@@ -1,3 +1,4 @@
+
 name: Update RetroAchievements Dashboard
 
 on:
@@ -90,6 +91,7 @@ jobs:
 
               if not game_id:
                   game["achievements"] = []
+                  game["boxArt"] = ""
                   continue
 
               detail_params = urllib.parse.urlencode({
@@ -106,6 +108,16 @@ jobs:
               try:
                   with urllib.request.urlopen(detail_request, timeout=30) as response:
                       detail = json.loads(response.read().decode("utf-8"))
+
+                  image_path = detail.get("ImageBoxArt") or detail.get("ImageIcon")
+
+                  if image_path:
+                      if image_path.startswith("http"):
+                          game["boxArt"] = image_path
+                      else:
+                          game["boxArt"] = "https://retroachievements.org" + image_path
+                  else:
+                      game["boxArt"] = ""
 
                   raw_achievements = detail.get("Achievements") or {}
 
@@ -132,9 +144,10 @@ jobs:
 
               except Exception as error:
                   print(
-                      f"Could not load achievements for {game['title']}: {error}"
+                      f"Could not load details for {game['title']}: {error}"
                   )
                   game["achievements"] = []
+                  game["boxArt"] = ""
 
               time.sleep(0.5)
 
