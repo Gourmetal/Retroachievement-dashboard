@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#10131d">
+  <meta name="theme-color" content="#101010">
   <title>RetroAchievements Dashboard</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -13,16 +13,29 @@
       <span class="brand-icon">🏆</span>
       <div>
         <h1>RetroAchievements</h1>
-        <p>Personal gaming dashboard</p>
+        <p>Your personal gaming dashboard</p>
       </div>
     </div>
     <div class="account">
       <span class="status-dot"></span>
-      <span>Gourmetal</span>
+      <span id="profile-username">Gourmetal</span>
     </div>
   </header>
 
   <main class="container">
+
+    <!-- PLAYER PROFILE -->
+    <section class="profile-card">
+      <div class="profile-avatar">🎮</div>
+      <div class="profile-info">
+        <p class="eyebrow">PLAYER PROFILE</p>
+        <h2 id="profile-name">Gourmetal</h2>
+        <p>Building a collection, one achievement at a time.</p>
+        <span class="player-badge">🏅 Achievement Hunter</span>
+      </div>
+    </section>
+
+    <!-- WELCOME -->
     <section class="welcome">
       <div>
         <p class="eyebrow">YOUR GAMING JOURNEY</p>
@@ -32,22 +45,26 @@
       <div class="trophy">🏆</div>
     </section>
 
+    <!-- STATS -->
     <section class="stats-grid">
       <article class="stat-card">
         <span class="stat-icon">🎮</span>
         <p>Games Played</p>
         <strong id="games-played">—</strong>
       </article>
+
       <article class="stat-card">
         <span class="stat-icon">⭐</span>
         <p>Achievements Earned</p>
         <strong id="achievements-earned">—</strong>
       </article>
+
       <article class="stat-card">
         <span class="stat-icon">🎯</span>
         <p>Achievements Available</p>
         <strong id="achievements-total">—</strong>
       </article>
+
       <article class="stat-card">
         <span class="stat-icon">📈</span>
         <p>Overall Progress</p>
@@ -55,6 +72,62 @@
       </article>
     </section>
 
+    <!-- OVERALL PROGRESS -->
+    <section class="panel progress-overview">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">YOUR PERFORMANCE</p>
+          <h2>Overall Completion</h2>
+        </div>
+      </div>
+
+      <div class="progress-ring-area">
+        <div class="progress-ring" id="overall-ring">
+          <div class="ring-center">
+            <strong id="ring-percentage">0%</strong>
+            <span>Complete</span>
+          </div>
+        </div>
+
+        <div class="progress-details">
+          <p><strong id="ring-earned">0</strong> achievements earned</p>
+          <p><strong id="ring-total">0</strong> achievements available</p>
+          <p class="game-meta">Keep going. Every unlock counts!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECENT ACHIEVEMENTS -->
+    <section class="panel recent-section">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">LATEST UNLOCKS</p>
+          <h2>Recent Achievements</h2>
+        </div>
+        <span class="section-icon">⚡</span>
+      </div>
+
+      <div id="recent-unlocks" class="recent-list">
+        <p class="loading">Loading recent achievements...</p>
+      </div>
+    </section>
+
+    <!-- FEATURED ACHIEVEMENTS -->
+    <section class="panel showcase-section">
+      <div class="section-title">
+        <div>
+          <p class="eyebrow">YOUR HIGHLIGHTS</p>
+          <h2>Achievement Showcase</h2>
+        </div>
+        <span class="section-icon">🏆</span>
+      </div>
+
+      <div id="achievement-showcase" class="showcase-grid">
+        <p class="loading">Loading your achievements...</p>
+      </div>
+    </section>
+
+    <!-- GAME COLLECTION -->
     <section class="games-section">
       <div class="section-heading">
         <div>
@@ -71,23 +144,16 @@
       </div>
 
       <div id="games-list" class="games-list">
-        <div class="loading">Your game collection will appear here once connected.</div>
-      </div>
-    </section>
-
-    <section class="recent-section">
-      <p class="eyebrow">LATEST UNLOCKS</p>
-      <h2>Recent Achievements</h2>
-      <div id="recent-unlocks" class="recent-list">
-        <p class="loading">Your recent achievements will appear here.</p>
+        <div class="loading">Your game collection will appear here.</div>
       </div>
     </section>
 
     <footer>
       <p>Made for Gourmetal · RetroAchievements Dashboard</p>
     </footer>
+
   </main>
 
   <script src="app.js"></script>
 </body>
-  </html>
+</html>
