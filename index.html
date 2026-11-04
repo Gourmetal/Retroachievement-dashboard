@@ -4,247 +4,148 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#101010">
-  <meta name="description" content="Gourmetal's personal RetroAchievements gaming dashboard.">
-  <title>Gourmetal | RetroAchievements Dashboard</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+  <meta name="theme-color" content="#08090f">
+  <meta name="description" content="RetroAchievements gaming dashboard">
 
-  <!-- AMBIENT PARTICLE BACKGROUND -->
+  <title>RetroAchievements Dashboard</title>
+
+  <link rel="stylesheet" href="styles.css?v=neon-glass-20261104">
+</head>
+
+<body>
   <div id="ambient-particles" aria-hidden="true"></div>
 
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-icon">🏆</span>
-      <div>
-        <h1>RetroAchievements</h1>
-        <p>Your personal gaming dashboard</p>
-      </div>
-    </div>
+  <main class="dashboard">
 
-    <div class="account">
-      <span class="status-dot"></span>
-      <span id="profile-username">Gourmetal</span>
-    </div>
-  </header>
-
-  <main class="container">
-
-    <!-- PLAYER PROFILE BANNER -->
-    <section class="profile-card">
-
-      <div class="profile-banner-art" aria-hidden="true">
+    <!-- PLAYER BANNER -->
+    <header class="profile-banner">
+      <div class="profile-banner-art">
         <div class="banner-grid"></div>
         <div class="banner-glow"></div>
-        <span class="banner-watermark">G</span>
-        <span class="banner-label">PLAYER ONE</span>
+        <div class="banner-watermark">G</div>
+        <div class="banner-label">RETRO GAMING PROFILE</div>
       </div>
 
       <div class="profile-content">
-
-        <div class="profile-avatar">
-          <img
-            id="profile-avatar"
-            src="https://retroachievements.org/UserPic/Gourmetal.png"
-            alt="Gourmetal avatar"
-          >
+        <div class="avatar-container">
+          <img id="avatar" src="" alt="Player avatar">
+          <div class="avatar-fallback">🏆</div>
         </div>
 
-        <div class="profile-info">
-          <p class="eyebrow">PLAYER PROFILE</p>
-          <h2 id="profile-name">Gourmetal</h2>
-          <p id="profile-motto">
-            Building a collection, one achievement at a time.
-          </p>
-
-          <div class="profile-details">
-            <span class="player-badge">🏅 Achievement Hunter</span>
-            <span id="profile-rank">Rank: Loading...</span>
-            <span id="profile-member-since">Member since: Loading...</span>
-          </div>
-
-          <div class="profile-points">
-            <div>
-              <strong id="profile-hardcore-points">—</strong>
-              <span>Hardcore Points</span>
-            </div>
-
-            <div>
-              <strong id="profile-softcore-points">—</strong>
-              <span>Softcore Points</span>
-            </div>
-
-            <div>
-              <strong id="profile-true-points">—</strong>
-              <span>True Points</span>
-            </div>
-          </div>
+        <div class="profile-details">
+          <h1 id="username">Loading player...</h1>
+          <p id="motto">RetroAchievements Player</p>
+          <p id="member-since"></p>
         </div>
-
       </div>
-    </section>
+    </header>
 
-    <!-- WELCOME -->
-    <section class="welcome">
-      <div>
-        <p class="eyebrow">YOUR GAMING JOURNEY</p>
-        <h2>Achievement Dashboard</h2>
-        <p class="subheading">
-          Your games, progress, and achievements in one place.
-        </p>
+    <!-- PLAYER STATS -->
+    <section class="stats-section">
+      <h2>Player Statistics</h2>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <span class="stat-icon">🏆</span>
+          <span class="stat-label">Achievements</span>
+          <strong id="total-achievements">0</strong>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-icon">🎮</span>
+          <span class="stat-label">Games Played</span>
+          <strong id="games-played">0</strong>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-icon">⭐</span>
+          <span class="stat-label">Hardcore Points</span>
+          <strong id="hardcore-points">0</strong>
+        </article>
+
+        <article class="stat-card">
+          <span class="stat-icon">💎</span>
+          <span class="stat-label">Softcore Points</span>
+          <strong id="softcore-points">0</strong>
+        </article>
       </div>
-
-      <div class="trophy">🏆</div>
-    </section>
-
-    <!-- STATS -->
-    <section class="stats-grid">
-
-      <article class="stat-card">
-        <span class="stat-icon">🎮</span>
-        <p>Games Played</p>
-        <strong id="games-played">—</strong>
-      </article>
-
-      <article class="stat-card">
-        <span class="stat-icon">⭐</span>
-        <p>Achievements Earned</p>
-        <strong id="achievements-earned">—</strong>
-      </article>
-
-      <article class="stat-card">
-        <span class="stat-icon">🎯</span>
-        <p>Achievements Available</p>
-        <strong id="achievements-total">—</strong>
-      </article>
-
-      <article class="stat-card">
-        <span class="stat-icon">📈</span>
-        <p>Overall Progress</p>
-        <strong id="overall-progress">—</strong>
-      </article>
-
     </section>
 
     <!-- OVERALL PROGRESS -->
-    <section class="panel progress-overview">
+    <section class="progress-section">
+      <h2>Overall Completion</h2>
 
-      <div class="section-title">
-        <div>
-          <p class="eyebrow">YOUR PERFORMANCE</p>
-          <h2>Overall Completion</h2>
-        </div>
-      </div>
-
-      <div class="progress-ring-area">
-
-        <div class="progress-ring" id="overall-ring">
-          <div class="ring-center">
-            <strong id="ring-percentage">0%</strong>
-            <span>Complete</span>
-          </div>
+      <div class="progress-card">
+        <div class="progress-info">
+          <span>Achievement Progress</span>
+          <strong id="completion-percent">0%</strong>
         </div>
 
-        <div class="progress-details">
-          <p>
-            <strong id="ring-earned">0</strong>
-            achievements earned
-          </p>
-
-          <p>
-            <strong id="ring-total">0</strong>
-            achievements available
-          </p>
-
-          <p class="game-meta">
-            Keep going. Every unlock counts!
-          </p>
+        <div class="progress-track">
+          <div id="overall-progress" class="progress-fill"></div>
         </div>
 
+        <p id="achievement-progress-text">0 of 0 achievements earned</p>
       </div>
     </section>
 
     <!-- RECENT ACHIEVEMENTS -->
-    <section class="panel recent-section">
-
-      <div class="section-title">
-        <div>
-          <p class="eyebrow">LATEST UNLOCKS</p>
-          <h2>Recent Achievements</h2>
-        </div>
-
-        <span class="section-icon">⚡</span>
-      </div>
-
-      <div id="recent-unlocks" class="recent-list">
-        <p class="loading">Loading recent achievements...</p>
-      </div>
-
-    </section>
-
-    <!-- ACHIEVEMENT SHOWCASE -->
-    <section class="panel showcase-section">
-
-      <div class="section-title">
-        <div>
-          <p class="eyebrow">YOUR HIGHLIGHTS</p>
-          <h2>Achievement Showcase</h2>
-        </div>
-
-        <span class="section-icon">🏆</span>
-      </div>
-
-      <div id="achievement-showcase" class="showcase-grid">
-        <p class="loading">Loading your achievements...</p>
-      </div>
-
-    </section>
-
-    <!-- GAME COLLECTION -->
-    <section class="games-section">
-
+    <section class="recent-section">
       <div class="section-heading">
-        <div>
-          <p class="eyebrow">YOUR COLLECTION</p>
-          <h2>My Games</h2>
-        </div>
-
-        <input
-          id="game-search"
-          type="search"
-          placeholder="Search your games..."
-        >
+        <h2>Recent Achievements</h2>
       </div>
 
-      <div class="filters">
-        <button class="filter active" data-filter="all">
-          All Games
-        </button>
-
-        <button class="filter" data-filter="in-progress">
-          In Progress
-        </button>
-
-        <button class="filter" data-filter="completed">
-          Completed
-        </button>
+      <div id="recent-achievements" class="recent-achievements">
+        <p class="loading-message">Loading recent achievements...</p>
       </div>
-
-      <div id="games-list" class="games-list">
-        <div class="loading">
-          Your game collection will appear here.
-        </div>
-      </div>
-
     </section>
 
-    <footer>
-      <p>Made for Gourmetal · RetroAchievements Dashboard</p>
+    <!-- GAME LIBRARY -->
+    <section class="games-section">
+      <div class="section-heading">
+        <h2>My Game Library</h2>
+        <span id="game-count" class="section-count">0 Games</span>
+      </div>
+
+      <div class="game-controls">
+        <input
+          type="search"
+          id="game-search"
+          placeholder="Search games..."
+          aria-label="Search games"
+        >
+
+        <select id="game-filter" aria-label="Filter games">
+          <option value="all">All Games</option>
+          <option value="completed">Completed</option>
+          <option value="in-progress">In Progress</option>
+          <option value="not-started">Not Started</option>
+        </select>
+      </div>
+
+      <div id="games-container" class="games-grid">
+        <p class="loading-message">Loading game library...</p>
+      </div>
+    </section>
+
+    <!-- GAME SHOWCASE -->
+    <section class="showcase-section">
+      <h2>Featured Games</h2>
+
+      <div id="game-showcase" class="showcase-grid">
+        <p class="loading-message">Loading featured games...</p>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="dashboard-footer">
+      <p>Powered by RetroAchievements</p>
+      <p>Keep playing. Keep earning. Keep collecting. 🎮</p>
+      <span id="last-updated"></span>
     </footer>
 
   </main>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=neon-glass-20261104"></script>
 </body>
 </html>
