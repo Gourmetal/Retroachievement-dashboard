@@ -23,9 +23,11 @@ function safeImage(url) {
 
 function formatDate(value) {
   if (!value) return "Date unavailable";
+
   const date = new Date(
     String(value).replace(" ", "T").replace(/Z$/, "") + "Z"
   );
+
   if (Number.isNaN(date.getTime())) return "Date unavailable";
 
   return date.toLocaleDateString(undefined, {
@@ -82,6 +84,7 @@ function renderProfile(data) {
       avatar.src = avatarUrl;
       avatar.alt = username + " avatar";
       avatar.style.display = "block";
+
       avatar.onerror = function () {
         this.style.display = "none";
       };
@@ -142,17 +145,20 @@ function createParticles() {
 
   for (let i = 0; i < count; i++) {
     const particle = document.createElement("span");
+
     particle.className = "ambient-particle";
     particle.style.left = Math.random() * 100 + "%";
     particle.style.animationDelay = Math.random() * 18 + "s";
     particle.style.animationDuration =
       12 + Math.random() * 16 + "s";
+
     particle.style.setProperty(
       "--particle-drift",
       Math.random() * 100 - 50 + "px"
     );
 
     const size = 2 + Math.random() * 4;
+
     particle.style.width = size + "px";
     particle.style.height = size + "px";
 
@@ -186,6 +192,7 @@ function renderRecentAchievements() {
         <div class="game-meta">${escapeHTML(item.gameTitle)}</div>
         <div class="game-meta">${formatDate(item.dateEarned)}</div>
       </div>
+
       <span class="achievement-points">
         ${Number(item.points) || 0} pts
       </span>
@@ -200,8 +207,9 @@ function renderShowcase() {
   if (!container) return;
 
   const featured = [...games]
-    .sort((a, b) => (Number(b.progress) || 0) -
-                    (Number(a.progress) || 0))
+    .sort((a, b) =>
+      (Number(b.progress) || 0) - (Number(a.progress) || 0)
+    )
     .slice(0, 4);
 
   if (!featured.length) {
@@ -212,11 +220,13 @@ function renderShowcase() {
 
   container.innerHTML = featured.map(game => {
     const art = game.steamGridDB || {};
+
     const image = safeImage(art.hero) ||
       safeImage(art.grid) ||
       safeImage(game.boxArt);
 
     const logo = safeImage(art.logo);
+
     const progress = Math.max(
       0,
       Math.min(100, Number(game.progress) || 0)
@@ -230,6 +240,7 @@ function renderShowcase() {
                alt="${escapeHTML(game.title)} artwork"
                loading="lazy">
         ` : ""}
+
         <div class="showcase-info">
           ${logo ? `
             <img class="showcase-logo"
@@ -237,6 +248,7 @@ function renderShowcase() {
                  alt="${escapeHTML(game.title)} logo"
                  loading="lazy">
           ` : ""}
+
           <h3>${escapeHTML(game.title)}</h3>
           <p class="game-meta">${progress}% complete</p>
         </div>
@@ -270,6 +282,7 @@ function renderGames() {
   });
 
   const count = document.getElementById("game-count");
+
   if (count) {
     count.textContent = filtered.length + " Games";
   }
@@ -309,14 +322,17 @@ function renderGames() {
           }">
             <div>
               <strong>${escapeHTML(item.title)}</strong>
+
               <div class="game-meta">
                 ${escapeHTML(item.description || "")}
               </div>
+
               <div class="game-meta">
                 ${item.earned ? "✓ Earned" : "🔒 Locked"}
                 ${item.hardcore ? " · Hardcore" : ""}
               </div>
             </div>
+
             <span class="achievement-points">
               ${Number(item.points) || 0} pts
             </span>
@@ -365,6 +381,118 @@ function renderGames() {
               </div>
 
               <div class="game-progress-layout">
+                <div class="game-progress-ring"
+                     style="--game-progress:${progress}%">
+                  <div class="game-ring-center">
+                    <strong>${progress}%</strong>
+                  </div>
+                </div>
+
+                <div class="game-progress-text">
+                  <strong>${earned} of ${total}</strong>
+                  <span>Achievements unlocked</span>
+                  <span>${escapeHTML(game.mode || "Progress")}</span>
+                </div>
+              </div>
+
+              ${icon ? `
+                <img class="game-icon"
+                     src="${escapeHTML(icon)}"
+                     alt=""
+                     loading="lazy">
+              ` : ""}
+
+              <div class="game-meta">
+                Tap to view achievements ▾
+              </div>
+            </div>
+          </div>
+        </summary>
+
+        <div class="achievement-list">
+          ${achievementRows}
+        </div>
+      </details>
+    `;
+  }).join("");
+}
+
+/* LOAD DASHBOARD DATA */
+
+async function loadDashboard() {
+  try {
+    const response = await fetch("data/games.json?v=" + Date.now());
+
+    if (!response.ok) {
+      throw new Error("Game data unavailable");
+    }
+
+    const data = await response.json();
+
+    games = Array.isArray(data.games) ? data.games : [];
+
+    const stats = data.stats || {};
+
+    const earned = Number(stats.achievementsEarned) ||
+      games.reduce((sum, game) =>
+        sum + (Number(game.earned) || 0), 0);
+
+    const total = Number(stats.achievementsTotal) ||
+      games.reduce((sum, game) =>
+        sum + (Number(game.total) || 0), 0);
+
+    const gamesPlayed = document.getElementById("games-played");
+    const achievements = document.getElementById("total-achievements");
+    const updated = document.getElementById("last-updated");
+
+    if (gamesPlayed) {
+      gamesPlayed.textContent = games.length;
+    }
+
+    if (achievements) {
+      achievements.textContent = formatPoints(earned);
+    }
+
+    if (updated) {
+      updated.textContent = data.lastUpdated
+        ? "Last updated: " + formatDate(data.lastUpdated)
+        : "";
+    }
+
+    renderProfile(data);
+    renderProgress(earned, total);
+    renderRecentAchievements();
+    renderShowcase();
+    renderGames();
+
+  } catch (error) {
+    console.error(error);
+
+    if (gamesContainer) {
+      gamesContainer.innerHTML =
+        '<p class="loading-message">Could not load game data. Check the update workflow.</p>';
+    }
+  }
+}
+
+/* SEARCH AND FILTER */
+
+if (searchInput) {
+  searchInput.addEventListener("input", renderGames);
+}
+
+if (filterSelect) {
+  filterSelect.addEventListener("change", () => {
+    activeFilter = filterSelect.value;
+    renderGames();
+  });
+}
+
+/* STARTUP */
+
+createParticles();
+loadDashboard();
+             <div class="game-progress-layout">
                 <div class="game-progress-ring"
                      style="--game-progress:${progress}%">
                   <div class="game-ring-center">
