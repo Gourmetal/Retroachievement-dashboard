@@ -1,14 +1,15 @@
 
 :root {
-  --bg: #000000;
+  --bg: #080808;
   --panel: #111111;
   --panel-light: #1c1c1c;
   --text: #ffffff;
   --muted: #aaaaaa;
   --accent: #ff9b14;
-  --blue: #ff9b14;
-  --green: #ff9b14;
-  --border: #292929;
+  --accent-hot: #ff6a00;
+  --border: #332313;
+  --glow: 0 0 12px rgba(255, 155, 20, 0.22),
+          0 0 28px rgba(255, 106, 0, 0.10);
 }
 
 * {
@@ -17,7 +18,8 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  background:
+    radial-gradient(ellipse at top, #241406 0%, #080808 48%);
   color: var(--text);
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -27,8 +29,9 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 18px 6%;
-  background: #111111;
+  background: #101010;
   border-bottom: 1px solid var(--border);
+  box-shadow: 0 3px 20px rgba(255, 115, 0, 0.08);
 }
 
 .brand {
@@ -39,6 +42,7 @@ body {
 
 .brand-icon {
   font-size: 34px;
+  filter: drop-shadow(0 0 8px var(--accent));
 }
 
 .brand h1 {
@@ -63,8 +67,10 @@ body {
 .status-dot {
   width: 9px;
   height: 9px;
-  background: var(--green);
+  background: var(--accent);
   border-radius: 50%;
+  box-shadow: 0 0 10px var(--accent);
+  animation: pulse 2s infinite;
 }
 
 .container {
@@ -77,9 +83,10 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 30px;
-  background: #111111 !important;
-  border: 1px solid #ff4b19;
+  background: linear-gradient(135deg, #1b1209, #111111) !important;
+  border: 1px solid var(--accent);
   border-radius: 18px;
+  box-shadow: var(--glow);
 }
 
 .eyebrow {
@@ -87,6 +94,7 @@ body {
   font-size: 11px;
   font-weight: bold;
   letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 h2 {
@@ -96,6 +104,7 @@ h2 {
 
 .trophy {
   font-size: 65px;
+  filter: drop-shadow(0 0 12px var(--accent));
 }
 
 .stats-grid {
@@ -110,10 +119,18 @@ h2 {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 14px;
+  box-shadow: var(--glow);
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
 }
 
 .stat-icon {
   font-size: 24px;
+  filter: drop-shadow(0 0 6px var(--accent));
 }
 
 .stat-card p {
@@ -124,6 +141,8 @@ h2 {
 
 .stat-card strong {
   font-size: 27px;
+  color: var(--accent);
+  text-shadow: 0 0 12px rgba(255, 155, 20, 0.35);
 }
 
 .games-section,
@@ -145,6 +164,12 @@ h2 {
   border: 1px solid var(--border);
   border-radius: 9px;
   color: var(--text);
+  outline: none;
+}
+
+#game-search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(255, 155, 20, 0.25);
 }
 
 .filters {
@@ -161,12 +186,15 @@ h2 {
   border: 1px solid var(--border);
   border-radius: 20px;
   cursor: pointer;
+  transition: 0.2s;
 }
 
+.filter:hover,
 .filter.active {
   background: var(--accent);
   color: #171717;
   border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(255, 155, 20, 0.35);
   font-weight: bold;
 }
 
@@ -182,6 +210,13 @@ h2 {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 13px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.game-card:hover,
+.recent-item:hover {
+  border-color: var(--accent);
+  box-shadow: var(--glow);
 }
 
 .game-card h3 {
@@ -203,8 +238,10 @@ h2 {
 
 .progress-fill {
   height: 100%;
-  background: var(--accent);
+  background: linear-gradient(90deg, var(--accent-hot), var(--accent));
   border-radius: 10px;
+  box-shadow: 0 0 12px var(--accent);
+  transition: width 1s ease;
 }
 
 .loading {
@@ -222,6 +259,144 @@ footer {
   font-size: 12px;
 }
 
+/* Player profile */
+
+#profile-card,
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  margin: 22px 0;
+  background: linear-gradient(135deg, #211508, #111111);
+  border: 1px solid var(--accent);
+  border-radius: 16px;
+  box-shadow: var(--glow);
+}
+
+#profile-avatar,
+.profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 66px;
+  height: 66px;
+  flex-shrink: 0;
+  background: #2b1a08;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  font-size: 32px;
+  box-shadow: 0 0 16px rgba(255, 155, 20, 0.35);
+}
+
+#profile-username {
+  color: var(--accent);
+  text-shadow: 0 0 10px rgba(255, 155, 20, 0.3);
+}
+
+#profile-info {
+  min-width: 0;
+}
+
+/* Progress overview and animated ring */
+
+.progress-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 24px;
+  margin: 22px 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--glow);
+}
+
+.progress-ring-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.progress-ring {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent) 0%, #292929 0%);
+  box-shadow: 0 0 22px rgba(255, 155, 20, 0.25);
+  animation: ringGlow 3s ease-in-out infinite alternate;
+  transition: background 1s ease;
+}
+
+.ring-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 116px;
+  height: 116px;
+  background: #111111;
+  border-radius: 50%;
+}
+
+#ring-percentage {
+  color: var(--accent);
+  font-size: 29px;
+  font-weight: bold;
+}
+
+.ring-center small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.progress-details {
+  flex: 1;
+  min-width: 160px;
+}
+
+.progress-details p {
+  color: var(--muted);
+}
+
+/* Panels and section titles */
+
+.panel {
+  padding: 20px;
+  margin-top: 22px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  box-shadow: var(--glow);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 15px;
+}
+
+.section-icon {
+  color: var(--accent);
+  filter: drop-shadow(0 0 6px var(--accent));
+}
+
+.showcase-section {
+  margin-top: 28px;
+}
+
+.showcase-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
 /* Game cards and cover art */
 
 .game-card summary {
@@ -236,8 +411,9 @@ footer {
 .game-card summary::after {
   content: "＋";
   float: right;
-  color: #ff4b19;
+  color: var(--accent);
   font-size: 20px;
+  text-shadow: 0 0 8px var(--accent);
 }
 
 .game-card[open] summary::after {
@@ -261,6 +437,7 @@ footer {
   background: #202020;
   border: 1px solid #383838;
   border-radius: 7px;
+  box-shadow: 0 0 10px rgba(255, 155, 20, 0.12);
 }
 
 .game-cover-placeholder {
@@ -300,7 +477,7 @@ footer {
 }
 
 .achievement-earned strong {
-  color: #ff4b19;
+  color: var(--accent);
 }
 
 .achievement-locked {
@@ -308,10 +485,33 @@ footer {
 }
 
 .achievement-points {
-  color: #ff4b19;
+  color: var(--accent);
   white-space: nowrap;
   font-size: 13px;
   font-weight: bold;
+  text-shadow: 0 0 8px rgba(255, 155, 20, 0.25);
+}
+
+/* Animations */
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 10px var(--accent);
+  }
+  50% {
+    opacity: 0.5;
+    box-shadow: 0 0 3px var(--accent);
+  }
+}
+
+@keyframes ringGlow {
+  from {
+    box-shadow: 0 0 12px rgba(255, 155, 20, 0.18);
+  }
+  to {
+    box-shadow: 0 0 26px rgba(255, 155, 20, 0.4);
+  }
 }
 
 /* Mobile layout */
@@ -356,6 +556,19 @@ footer {
     flex-basis: 68px;
     width: 68px;
     height: 96px;
+  }
+
+  .progress-overview {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .progress-details {
+    flex-basis: 100%;
+  }
+
+  .showcase-grid {
+    grid-template-columns: 1fr;
   }
 }
 
