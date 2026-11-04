@@ -1,6 +1,6 @@
 {
   "username": "Gourmetal",
-  "lastUpdated": "2026-11-04T11:13:01.695488+00:00",
+  "lastUpdated": "2026-11-04T14:30:19.833752+00:00",
   "games": [
     {
       "gameId": 510,
@@ -12,6 +12,7 @@
       "progress": 5,
       "mode": "Softcore",
       "lastPlayed": "2026-08-09T16:24:18+00:00",
+      "boxArt": "https://retroachievements.org/Images/071775.png",
       "achievements": [
         {
           "id": 3069,
@@ -685,6 +686,7 @@
       "progress": 24,
       "mode": "Softcore",
       "lastPlayed": "2026-08-07T21:32:36+00:00",
+      "boxArt": "https://retroachievements.org/Images/124461.png",
       "achievements": [
         {
           "id": 11887,
@@ -1398,6 +1400,7 @@
       "progress": 7,
       "mode": "Softcore",
       "lastPlayed": "2026-08-31T15:55:33+00:00",
+      "boxArt": "https://retroachievements.org/Images/014485.png",
       "achievements": [
         {
           "id": 23002,
@@ -1561,6 +1564,7 @@
       "progress": 4,
       "mode": "Softcore",
       "lastPlayed": "2026-08-07T21:36:59+00:00",
+      "boxArt": "https://retroachievements.org/Images/014448.png",
       "achievements": [
         {
           "id": 39613,
@@ -1834,6 +1838,7 @@
       "progress": 56,
       "mode": "Softcore",
       "lastPlayed": "2026-08-09T16:12:16+00:00",
+      "boxArt": "https://retroachievements.org/Images/155566.png",
       "achievements": [
         {
           "id": 4688,
@@ -2277,6 +2282,7 @@
       "progress": 5,
       "mode": "Softcore",
       "lastPlayed": "2026-07-20T16:16:41+00:00",
+      "boxArt": "https://retroachievements.org/Images/096231.png",
       "achievements": [
         {
           "id": 5761,
@@ -2840,6 +2846,7 @@
       "progress": 1,
       "mode": "Softcore",
       "lastPlayed": "2026-07-20T15:47:50+00:00",
+      "boxArt": "https://retroachievements.org/Images/142942.png",
       "achievements": [
         {
           "id": 5636,
@@ -3983,6 +3990,7 @@
       "progress": 1,
       "mode": "Softcore",
       "lastPlayed": "2026-07-05T03:17:10+00:00",
+      "boxArt": "https://retroachievements.org/Images/014406.png",
       "achievements": [
         {
           "id": 537183,
@@ -5966,6 +5974,7 @@
       "progress": 10,
       "mode": "Softcore",
       "lastPlayed": "2026-08-11T17:24:55+00:00",
+      "boxArt": "https://retroachievements.org/Images/110569.png",
       "achievements": [
         {
           "id": 512403,
@@ -6559,6 +6568,7 @@
       "progress": 3,
       "mode": "Softcore",
       "lastPlayed": "2026-10-16T14:58:30+00:00",
+      "boxArt": "https://retroachievements.org/Images/007653.png",
       "achievements": [
         {
           "id": 49122,
@@ -6932,6 +6942,7 @@
       "progress": 23,
       "mode": "Softcore",
       "lastPlayed": "2026-07-28T17:20:37+00:00",
+      "boxArt": "https://retroachievements.org/Images/110910.png",
       "achievements": [
         {
           "id": 12438,
@@ -7755,6 +7766,7 @@
       "progress": 3,
       "mode": "Softcore",
       "lastPlayed": "2026-09-05T15:11:00+00:00",
+      "boxArt": "https://retroachievements.org/Images/110912.png",
       "achievements": [
         {
           "id": 38434,
@@ -8428,6 +8440,7 @@
       "progress": 79,
       "mode": "Softcore",
       "lastPlayed": "2026-11-03T19:48:18+00:00",
+      "boxArt": "https://retroachievements.org/Images/000156.png",
       "achievements": [
         {
           "id": 2170,
@@ -9101,6 +9114,7 @@
       "progress": 3,
       "mode": "Softcore",
       "lastPlayed": "2026-07-20T15:59:00+00:00",
+      "boxArt": "https://retroachievements.org/Images/003457.png",
       "achievements": [
         {
           "id": 9993,
@@ -9774,6 +9788,7 @@
       "progress": 1,
       "mode": "Softcore",
       "lastPlayed": "2026-07-14T16:44:58+00:00",
+      "boxArt": "https://retroachievements.org/Images/120406.png",
       "achievements": [
         {
           "id": 502624,
@@ -10467,6 +10482,7 @@
       "progress": 8,
       "mode": "Softcore",
       "lastPlayed": "2026-09-25T16:09:29+00:00",
+      "boxArt": "https://retroachievements.org/Images/086905.png",
       "achievements": [
         {
           "id": 385571,
