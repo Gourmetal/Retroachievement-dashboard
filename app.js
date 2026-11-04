@@ -62,9 +62,19 @@ function renderProfile(data) {
   if (usernameElement) usernameElement.textContent = username;
   if (nameElement) nameElement.textContent = username;
 
+  // Load the avatar without unnecessarily reloading it.
   if (avatar && profile.avatar) {
-    avatar.src = profile.avatar;
     avatar.alt = username + " avatar";
+
+    if (avatar.src !== new URL(profile.avatar, document.baseURI).href) {
+      avatar.src = profile.avatar;
+    }
+
+    // Show a trophy if the avatar image cannot load.
+    avatar.onerror = function () {
+      this.style.display = "none";
+      this.parentElement.textContent = "🏆";
+    };
   }
 
   if (motto) {
@@ -187,7 +197,9 @@ function renderShowcase() {
 }
 
 function renderGames() {
-  const search = searchInput.value.trim().toLowerCase();
+  const search = searchInput
+    ? searchInput.value.trim().toLowerCase()
+    : "";
 
   const filtered = games.filter(game => {
     const matches = String(game.title || "")
@@ -347,8 +359,34 @@ async function loadDashboard() {
     renderGames();
 
   } catch (error) {
-    gamesList.innerHTML =
-      '<div class="loading">Could not load game data. Check the update workflow.</div>';
+    if (gamesList) {
+      gamesList.innerHTML =
+        '<div class="loading">Could not load game data. Check the update workflow.</div>';
+    }
+
+    console.error(error);
+  }
+}
+
+if (searchInput) {
+  searchInput.addEventListener("input", renderGames);
+}
+
+filterButtons.forEach(button => {
+  button.addEventListener("click", () => {
+    filterButtons.forEach(item =>
+      item.classList.remove("active")
+    );
+
+    button.classList.add("active");
+    activeFilter = button.dataset.filter;
+
+    renderGames();
+  });
+});
+
+loadDashboard();
+s="loading">Could not load game data. Check the update workflow.</div>';
 
     console.error(error);
   }
