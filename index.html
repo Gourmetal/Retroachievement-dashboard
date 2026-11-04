@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#10131d">
+  <title>RetroAchievements Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">🏆</span>
+      <div>
+        <h1>RetroAchievements</h1>
+        <p>Personal gaming dashboard</p>
+      </div>
+    </div>
+    <div class="account">
+      <span class="status-dot"></span>
+      <span>Gourmetal</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="welcome">
+      <div>
+        <p class="eyebrow">YOUR GAMING JOURNEY</p>
+        <h2>Achievement Dashboard</h2>
+        <p class="subheading">Your games, progress, and achievements in one place.</p>
+      </div>
+      <div class="trophy">🏆</div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card">
+        <span class="stat-icon">🎮</span>
+        <p>Games Played</p>
+        <strong id="games-played">—</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon">⭐</span>
+        <p>Achievements Earned</p>
+        <strong id="achievements-earned">—</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon">🎯</span>
+        <p>Achievements Available</p>
+        <strong id="achievements-total">—</strong>
+      </article>
+      <article class="stat-card">
+        <span class="stat-icon">📈</span>
+        <p>Overall Progress</p>
+        <strong id="overall-progress">—</strong>
+      </article>
+    </section>
+
+    <section class="games-section">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">YOUR COLLECTION</p>
+          <h2>My Games</h2>
+        </div>
+        <input id="game-search" type="search" placeholder="Search your games...">
+      </div>
+
+      <div class="filters">
+        <button class="filter active" data-filter="all">All Games</button>
+        <button class="filter" data-filter="in-progress">In Progress</button>
+        <button class="filter" data-filter="completed">Completed</button>
+      </div>
+
+      <div id="games-list" class="games-list">
+        <div class="loading">Your game collection will appear here once connected.</div>
+      </div>
+    </section>
+
+    <section class="recent-section">
+      <p class="eyebrow">LATEST UNLOCKS</p>
+      <h2>Recent Achievements</h2>
+      <div id="recent-unlocks" class="recent-list">
+        <p class="loading">Your recent achievements will appear here.</p>
+      </div>
+    </section>
+
+    <footer>
+      <p>Made for Gourmetal · RetroAchievements Dashboard</p>
+    </footer>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+  </html>
