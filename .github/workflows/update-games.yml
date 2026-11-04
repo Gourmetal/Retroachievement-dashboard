@@ -17,7 +17,7 @@ jobs:
       - name: Get repository files
         uses: actions/checkout@v4
 
-      - name: Update game progress
+      - name: Update game progress and player profile
         env:
           RA_API_KEY: ${{ secrets.RA_API_KEY }}
         run: |
@@ -31,28 +31,52 @@ jobs:
 
           username = "Gourmetal"
           api_key = os.environ["RA_API_KEY"]
+          api_root = "https://retroachievements.org"
 
-          base = "https://retroachievements.org/API/API_GetUserCompletionProgress.php"
+          def get_api_data(endpoint, params):
+              params["y"] = api_key
+              query = urllib.parse.urlencode(params)
+              request = urllib.request.Request(
+                  f"{api_root}/API/{endpoint}?{query}",
+                  headers={"User-Agent": "Gourmetal-Dashboard/1.0"}
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.loads(response.read().decode("utf-8"))
 
+          # Get player profile information
+          profile_data = get_api_data(
+              "API_GetUserSummary.php",
+              {"u": username, "g": 0, "a": 0}
+          )
+
+          avatar_path = profile_data.get("UserPic") or ""
+
+          if avatar_path and not avatar_path.startswith("http"):
+              avatar_path = api_root + avatar_path
+
+          profile = {
+              "username": profile_data.get("User", username),
+              "avatar": avatar_path,
+              "memberSince": profile_data.get("MemberSince"),
+              "motto": profile_data.get("Motto") or "",
+              "rank": profile_data.get("Rank"),
+              "totalRanked": profile_data.get("TotalRanked"),
+              "hardcorePoints": profile_data.get("TotalPoints", 0),
+              "softcorePoints": profile_data.get("TotalSoftcorePoints", 0),
+              "truePoints": profile_data.get("TotalTruePoints", 0)
+          }
+
+          # Get all played games
+          base = "API_GetUserCompletionProgress.php"
           all_games = []
           offset = 0
           total = None
 
           while total is None or offset < total:
-              params = urllib.parse.urlencode({
-                  "u": username,
-                  "y": api_key,
-                  "c": 500,
-                  "o": offset
-              })
-
-              request = urllib.request.Request(
-                  f"{base}?{params}",
-                  headers={"User-Agent": "Gourmetal-Dashboard/1.0"}
+              data = get_api_data(
+                  base,
+                  {"u": username, "c": 500, "o": offset}
               )
-
-              with urllib.request.urlopen(request, timeout=30) as response:
-                  data = json.loads(response.read().decode("utf-8"))
 
               total = data.get("Total", 0)
               results = data.get("Results", [])
@@ -84,7 +108,8 @@ jobs:
                   "lastPlayed": item.get("MostRecentAwardedDate")
               })
 
-          detail_base = "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php"
+          # Get achievement details for each game
+          detail_base = "API_GetGameInfoAndUserProgress.php"
 
           for game in games:
               game_id = game.get("gameId")
@@ -94,28 +119,19 @@ jobs:
                   game["boxArt"] = ""
                   continue
 
-              detail_params = urllib.parse.urlencode({
-                  "u": username,
-                  "y": api_key,
-                  "g": game_id
-              })
-
-              detail_request = urllib.request.Request(
-                  f"{detail_base}?{detail_params}",
-                  headers={"User-Agent": "Gourmetal-Dashboard/1.0"}
-              )
-
               try:
-                  with urllib.request.urlopen(detail_request, timeout=30) as response:
-                      detail = json.loads(response.read().decode("utf-8"))
+                  detail = get_api_data(
+                      detail_base,
+                      {"u": username, "g": game_id}
+                  )
 
                   image_path = detail.get("ImageBoxArt") or detail.get("ImageIcon")
 
                   if image_path:
-                      if image_path.startswith("http"):
-                          game["boxArt"] = image_path
-                      else:
-                          game["boxArt"] = "https://retroachievements.org" + image_path
+                      game["boxArt"] = (
+                          image_path if image_path.startswith("http")
+                          else api_root + image_path
+                      )
                   else:
                       game["boxArt"] = ""
 
@@ -143,9 +159,7 @@ jobs:
                   )
 
               except Exception as error:
-                  print(
-                      f"Could not load details for {game['title']}: {error}"
-                  )
+                  print(f"Could not load {game['title']}: {error}")
                   game["achievements"] = []
                   game["boxArt"] = ""
 
@@ -155,6 +169,7 @@ jobs:
 
           output = {
               "username": username,
+              "profile": profile,
               "lastUpdated": datetime.now(timezone.utc).isoformat(),
               "games": games,
               "recentAchievements": [],
@@ -171,6 +186,7 @@ jobs:
               json.dump(output, file, indent=2, ensure_ascii=False)
 
           print(f"Updated dashboard with {len(games)} games.")
+          print(f"Profile loaded for {profile['username']}.")
           PY
 
       - name: Save updated game data
