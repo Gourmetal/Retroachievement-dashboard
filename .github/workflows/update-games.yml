@@ -80,8 +80,56 @@ jobs:
                   "progress": progress,
                   "mode": "Softcore",
                   "lastPlayed": item.get("MostRecentAwardedDate")
-              })
+              }
+          detail_base = "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php"
 
+          for game in games:
+              game_id = game.get("gameId")
+
+              if not game_id:
+                  game["achievements"] = []
+                  continue
+
+              detail_params = urllib.parse.urlencode({
+                  "u": username,
+                  "y": api_key,
+                  "g": game_id
+              }
+
+              detail_request = urllib.request.Request(
+                  f"{detail_base}?{detail_params}",
+                  headers={"User-Agent": "Gourmetal-Dashboard/1.0"}
+              )
+
+              try:
+                  with urllib.request.urlopen(detail_request, timeout=30) as response:
+                      detail = json.loads(response.read().decode("utf-8"))
+
+                  raw_achievements = detail.get("Achievements", {})
+
+                  game["achievements"] = [
+                      {
+                          "id": achievement.get("ID", achievement_id),
+                          "title": achievement.get("Title", "Untitled achievement"),
+                          "description": achievement.get("Description", ""),
+                          "points": int(achievement.get("Points") or 0),
+                          "earned": bool(achievement.get("DateEarned")),
+                          "dateEarned": achievement.get("DateEarned"),
+                          "hardcore": bool(achievement.get("DateEarnedHardcore")),
+                          "dateEarnedHardcore": achievement.get("DateEarnedHardcore")
+                      }
+                      for achievement_id, achievement in raw_achievements.items()
+                  ]
+
+                  game["achievements"].sort(
+                      key=lambda item: (not item["earned"], item["title"].lower())
+                  )
+
+              except Exception as error:
+                  print(f"Could not load achievements for {game['title']}: {error}")
+                  game["achievements"] = []
+
+              time.sleep(0.5)
           games.sort(key=lambda game: game["title"].lower())
 
           output = {
