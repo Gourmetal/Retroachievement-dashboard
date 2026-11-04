@@ -98,7 +98,7 @@ recent_request = urllib.request.Request(
 with urllib.request.urlopen(recent_request, timeout=30) as response:
     recent_data = json.loads(response.read().decode("utf-8"))
 
-recent_achievements = []
+"recentAchievements": recent_achievements,
 
 for item in recent_data:
     recent_achievements.append({
