@@ -32,6 +32,10 @@ function formatDate(value) {
   });
 }
 
+function formatPoints(value) {
+  return Number(value || 0).toLocaleString();
+}
+
 function getEarnedAchievements() {
   return games.flatMap(game =>
     (Array.isArray(game.achievements) ? game.achievements : [])
@@ -45,27 +49,55 @@ function getEarnedAchievements() {
 }
 
 function renderProfile(data) {
-  const username = data.username || "RetroAchievements Player";
+  const profile = data.profile || {};
+  const username = profile.username || data.username || "RetroAchievements Player";
 
-  const usernameElement =
-    document.getElementById("profile-username");
+  const usernameElement = document.getElementById("profile-username");
+  const nameElement = document.getElementById("profile-name");
+  const avatar = document.getElementById("profile-avatar");
+  const motto = document.getElementById("profile-motto");
+  const rank = document.getElementById("profile-rank");
+  const memberSince = document.getElementById("profile-member-since");
 
-  const nameElement =
-    document.getElementById("profile-name");
+  if (usernameElement) usernameElement.textContent = username;
+  if (nameElement) nameElement.textContent = username;
 
-  const avatar =
-    document.querySelector(".profile-avatar");
-
-  if (usernameElement) {
-    usernameElement.textContent = username;
+  if (avatar && profile.avatar) {
+    avatar.src = profile.avatar;
+    avatar.alt = username + " avatar";
   }
 
-  if (nameElement) {
-    nameElement.textContent = username;
+  if (motto) {
+    motto.textContent = profile.motto ||
+      "Building a collection, one achievement at a time.";
   }
 
-  if (avatar) {
-    avatar.textContent = "🏆";
+  if (rank) {
+    rank.textContent = profile.rank
+      ? "Rank: #" + formatPoints(profile.rank)
+      : "Rank: Not available";
+  }
+
+  if (memberSince) {
+    memberSince.textContent = profile.memberSince
+      ? "Member since: " + formatDate(profile.memberSince)
+      : "Member since: Not available";
+  }
+
+  const hardcore = document.getElementById("profile-hardcore-points");
+  const softcore = document.getElementById("profile-softcore-points");
+  const truePoints = document.getElementById("profile-true-points");
+
+  if (hardcore) {
+    hardcore.textContent = formatPoints(profile.hardcorePoints);
+  }
+
+  if (softcore) {
+    softcore.textContent = formatPoints(profile.softcorePoints);
+  }
+
+  if (truePoints) {
+    truePoints.textContent = formatPoints(profile.truePoints);
   }
 }
 
@@ -84,22 +116,13 @@ function renderProgress(earned, total) {
       `conic-gradient(#ff9b14 ${percentage}%, #292929 ${percentage}% 100%)`;
   }
 
-  if (ringPercentage) {
-    ringPercentage.textContent = percentage + "%";
-  }
-
-  if (ringEarned) {
-    ringEarned.textContent = earned;
-  }
-
-  if (ringTotal) {
-    ringTotal.textContent = total;
-  }
+  if (ringPercentage) ringPercentage.textContent = percentage + "%";
+  if (ringEarned) ringEarned.textContent = earned;
+  if (ringTotal) ringTotal.textContent = total;
 }
 
 function renderRecentAchievements() {
   const container = document.getElementById("recent-unlocks");
-
   if (!container) return;
 
   const recent = getEarnedAchievements()
@@ -120,17 +143,12 @@ function renderRecentAchievements() {
     <div class="achievement-row achievement-earned">
       <div>
         <strong>🏆 ${escapeHTML(achievement.title)}</strong>
-
-        <div class="game-meta">
-          ${escapeHTML(achievement.gameTitle)}
-        </div>
-
+        <div class="game-meta">${escapeHTML(achievement.gameTitle)}</div>
         <div class="game-meta">
           ${formatDate(achievement.dateEarned)}
           ${achievement.hardcore ? " · Hardcore" : ""}
         </div>
       </div>
-
       <span class="achievement-points">
         ${Number(achievement.points) || 0} pts
       </span>
@@ -139,9 +157,7 @@ function renderRecentAchievements() {
 }
 
 function renderShowcase() {
-  const container =
-    document.getElementById("achievement-showcase");
-
+  const container = document.getElementById("achievement-showcase");
   if (!container) return;
 
   const featured = getEarnedAchievements()
@@ -161,12 +177,8 @@ function renderShowcase() {
     <div class="achievement-row achievement-earned">
       <div>
         <strong>⭐ ${escapeHTML(achievement.title)}</strong>
-
-        <div class="game-meta">
-          ${escapeHTML(achievement.gameTitle)}
-        </div>
+        <div class="game-meta">${escapeHTML(achievement.gameTitle)}</div>
       </div>
-
       <span class="achievement-points">
         ${Number(achievement.points) || 0} pts
       </span>
@@ -228,17 +240,14 @@ function renderGames() {
           }">
             <div>
               <strong>${escapeHTML(achievement.title)}</strong>
-
               <div class="game-meta">
                 ${escapeHTML(achievement.description || "")}
               </div>
-
               <div class="game-meta">
                 ${achievement.earned ? "✓ Earned" : "🔒 Locked"}
                 ${achievement.hardcore ? " · Hardcore" : ""}
               </div>
             </div>
-
             <span class="achievement-points">
               ${Number(achievement.points) || 0} pts
             </span>
@@ -251,38 +260,31 @@ function renderGames() {
         <summary>
           <div class="game-summary-layout">
             ${cover}
-
             <div class="game-summary-info">
               <h3>${escapeHTML(game.title)}</h3>
-
               <div class="game-meta">
                 ${Number(game.earned) || 0} /
                 ${Number(game.total) || 0}
                 achievements · ${progress}% complete
               </div>
-
               <div class="game-meta">
                 ${escapeHTML(game.console || "")}
               </div>
-
               <div class="progress-track">
                 <div
                   class="progress-fill"
                   style="width:${progress}%"
                 ></div>
               </div>
-
               <div class="game-meta">
                 ${escapeHTML(game.mode || "Softcore progress")}
               </div>
-
               <div class="game-meta">
                 Tap to view achievements ▾
               </div>
             </div>
           </div>
         </summary>
-
         <div class="achievement-list">
           ${achievementRows}
         </div>
@@ -329,17 +331,9 @@ async function loadDashboard() {
     const overallProgress =
       document.getElementById("overall-progress");
 
-    if (gamesPlayed) {
-      gamesPlayed.textContent = games.length;
-    }
-
-    if (achievementsEarned) {
-      achievementsEarned.textContent = earned;
-    }
-
-    if (achievementsTotal) {
-      achievementsTotal.textContent = total;
-    }
+    if (gamesPlayed) gamesPlayed.textContent = games.length;
+    if (achievementsEarned) achievementsEarned.textContent = earned;
+    if (achievementsTotal) achievementsTotal.textContent = total;
 
     if (overallProgress) {
       overallProgress.textContent =
