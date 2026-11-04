@@ -76,8 +76,8 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 30px;
-  background: linear-gradient(120deg, #1a1a1a, #000000);
-  border: 1px solid var(--border);
+  background: #111111 !important;
+  border: 1px solid #ff4b19;
   border-radius: 18px;
 }
 
