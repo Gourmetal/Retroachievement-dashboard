@@ -1,3 +1,4 @@
+
 :root {
   --bg: #000000;
   --panel: #111111;
@@ -26,7 +27,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 18px 6%;
-  background: #171c29;
+  background: #111111;
   border-bottom: 1px solid var(--border);
 }
 
@@ -253,6 +254,7 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+
 .game-card summary {
   cursor: pointer;
   list-style: none;
