@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,12 +27,35 @@
 
     <!-- PLAYER PROFILE -->
     <section class="profile-card">
-      <div class="profile-avatar">🎮</div>
+      <div class="profile-avatar">
+        <img id="profile-avatar" src="https://retroachievements.org/UserPic/Gourmetal.png" alt="Gourmetal avatar">
+      </div>
+
       <div class="profile-info">
         <p class="eyebrow">PLAYER PROFILE</p>
         <h2 id="profile-name">Gourmetal</h2>
-        <p>Building a collection, one achievement at a time.</p>
-        <span class="player-badge">🏅 Achievement Hunter</span>
+        <p id="profile-motto">Building a collection, one achievement at a time.</p>
+
+        <div class="profile-details">
+          <span class="player-badge">🏅 Achievement Hunter</span>
+          <span id="profile-rank">Rank: Loading...</span>
+          <span id="profile-member-since">Member since: Loading...</span>
+        </div>
+
+        <div class="profile-points">
+          <div>
+            <strong id="profile-hardcore-points">—</strong>
+            <span>Hardcore Points</span>
+          </div>
+          <div>
+            <strong id="profile-softcore-points">—</strong>
+            <span>Softcore Points</span>
+          </div>
+          <div>
+            <strong id="profile-true-points">—</strong>
+            <span>True Points</span>
+          </div>
+        </div>
       </div>
     </section>
 
