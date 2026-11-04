@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 171594,
+    "totalRanked": 171596,
     "hardcorePoints": 1,
     "softcorePoints": 754,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-04T20:58:42.454043+00:00",
+  "lastUpdated": "2026-11-04T21:28:55.954431+00:00",
   "games": [
     {
       "gameId": 510,
@@ -685,7 +685,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 770,
@@ -1399,7 +1406,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 3653,
@@ -1563,7 +1577,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 8378,
@@ -1837,7 +1858,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 785,
@@ -2281,7 +2309,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 534,
@@ -2845,7 +2880,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 810,
@@ -3989,7 +4031,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 668,
@@ -5973,7 +6022,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 2161,
@@ -6567,7 +6623,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 2588,
@@ -6941,7 +7004,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 505,
@@ -7765,7 +7835,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 5234,
@@ -8439,7 +8516,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 559,
@@ -9113,7 +9197,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 800,
@@ -9787,7 +9878,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 30894,
@@ -10481,7 +10579,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     },
     {
       "gameId": 27584,
@@ -11745,7 +11850,14 @@
           "hardcore": false,
           "dateEarnedHardcore": null
         }
-      ]
+      ],
+      "steamGridDB": {
+        "gameId": null,
+        "grid": "",
+        "hero": "",
+        "logo": "",
+        "icon": ""
+      }
     }
   ],
   "recentAchievements": [],
