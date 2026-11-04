@@ -80,7 +80,7 @@ jobs:
                   "progress": progress,
                   "mode": "Softcore",
                   "lastPlayed": item.get("MostRecentAwardedDate")
-              }
+                            })
           detail_base = "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php"
 
           for game in games:
