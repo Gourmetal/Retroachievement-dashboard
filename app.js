@@ -48,6 +48,8 @@ function getEarnedAchievements() {
   );
 }
 
+/* PLAYER PROFILE */
+
 function renderProfile(data) {
   const profile = data.profile || {};
   const username = profile.username || data.username || "RetroAchievements Player";
@@ -62,15 +64,13 @@ function renderProfile(data) {
   if (usernameElement) usernameElement.textContent = username;
   if (nameElement) nameElement.textContent = username;
 
-  // Load the avatar without unnecessarily reloading it.
   if (avatar && profile.avatar) {
     avatar.alt = username + " avatar";
 
-    if (avatar.src !== new URL(profile.avatar, document.baseURI).href) {
+    if (avatar.getAttribute("src") !== profile.avatar) {
       avatar.src = profile.avatar;
     }
 
-    // Show a trophy if the avatar image cannot load.
     avatar.onerror = function () {
       this.style.display = "none";
       this.parentElement.textContent = "🏆";
@@ -98,18 +98,12 @@ function renderProfile(data) {
   const softcore = document.getElementById("profile-softcore-points");
   const truePoints = document.getElementById("profile-true-points");
 
-  if (hardcore) {
-    hardcore.textContent = formatPoints(profile.hardcorePoints);
-  }
-
-  if (softcore) {
-    softcore.textContent = formatPoints(profile.softcorePoints);
-  }
-
-  if (truePoints) {
-    truePoints.textContent = formatPoints(profile.truePoints);
-  }
+  if (hardcore) hardcore.textContent = formatPoints(profile.hardcorePoints);
+  if (softcore) softcore.textContent = formatPoints(profile.softcorePoints);
+  if (truePoints) truePoints.textContent = formatPoints(profile.truePoints);
 }
+
+/* OVERALL PROGRESS */
 
 function renderProgress(earned, total) {
   const percentage = total
@@ -122,14 +116,47 @@ function renderProgress(earned, total) {
   const ringTotal = document.getElementById("ring-total");
 
   if (ring) {
-    ring.style.background =
-      `conic-gradient(#ff9b14 ${percentage}%, #292929 ${percentage}% 100%)`;
+    ring.style.setProperty("--progress", percentage + "%");
   }
 
   if (ringPercentage) ringPercentage.textContent = percentage + "%";
   if (ringEarned) ringEarned.textContent = earned;
   if (ringTotal) ringTotal.textContent = total;
 }
+
+/* BACKGROUND PARTICLES */
+
+function createParticles() {
+  const container = document.getElementById("ambient-particles");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const particleCount = window.matchMedia("(max-width: 600px)").matches
+    ? 16
+    : 30;
+
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement("span");
+    particle.className = "ambient-particle";
+
+    particle.style.left = Math.random() * 100 + "%";
+    particle.style.animationDelay = (Math.random() * 18) + "s";
+    particle.style.animationDuration = (12 + Math.random() * 16) + "s";
+    particle.style.setProperty(
+      "--particle-drift",
+      (Math.random() * 100 - 50) + "px"
+    );
+
+    const size = 2 + Math.random() * 4;
+    particle.style.width = size + "px";
+    particle.style.height = size + "px";
+
+    container.appendChild(particle);
+  }
+}
+
+/* RECENT ACHIEVEMENTS */
 
 function renderRecentAchievements() {
   const container = document.getElementById("recent-unlocks");
@@ -166,6 +193,8 @@ function renderRecentAchievements() {
   `).join("");
 }
 
+/* ACHIEVEMENT SHOWCASE */
+
 function renderShowcase() {
   const container = document.getElementById("achievement-showcase");
   if (!container) return;
@@ -196,7 +225,11 @@ function renderShowcase() {
   `).join("");
 }
 
+/* GAME COLLECTION WITH INDIVIDUAL PROGRESS RINGS */
+
 function renderGames() {
+  if (!gamesList) return;
+
   const search = searchInput
     ? searchInput.value.trim().toLowerCase()
     : "";
@@ -232,6 +265,9 @@ function renderGames() {
     const achievements = Array.isArray(game.achievements)
       ? game.achievements
       : [];
+
+    const earned = Number(game.earned) || 0;
+    const total = Number(game.total) || 0;
 
     const cover = game.boxArt
       ? `<img
@@ -272,31 +308,40 @@ function renderGames() {
         <summary>
           <div class="game-summary-layout">
             ${cover}
+
             <div class="game-summary-info">
               <h3>${escapeHTML(game.title)}</h3>
+
               <div class="game-meta">
-                ${Number(game.earned) || 0} /
-                ${Number(game.total) || 0}
-                achievements · ${progress}% complete
+                ${earned} / ${total} achievements
               </div>
+
               <div class="game-meta">
                 ${escapeHTML(game.console || "")}
               </div>
-              <div class="progress-track">
-                <div
-                  class="progress-fill"
-                  style="width:${progress}%"
-                ></div>
+
+              <div class="game-progress-layout">
+                <div class="game-progress-ring"
+                     style="--game-progress: ${progress}%">
+                  <div class="game-ring-center">
+                    <strong>${progress}%</strong>
+                  </div>
+                </div>
+
+                <div class="game-progress-text">
+                  <strong>${earned} of ${total}</strong>
+                  <span>Achievements unlocked</span>
+                  <span>${escapeHTML(game.mode || "Softcore progress")}</span>
+                </div>
               </div>
-              <div class="game-meta">
-                ${escapeHTML(game.mode || "Softcore progress")}
-              </div>
+
               <div class="game-meta">
                 Tap to view achievements ▾
               </div>
             </div>
           </div>
         </summary>
+
         <div class="achievement-list">
           ${achievementRows}
         </div>
@@ -304,6 +349,8 @@ function renderGames() {
     `;
   }).join("");
 }
+
+/* LOAD DASHBOARD DATA */
 
 async function loadDashboard() {
   try {
@@ -346,6 +393,52 @@ async function loadDashboard() {
     if (gamesPlayed) gamesPlayed.textContent = games.length;
     if (achievementsEarned) achievementsEarned.textContent = earned;
     if (achievementsTotal) achievementsTotal.textContent = total;
+
+    if (overallProgress) {
+      overallProgress.textContent =
+        total ? Math.round((earned / total) * 100) + "%" : "0%";
+    }
+
+    renderProfile(data);
+    renderProgress(earned, total);
+    renderRecentAchievements();
+    renderShowcase();
+    renderGames();
+
+  } catch (error) {
+    if (gamesList) {
+      gamesList.innerHTML =
+        '<div class="loading">Could not load game data. Check the update workflow.</div>';
+    }
+
+    console.error(error);
+  }
+}
+
+/* SEARCH AND FILTERS */
+
+if (searchInput) {
+  searchInput.addEventListener("input", renderGames);
+}
+
+filterButtons.forEach(button => {
+  button.addEventListener("click", () => {
+    filterButtons.forEach(item =>
+      item.classList.remove("active")
+    );
+
+    button.classList.add("active");
+    activeFilter = button.dataset.filter;
+
+    renderGames();
+  });
+});
+
+/* STARTUP */
+
+createParticles();
+loadDashboard();
+t = total;
 
     if (overallProgress) {
       overallProgress.textContent =
