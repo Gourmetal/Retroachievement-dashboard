@@ -1,4 +1,3 @@
-
 let games = [];
 let activeFilter = "all";
 
@@ -18,12 +17,8 @@ function escapeHTML(value) {
 
 function formatDate(value) {
   if (!value) return "Date unavailable";
-
   const date = new Date(value.replace(" ", "T") + "Z");
-
-  if (Number.isNaN(date.getTime())) {
-    return "Date unavailable";
-  }
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
 
   return date.toLocaleDateString(undefined, {
     month: "short",
@@ -106,19 +101,14 @@ function renderProfile(data) {
 /* OVERALL PROGRESS */
 
 function renderProgress(earned, total) {
-  const percentage = total
-    ? Math.round((earned / total) * 100)
-    : 0;
+  const percentage = total ? Math.round((earned / total) * 100) : 0;
 
   const ring = document.getElementById("overall-ring");
   const ringPercentage = document.getElementById("ring-percentage");
   const ringEarned = document.getElementById("ring-earned");
   const ringTotal = document.getElementById("ring-total");
 
-  if (ring) {
-    ring.style.setProperty("--progress", percentage + "%");
-  }
-
+  if (ring) ring.style.setProperty("--progress", percentage + "%");
   if (ringPercentage) ringPercentage.textContent = percentage + "%";
   if (ringEarned) ringEarned.textContent = earned;
   if (ringTotal) ringTotal.textContent = total;
@@ -139,13 +129,12 @@ function createParticles() {
   for (let i = 0; i < particleCount; i++) {
     const particle = document.createElement("span");
     particle.className = "ambient-particle";
-
     particle.style.left = Math.random() * 100 + "%";
-    particle.style.animationDelay = (Math.random() * 18) + "s";
-    particle.style.animationDuration = (12 + Math.random() * 16) + "s";
+    particle.style.animationDelay = Math.random() * 18 + "s";
+    particle.style.animationDuration = 12 + Math.random() * 16 + "s";
     particle.style.setProperty(
       "--particle-drift",
-      (Math.random() * 100 - 50) + "px"
+      Math.random() * 100 - 50 + "px"
     );
 
     const size = 2 + Math.random() * 4;
@@ -201,8 +190,7 @@ function renderShowcase() {
 
   const featured = getEarnedAchievements()
     .sort((a, b) =>
-      (Number(b.points) || 0) -
-      (Number(a.points) || 0)
+      (Number(b.points) || 0) - (Number(a.points) || 0)
     )
     .slice(0, 6);
 
@@ -235,19 +223,14 @@ function renderGames() {
     : "";
 
   const filtered = games.filter(game => {
-    const matches = String(game.title || "")
-      .toLowerCase()
-      .includes(search);
-
+    const matches = String(game.title || "").toLowerCase().includes(search);
     const progress = Number(game.progress) || 0;
 
-    return matches &&
-      (
-        activeFilter === "all" ||
-        (activeFilter === "completed" && progress >= 100) ||
-        (activeFilter === "in-progress" &&
-          progress > 0 && progress < 100)
-      );
+    return matches && (
+      activeFilter === "all" ||
+      (activeFilter === "completed" && progress >= 100) ||
+      (activeFilter === "in-progress" && progress > 0 && progress < 100)
+    );
   });
 
   if (!filtered.length) {
@@ -257,10 +240,7 @@ function renderGames() {
   }
 
   gamesList.innerHTML = filtered.map(game => {
-    const progress = Math.max(
-      0,
-      Math.min(100, Number(game.progress) || 0)
-    );
+    const progress = Math.max(0, Math.min(100, Number(game.progress) || 0));
 
     const achievements = Array.isArray(game.achievements)
       ? game.achievements
@@ -282,9 +262,7 @@ function renderGames() {
     const achievementRows = achievements.length
       ? achievements.map(achievement => `
           <div class="achievement-row ${
-            achievement.earned
-              ? "achievement-earned"
-              : "achievement-locked"
+            achievement.earned ? "achievement-earned" : "achievement-locked"
           }">
             <div>
               <strong>${escapeHTML(achievement.title)}</strong>
@@ -351,6 +329,76 @@ function renderGames() {
 }
 
 /* LOAD DASHBOARD DATA */
+
+async function loadDashboard() {
+  try {
+    const response = await fetch("data/games.json?v=" + Date.now());
+
+    if (!response.ok) {
+      throw new Error("Game data unavailable");
+    }
+
+    const data = await response.json();
+
+    games = Array.isArray(data.games) ? data.games : [];
+
+    const stats = data.stats || {};
+
+    const earned = Number(stats.achievementsEarned) ||
+      games.reduce((sum, game) => sum + (Number(game.earned) || 0), 0);
+
+    const total = Number(stats.achievementsTotal) ||
+      games.reduce((sum, game) => sum + (Number(game.total) || 0), 0);
+
+    const gamesPlayed = document.getElementById("games-played");
+    const achievementsEarned = document.getElementById("achievements-earned");
+    const achievementsTotal = document.getElementById("achievements-total");
+    const overallProgress = document.getElementById("overall-progress");
+
+    if (gamesPlayed) gamesPlayed.textContent = games.length;
+    if (achievementsEarned) achievementsEarned.textContent = earned;
+    if (achievementsTotal) achievementsTotal.textContent = total;
+
+    if (overallProgress) {
+      overallProgress.textContent =
+        total ? Math.round((earned / total) * 100) + "%" : "0%";
+    }
+
+    renderProfile(data);
+    renderProgress(earned, total);
+    renderRecentAchievements();
+    renderShowcase();
+    renderGames();
+
+  } catch (error) {
+    if (gamesList) {
+      gamesList.innerHTML =
+        '<div class="loading">Could not load game data. Check the update workflow.</div>';
+    }
+
+    console.error(error);
+  }
+}
+
+/* SEARCH AND FILTERS */
+
+if (searchInput) {
+  searchInput.addEventListener("input", renderGames);
+}
+
+filterButtons.forEach(button => {
+  button.addEventListener("click", () => {
+    filterButtons.forEach(item => item.classList.remove("active"));
+    button.classList.add("active");
+    activeFilter = button.dataset.filter;
+    renderGames();
+  });
+});
+
+/* STARTUP */
+
+createParticles();
+loadDashboard();*/
 
 async function loadDashboard() {
   try {
