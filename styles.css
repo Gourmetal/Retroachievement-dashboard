@@ -253,3 +253,51 @@ footer {
     grid-template-columns: 1fr;
   }
 }
+.game-card summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+.game-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.game-card summary::after {
+  content: "＋";
+  float: right;
+  color: #ff4b19;
+  font-size: 20px;
+}
+
+.game-card[open] summary::after {
+  content: "−";
+}
+
+.achievement-list {
+  margin-top: 18px;
+  border-top: 1px solid #292929;
+}
+
+.achievement-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 1px solid #292929;
+}
+
+.achievement-earned strong {
+  color: #ff4b19;
+}
+
+.achievement-locked {
+  opacity: 0.55;
+}
+
+.achievement-points {
+  color: #ff4b19;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: bold;
+}
