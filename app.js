@@ -19,8 +19,11 @@ function escapeHTML(value) {
 function formatDate(value) {
   if (!value) return "Date unavailable";
 
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Date unavailable";
+  const date = new Date(value.replace(" ", "T") + "Z");
+
+  if (Number.isNaN(date.getTime())) {
+    return "Date unavailable";
+  }
 
   return date.toLocaleDateString(undefined, {
     month: "short",
@@ -41,16 +44,32 @@ function getEarnedAchievements() {
   );
 }
 
-function renderProfile(data, earned, total) {
+function renderProfile(data) {
   const username = data.username || "RetroAchievements Player";
-  const usernameElement = document.getElementById("profile-username");
-  const nameElement = document.getElementById("profile-name");
-  const avatar = document.getElementById("profile-avatar");
 
-  if (usernameElement) usernameElement.textContent = username;
-  if (nameElement) nameElement.textContent = "Player Overview";
-  if (avatar) avatar.textContent = "🏆";
+  const usernameElement =
+    document.getElementById("profile-username");
 
+  const nameElement =
+    document.getElementById("profile-name");
+
+  const avatar =
+    document.querySelector(".profile-avatar");
+
+  if (usernameElement) {
+    usernameElement.textContent = username;
+  }
+
+  if (nameElement) {
+    nameElement.textContent = username;
+  }
+
+  if (avatar) {
+    avatar.textContent = "🏆";
+  }
+}
+
+function renderProgress(earned, total) {
   const percentage = total
     ? Math.round((earned / total) * 100)
     : 0;
@@ -65,19 +84,29 @@ function renderProfile(data, earned, total) {
       `conic-gradient(#ff9b14 ${percentage}%, #292929 ${percentage}% 100%)`;
   }
 
-  if (ringPercentage) ringPercentage.textContent = percentage + "%";
-  if (ringEarned) ringEarned.textContent = earned;
-  if (ringTotal) ringTotal.textContent = total;
+  if (ringPercentage) {
+    ringPercentage.textContent = percentage + "%";
+  }
+
+  if (ringEarned) {
+    ringEarned.textContent = earned;
+  }
+
+  if (ringTotal) {
+    ringTotal.textContent = total;
+  }
 }
 
 function renderRecentAchievements() {
   const container = document.getElementById("recent-unlocks");
+
   if (!container) return;
 
   const recent = getEarnedAchievements()
     .filter(achievement => achievement.dateEarned)
     .sort((a, b) =>
-      new Date(b.dateEarned) - new Date(a.dateEarned)
+      new Date(b.dateEarned.replace(" ", "T") + "Z") -
+      new Date(a.dateEarned.replace(" ", "T") + "Z")
     )
     .slice(0, 8);
 
@@ -91,14 +120,17 @@ function renderRecentAchievements() {
     <div class="achievement-row achievement-earned">
       <div>
         <strong>🏆 ${escapeHTML(achievement.title)}</strong>
+
         <div class="game-meta">
           ${escapeHTML(achievement.gameTitle)}
         </div>
+
         <div class="game-meta">
           ${formatDate(achievement.dateEarned)}
           ${achievement.hardcore ? " · Hardcore" : ""}
         </div>
       </div>
+
       <span class="achievement-points">
         ${Number(achievement.points) || 0} pts
       </span>
@@ -107,12 +139,15 @@ function renderRecentAchievements() {
 }
 
 function renderShowcase() {
-  const container = document.getElementById("achievement-showcase");
+  const container =
+    document.getElementById("achievement-showcase");
+
   if (!container) return;
 
   const featured = getEarnedAchievements()
     .sort((a, b) =>
-      (Number(b.points) || 0) - (Number(a.points) || 0)
+      (Number(b.points) || 0) -
+      (Number(a.points) || 0)
     )
     .slice(0, 6);
 
@@ -126,10 +161,12 @@ function renderShowcase() {
     <div class="achievement-row achievement-earned">
       <div>
         <strong>⭐ ${escapeHTML(achievement.title)}</strong>
+
         <div class="game-meta">
           ${escapeHTML(achievement.gameTitle)}
         </div>
       </div>
+
       <span class="achievement-points">
         ${Number(achievement.points) || 0} pts
       </span>
@@ -148,10 +185,12 @@ function renderGames() {
     const progress = Number(game.progress) || 0;
 
     return matches &&
-      (activeFilter === "all" ||
-       (activeFilter === "completed" && progress >= 100) ||
-       (activeFilter === "in-progress" &&
-        progress > 0 && progress < 100));
+      (
+        activeFilter === "all" ||
+        (activeFilter === "completed" && progress >= 100) ||
+        (activeFilter === "in-progress" &&
+          progress > 0 && progress < 100)
+      );
   });
 
   if (!filtered.length) {
@@ -189,14 +228,17 @@ function renderGames() {
           }">
             <div>
               <strong>${escapeHTML(achievement.title)}</strong>
+
               <div class="game-meta">
                 ${escapeHTML(achievement.description || "")}
               </div>
+
               <div class="game-meta">
                 ${achievement.earned ? "✓ Earned" : "🔒 Locked"}
                 ${achievement.hardcore ? " · Hardcore" : ""}
               </div>
             </div>
+
             <span class="achievement-points">
               ${Number(achievement.points) || 0} pts
             </span>
@@ -260,7 +302,10 @@ async function loadDashboard() {
     }
 
     const data = await response.json();
-    games = Array.isArray(data.games) ? data.games : [];
+
+    games = Array.isArray(data.games)
+      ? data.games
+      : [];
 
     const stats = data.stats || {};
 
@@ -276,19 +321,33 @@ async function loadDashboard() {
         0
       );
 
-    document.getElementById("games-played").textContent =
-      games.length;
+    const gamesPlayed = document.getElementById("games-played");
+    const achievementsEarned =
+      document.getElementById("achievements-earned");
+    const achievementsTotal =
+      document.getElementById("achievements-total");
+    const overallProgress =
+      document.getElementById("overall-progress");
 
-    document.getElementById("achievements-earned").textContent =
-      earned;
+    if (gamesPlayed) {
+      gamesPlayed.textContent = games.length;
+    }
 
-    document.getElementById("achievements-total").textContent =
-      total;
+    if (achievementsEarned) {
+      achievementsEarned.textContent = earned;
+    }
 
-    document.getElementById("overall-progress").textContent =
-      total ? Math.round(earned / total * 100) + "%" : "0%";
+    if (achievementsTotal) {
+      achievementsTotal.textContent = total;
+    }
 
-    renderProfile(data, earned, total);
+    if (overallProgress) {
+      overallProgress.textContent =
+        total ? Math.round((earned / total) * 100) + "%" : "0%";
+    }
+
+    renderProfile(data);
+    renderProgress(earned, total);
     renderRecentAchievements();
     renderShowcase();
     renderGames();
@@ -301,7 +360,9 @@ async function loadDashboard() {
   }
 }
 
-searchInput.addEventListener("input", renderGames);
+if (searchInput) {
+  searchInput.addEventListener("input", renderGames);
+}
 
 filterButtons.forEach(button => {
   button.addEventListener("click", () => {
