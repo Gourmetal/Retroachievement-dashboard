@@ -1,3 +1,4 @@
+
 let games = [];
 let activeFilter = "all";
 
@@ -7,8 +8,11 @@ const filterButtons = document.querySelectorAll(".filter");
 
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;",
-    '"': "&quot;", "'": "&#039;"
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
   })[c]);
 }
 
@@ -26,13 +30,26 @@ function renderGames() {
   });
 
   if (!filtered.length) {
-    gamesList.innerHTML = '<div class="loading">No matching games found. Check that your data has been updated.</div>';
+    gamesList.innerHTML =
+      '<div class="loading">No matching games found. Check that your data has been updated.</div>';
     return;
   }
 
   gamesList.innerHTML = filtered.map(game => {
     const progress = Math.max(0, Math.min(100, Number(game.progress) || 0));
-    const achievements = Array.isArray(game.achievements) ? game.achievements : [];
+    const achievements = Array.isArray(game.achievements)
+      ? game.achievements
+      : [];
+
+    const cover = game.boxArt
+      ? `<img
+           class="game-cover"
+           src="${escapeHTML(game.boxArt)}"
+           alt="${escapeHTML(game.title)} cover art"
+           loading="lazy"
+           onerror="this.style.display='none'"
+         >`
+      : `<div class="game-cover-placeholder">🎮</div>`;
 
     const achievementRows = achievements.length
       ? achievements.map(achievement => `
@@ -53,18 +70,34 @@ function renderGames() {
     return `
       <details class="game-card">
         <summary>
-          <h3>${escapeHTML(game.title)}</h3>
-          <div class="game-meta">
-            ${Number(game.earned) || 0} / ${Number(game.total) || 0}
-            achievements · ${progress}% complete ·
-            ${escapeHTML(game.console || "")}
+          <div class="game-summary-layout">
+            ${cover}
+
+            <div class="game-summary-info">
+              <h3>${escapeHTML(game.title)}</h3>
+
+              <div class="game-meta">
+                ${Number(game.earned) || 0} / ${Number(game.total) || 0}
+                achievements · ${progress}% complete
+              </div>
+
+              <div class="game-meta">
+                ${escapeHTML(game.console || "")}
+              </div>
+
+              <div class="progress-track">
+                <div class="progress-fill" style="width:${progress}%"></div>
+              </div>
+
+              <div class="game-meta">
+                ${escapeHTML(game.mode || "Softcore progress")}
+              </div>
+
+              <div class="game-meta">Tap to view achievements ▾</div>
+            </div>
           </div>
-          <div class="progress-track">
-            <div class="progress-fill" style="width:${progress}%"></div>
-          </div>
-          <div class="game-meta">${escapeHTML(game.mode || "Softcore progress")}</div>
-          <div class="game-meta">Tap to view achievements ▾</div>
         </summary>
+
         <div class="achievement-list">
           ${achievementRows}
         </div>
@@ -72,35 +105,45 @@ function renderGames() {
     `;
   }).join("");
 }
+
 async function loadDashboard() {
   try {
     const response = await fetch("data/games.json?v=" + Date.now());
-    if (!response.ok) throw new Error("Game data unavailable");
+
+    if (!response.ok) {
+      throw new Error("Game data unavailable");
+    }
 
     const data = await response.json();
     games = Array.isArray(data.games) ? data.games : [];
 
     const stats = data.stats || {};
+
     const earned = Number(stats.achievementsEarned) ||
-      games.reduce((sum, g) => sum + (Number(g.earned) || 0), 0);
+      games.reduce((sum, game) => sum + (Number(game.earned) || 0), 0);
+
     const total = Number(stats.achievementsTotal) ||
-      games.reduce((sum, g) => sum + (Number(g.total) || 0), 0);
+      games.reduce((sum, game) => sum + (Number(game.total) || 0), 0);
 
     document.getElementById("games-played").textContent = games.length;
     document.getElementById("achievements-earned").textContent = earned;
     document.getElementById("achievements-total").textContent = total;
+
     document.getElementById("overall-progress").textContent =
       total ? Math.round(earned / total * 100) + "%" : "0%";
 
     renderGames();
 
     const recent = document.getElementById("recent-unlocks");
+
     if (recent) {
-      recent.innerHTML = '<p class="loading">Recent achievement history will be added in a later update.</p>';
+      recent.innerHTML =
+        '<p class="loading">Recent achievement history will be added in a later update.</p>';
     }
   } catch (error) {
     gamesList.innerHTML =
       '<div class="loading">Could not load game data. Check the update workflow.</div>';
+
     console.error(error);
   }
 }
@@ -110,8 +153,10 @@ searchInput.addEventListener("input", renderGames);
 filterButtons.forEach(button => {
   button.addEventListener("click", () => {
     filterButtons.forEach(item => item.classList.remove("active"));
+
     button.classList.add("active");
     activeFilter = button.dataset.filter;
+
     renderGames();
   });
 });
