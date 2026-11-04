@@ -82,6 +82,34 @@ jobs:
 
           games.sort(key=lambda game: game["title"].lower())
 
+          recent_url = "https://retroachievements.org/API/API_GetUserRecentAchievements.php"
+
+recent_params = urllib.parse.urlencode({
+    "u": username,
+    "y": api_key,
+    "m": 43200
+})
+
+recent_request = urllib.request.Request(
+    f"{recent_url}?{recent_params}",
+    headers={"User-Agent": "Gourmetal-Dashboard/1.0"}
+)
+
+with urllib.request.urlopen(recent_request, timeout=30) as response:
+    recent_data = json.loads(response.read().decode("utf-8"))
+
+recent_achievements = []
+
+for item in recent_data:
+    recent_achievements.append({
+        "title": item.get("Title", ""),
+        "gameTitle": item.get("GameTitle", ""),
+        "date": item.get("Date", ""),
+        "points": item.get("Points", 0),
+        "hardcore": bool(item.get("HardcoreMode", 0)),
+        "badgeUrl": "https://retroachievements.org" + item.get("BadgeURL", "")
+    })
+
           output = {
               "username": username,
               "lastUpdated": datetime.now(timezone.utc).isoformat(),
