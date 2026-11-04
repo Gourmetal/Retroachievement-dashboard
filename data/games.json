@@ -1,6 +1,188 @@
 {
   "username": "Gourmetal",
-  "lastUpdated": null,
-  "games": [],
-  "recentAchievements": []
+  "lastUpdated": "2026-11-04T08:59:46.359221+00:00",
+  "games": [
+    {
+      "gameId": 510,
+      "title": "Castlevania: Aria of Sorrow",
+      "console": "Game Boy Advance",
+      "earned": 3,
+      "hardcoreEarned": 0,
+      "total": 66,
+      "progress": 5,
+      "mode": "Softcore",
+      "lastPlayed": "2026-08-09T16:24:18+00:00"
+    },
+    {
+      "gameId": 770,
+      "title": "Kirby: Nightmare in Dream Land",
+      "console": "Game Boy Advance",
+      "earned": 17,
+      "hardcoreEarned": 0,
+      "total": 70,
+      "progress": 24,
+      "mode": "Softcore",
+      "lastPlayed": "2026-08-07T21:32:36+00:00"
+    },
+    {
+      "gameId": 3653,
+      "title": "Klonoa: Empire of Dreams",
+      "console": "Game Boy Advance",
+      "earned": 1,
+      "hardcoreEarned": 0,
+      "total": 15,
+      "progress": 7,
+      "mode": "Softcore",
+      "lastPlayed": "2026-08-31T15:55:33+00:00"
+    },
+    {
+      "gameId": 8378,
+      "title": "Magical Quest 2 Starring Mickey & Minnie",
+      "console": "Game Boy Advance",
+      "earned": 1,
+      "hardcoreEarned": 0,
+      "total": 26,
+      "progress": 4,
+      "mode": "Softcore",
+      "lastPlayed": "2026-08-07T21:36:59+00:00"
+    },
+    {
+      "gameId": 785,
+      "title": "Metroid Fusion",
+      "console": "Game Boy Advance",
+      "earned": 24,
+      "hardcoreEarned": 0,
+      "total": 43,
+      "progress": 56,
+      "mode": "Softcore",
+      "lastPlayed": "2026-08-09T16:12:16+00:00"
+    },
+    {
+      "gameId": 534,
+      "title": "Metroid: Zero Mission",
+      "console": "Game Boy Advance",
+      "earned": 3,
+      "hardcoreEarned": 0,
+      "total": 55,
+      "progress": 5,
+      "mode": "Softcore",
+      "lastPlayed": "2026-07-20T16:16:41+00:00"
+    },
+    {
+      "gameId": 810,
+      "title": "Pokémon Crystal Version",
+      "console": "Game Boy Color",
+      "earned": 1,
+      "hardcoreEarned": 0,
+      "total": 113,
+      "progress": 1,
+      "mode": "Softcore",
+      "lastPlayed": "2026-07-20T15:47:50+00:00"
+    },
+    {
+      "gameId": 668,
+      "title": "Pokémon Emerald Version",
+      "console": "Game Boy Advance",
+      "earned": 1,
+      "hardcoreEarned": 1,
+      "total": 197,
+      "progress": 1,
+      "mode": "Softcore",
+      "lastPlayed": "2026-07-05T03:17:10+00:00"
+    },
+    {
+      "gameId": 2161,
+      "title": "Shrek: Hassle at the Castle",
+      "console": "Game Boy Advance",
+      "earned": 6,
+      "hardcoreEarned": 0,
+      "total": 58,
+      "progress": 10,
+      "mode": "Softcore",
+      "lastPlayed": "2026-08-11T17:24:55+00:00"
+    },
+    {
+      "gameId": 2588,
+      "title": "Summon Night: Swordcraft Story",
+      "console": "Game Boy Advance",
+      "earned": 1,
+      "hardcoreEarned": 0,
+      "total": 36,
+      "progress": 3,
+      "mode": "Softcore",
+      "lastPlayed": "2026-10-16T14:58:30+00:00"
+    },
+    {
+      "gameId": 505,
+      "title": "Super Mario Advance",
+      "console": "Game Boy Advance",
+      "earned": 19,
+      "hardcoreEarned": 0,
+      "total": 81,
+      "progress": 23,
+      "mode": "Softcore",
+      "lastPlayed": "2026-07-28T17:20:37+00:00"
+    },
+    {
+      "gameId": 5234,
+      "title": "Super Mario Advance 3: Yoshi's Island",
+      "console": "Game Boy Advance",
+      "earned": 2,
+      "hardcoreEarned": 0,
+      "total": 66,
+      "progress": 3,
+      "mode": "Softcore",
+      "lastPlayed": "2026-09-05T15:11:00+00:00"
+    },
+    {
+      "gameId": 559,
+      "title": "The Legend of Zelda: The Minish Cap",
+      "console": "Game Boy Advance",
+      "earned": 52,
+      "hardcoreEarned": 0,
+      "total": 66,
+      "progress": 79,
+      "mode": "Softcore",
+      "lastPlayed": "2026-11-03T19:48:18+00:00"
+    },
+    {
+      "gameId": 800,
+      "title": "Wario Land 4",
+      "console": "Game Boy Advance",
+      "earned": 2,
+      "hardcoreEarned": 0,
+      "total": 66,
+      "progress": 3,
+      "mode": "Softcore",
+      "lastPlayed": "2026-07-20T15:59:00+00:00"
+    },
+    {
+      "gameId": 30894,
+      "title": "~Hack~ Pokémon Emerald Seaglass",
+      "console": "Game Boy Advance",
+      "earned": 1,
+      "hardcoreEarned": 0,
+      "total": 68,
+      "progress": 1,
+      "mode": "Softcore",
+      "lastPlayed": "2026-07-14T16:44:58+00:00"
+    },
+    {
+      "gameId": 27584,
+      "title": "~Homebrew~ Goodboy Galaxy",
+      "console": "Game Boy Advance",
+      "earned": 10,
+      "hardcoreEarned": 0,
+      "total": 125,
+      "progress": 8,
+      "mode": "Softcore",
+      "lastPlayed": "2026-09-25T16:09:29+00:00"
+    }
+  ],
+  "recentAchievements": [],
+  "stats": {
+    "gamesPlayed": 16,
+    "achievementsEarned": 144,
+    "achievementsTotal": 1151
+  }
 }
