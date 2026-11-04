@@ -72,8 +72,6 @@ function renderGames() {
     `;
   }).join("");
 }
-}
-
 async function loadDashboard() {
   try {
     const response = await fetch("data/games.json?v=" + Date.now());
