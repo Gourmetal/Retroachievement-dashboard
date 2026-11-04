@@ -32,22 +32,46 @@ function renderGames() {
 
   gamesList.innerHTML = filtered.map(game => {
     const progress = Math.max(0, Math.min(100, Number(game.progress) || 0));
+    const achievements = Array.isArray(game.achievements) ? game.achievements : [];
+
+    const achievementRows = achievements.length
+      ? achievements.map(achievement => `
+          <div class="achievement-row ${achievement.earned ? "achievement-earned" : "achievement-locked"}">
+            <div>
+              <strong>${escapeHTML(achievement.title)}</strong>
+              <div class="game-meta">${escapeHTML(achievement.description || "")}</div>
+              <div class="game-meta">
+                ${achievement.earned ? "✓ Earned" : "🔒 Locked"}
+                ${achievement.hardcore ? " · Hardcore" : ""}
+              </div>
+            </div>
+            <span class="achievement-points">${Number(achievement.points) || 0} pts</span>
+          </div>
+        `).join("")
+      : '<p class="loading">No achievement details available for this game.</p>';
 
     return `
-      <article class="game-card">
-        <h3>${escapeHTML(game.title)}</h3>
-        <div class="game-meta">
-          ${Number(game.earned) || 0} / ${Number(game.total) || 0}
-          achievements · ${progress}% complete ·
-          ${escapeHTML(game.console || "")}
+      <details class="game-card">
+        <summary>
+          <h3>${escapeHTML(game.title)}</h3>
+          <div class="game-meta">
+            ${Number(game.earned) || 0} / ${Number(game.total) || 0}
+            achievements · ${progress}% complete ·
+            ${escapeHTML(game.console || "")}
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:${progress}%"></div>
+          </div>
+          <div class="game-meta">${escapeHTML(game.mode || "Softcore progress")}</div>
+          <div class="game-meta">Tap to view achievements ▾</div>
+        </summary>
+        <div class="achievement-list">
+          ${achievementRows}
         </div>
-        <div class="progress-track">
-          <div class="progress-fill" style="width:${progress}%"></div>
-        </div>
-        <div class="game-meta">${escapeHTML(game.mode || "Softcore progress")}</div>
-      </article>
+      </details>
     `;
   }).join("");
+}
 }
 
 async function loadDashboard() {
