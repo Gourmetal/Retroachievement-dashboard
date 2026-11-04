@@ -195,7 +195,7 @@ h2 {
 
 .progress-track {
   height: 9px;
-  background: #30394d;
+  background: #303030;
   border-radius: 10px;
   overflow: hidden;
   margin: 13px 0 8px;
@@ -222,38 +222,7 @@ footer {
   font-size: 12px;
 }
 
-@media (max-width: 700px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .welcome {
-    padding: 22px;
-  }
-
-  .trophy {
-    font-size: 45px;
-  }
-
-  h2 {
-    font-size: 21px;
-  }
-
-  .section-heading {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  #game-search {
-    width: 100%;
-  }
-}
-
-@media (max-width: 380px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* Game cards and cover art */
 
 .game-card summary {
   cursor: pointer;
@@ -273,6 +242,47 @@ footer {
 
 .game-card[open] summary::after {
   content: "−";
+}
+
+.game-summary-layout {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-right: 22px;
+}
+
+.game-cover {
+  display: block;
+  flex: 0 0 78px;
+  width: 78px;
+  height: 110px;
+  object-fit: cover;
+  object-position: center;
+  background: #202020;
+  border: 1px solid #383838;
+  border-radius: 7px;
+}
+
+.game-cover-placeholder {
+  display: flex;
+  flex: 0 0 78px;
+  width: 78px;
+  height: 110px;
+  align-items: center;
+  justify-content: center;
+  background: #202020;
+  border: 1px solid #383838;
+  border-radius: 7px;
+  font-size: 30px;
+}
+
+.game-summary-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.game-summary-info h3 {
+  overflow-wrap: anywhere;
 }
 
 .achievement-list {
@@ -302,4 +312,66 @@ footer {
   white-space: nowrap;
   font-size: 13px;
   font-weight: bold;
+}
+
+/* Mobile layout */
+
+@media (max-width: 700px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .welcome {
+    padding: 22px;
+  }
+
+  .trophy {
+    font-size: 45px;
+  }
+
+  h2 {
+    font-size: 21px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #game-search {
+    width: 100%;
+  }
+
+  .game-card,
+  .recent-item {
+    padding: 14px;
+  }
+
+  .game-summary-layout {
+    gap: 12px;
+  }
+
+  .game-cover,
+  .game-cover-placeholder {
+    flex-basis: 68px;
+    width: 68px;
+    height: 96px;
+  }
+}
+
+@media (max-width: 380px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .game-summary-layout {
+    gap: 9px;
+  }
+
+  .game-cover,
+  .game-cover-placeholder {
+    flex-basis: 58px;
+    width: 58px;
+    height: 84px;
+  }
 }
