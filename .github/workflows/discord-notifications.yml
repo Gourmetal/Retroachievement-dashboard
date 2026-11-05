@@ -141,6 +141,8 @@ jobs:
                           f"(HTTP {response.status})"
                       )
               except urllib.error.HTTPError as error:
+                  details = error.read().decode("utf-8", errors="replace")
+                  print(f"Discord response: {details}")
                   raise RuntimeError(
                       f"Discord webhook rejected the message: HTTP {error.code}."
                   ) from error
@@ -160,7 +162,10 @@ jobs:
           else:
               seen = set()
 
-          print(f"Checking achievements from the last {LOOKBACK_MINUTES} minutes...")
+          print(
+              f"Checking achievements from the last "
+              f"{LOOKBACK_MINUTES} minutes..."
+          )
 
           recent = get_recent()
           print(f"RetroAchievements returned {len(recent)} recent unlocks.")
@@ -185,8 +190,14 @@ jobs:
               json.dumps(sorted(seen), indent=2) + "\n"
           )
 
-          print(f"Notification history now contains {len(seen)} achievement IDs.")
-          print(f"Successfully sent {len(sent_ids)} Discord notification(s).")
+          print(
+              f"Notification history now contains "
+              f"{len(seen)} achievement IDs."
+          )
+          print(
+              f"Successfully sent {len(sent_ids)} "
+              f"Discord notification(s)."
+          )
           PY
 
       - name: Save notification history
