@@ -1,4 +1,3 @@
-
 name: Update RetroAchievements Dashboard
 
 on:
@@ -85,28 +84,16 @@ jobs:
                   }
               )
 
-          # Test SteamGridDB before processing any games.
           if not sgdb_key:
               print("WARNING: SGDB_API_KEY secret is missing.")
           else:
               print("Testing SteamGridDB API connection...")
-              try:
-                  test = sgdb_data(
-                      "search/autocomplete/Zelda"
-                  )
-                  print(
-                      "SteamGridDB connection successful. "
-                      f"Search returned "
-                      f"{len(test.get('data') or [])} results."
-                  )
-              except Exception as error:
-                  print(
-                      "SteamGridDB connection test failed: "
-                      f"{type(error).__name__}: {error}"
-                  )
-                  raise
+              test = sgdb_data("search/autocomplete/Zelda")
+              print(
+                  "SteamGridDB connection successful. "
+                  f"Search returned {len(test.get('data') or [])} results."
+              )
 
-          # Load saved artwork cache.
           cache_path = "data/steamgriddb-cache.json"
 
           try:
@@ -136,7 +123,6 @@ jobs:
               if not sgdb_key:
                   return empty_artwork
 
-              # Reuse only successful cached results.
               cached = artwork_cache.get(title)
 
               if cached and has_artwork(cached):
@@ -145,7 +131,6 @@ jobs:
               artwork = dict(empty_artwork)
 
               try:
-                  # Use cleaner search names for special titles.
                   search_names = {
                       "~Hack~ Pokémon Emerald Seaglass":
                           "Pokemon Emerald Seaglass",
@@ -153,10 +138,7 @@ jobs:
                           "Goodboy Galaxy"
                   }
 
-                  search_title = search_names.get(
-                      title, title
-                  )
-
+                  search_title = search_names.get(title, title)
                   search_term = urllib.parse.quote(
                       search_title, safe=""
                   )
@@ -169,17 +151,14 @@ jobs:
 
                   if not matches:
                       print(
-                          f"No SteamGridDB match found: "
-                          f"{search_title} (dashboard title: {title})"
+                          f"No SteamGridDB match found: {search_title}"
                       )
                       return artwork
 
                   sgdb_id = matches[0].get("id")
 
                   if not sgdb_id:
-                      print(
-                          f"No SteamGridDB game ID: {search_title}"
-                      )
+                      print(f"No SteamGridDB game ID: {search_title}")
                       return artwork
 
                   artwork["gameId"] = sgdb_id
@@ -215,13 +194,10 @@ jobs:
                               f"{type(error).__name__}: {error}"
                           )
 
-                  # Cache only successful game matches.
                   if has_artwork(artwork):
                       artwork_cache[title] = artwork
                   else:
-                      print(
-                          f"No artwork assets found for {title}"
-                      )
+                      print(f"No artwork assets found for {title}")
 
               except Exception as error:
                   print(
@@ -232,7 +208,6 @@ jobs:
               time.sleep(0.3)
               return artwork
 
-          # Get player profile.
           profile_data = ra_data(
               "API_GetUserSummary.php",
               {"u": username, "g": 0, "a": 0}
@@ -257,7 +232,6 @@ jobs:
               "truePoints": profile_data.get("TotalTruePoints", 0)
           }
 
-          # Get all played games.
           all_games = []
           offset = 0
           total = None
@@ -305,7 +279,6 @@ jobs:
                   )
               })
 
-          # Load achievements and artwork.
           for game in games:
               game_id = game.get("gameId")
 
@@ -386,134 +359,7 @@ jobs:
                   game["achievements"] = []
                   game["boxArt"] = ""
 
-              game["steamGridDB"] = get_artwork(
-                  game["title"]
-              )
-
-              time.sleep(0.5)
-
-          games.sort(
-              key=lambda game: game["title"].lower()
-          )
-
-          output = {
-              "username": username,
-              "profile": profile,
-              "lastUpdated": datetime.now(
-                  timezone.utc
-              ).isoformat(),
-              "games": games,
-              "recentAchievements": [],
-              "stats": {
-                  "gamesPlayed": len(games),
-                  "achievementsEarned": sum(
-                      game["earned"] for game in games
-                  ),
-                  "achievementsTotal": sum(
-                      game["total"] for game in games
-                  )
-              }
-          }
-
-          os.makedirs("data", exist_ok=True)
-
-          with open(
-              "data/games.json", "w", encoding="utf-8"
-          ) as file:
-              json.dump(
-                  output, file, indent=2, ensure_ascii=False
-              )
-
-          with open(
-              cache_path, "w", encoding="utf-8"
-          ) as file:
-              json.dump(
-                  artwork_cache,
-                  file,
-                  indent=2,
-                  ensure_ascii=False
-              )
-
-          artwork_count = sum(
-              has_artwork(game.get("steamGridDB") or {})
-              for game in games
-          )
-
-          print(f"Updated dashboard with {len(games)} games.")
-          print(f"Profile loaded for {profile['username']}.")
-          print(
-              f"Games with SteamGridDB artwork: {artwork_count}"
-          )
-          print("SteamGridDB artwork cache saved.")
-          PY
-
-      - name: Save updated game data
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/games.json data/steamgriddb-cache.json
-          git diff --cached --quiet || git commit -m "Update RetroAchievements game progress and artwork"
-          git push
-           else ra_root + image_path
-                      )
-                  else:
-                      game["boxArt"] = ""
-
-                  raw_achievements = (
-                      detail.get("Achievements") or {}
-                  )
-
-                  game["achievements"] = [
-                      {
-                          "id": achievement.get(
-                              "ID", achievement_id
-                          ),
-                          "title": achievement.get(
-                              "Title", "Untitled achievement"
-                          ),
-                          "description": achievement.get(
-                              "Description", ""
-                          ),
-                          "points": int(
-                              achievement.get("Points") or 0
-                          ),
-                          "earned": bool(
-                              achievement.get("DateEarned")
-                          ),
-                          "dateEarned": achievement.get(
-                              "DateEarned"
-                          ),
-                          "hardcore": bool(
-                              achievement.get(
-                                  "DateEarnedHardcore"
-                              )
-                          ),
-                          "dateEarnedHardcore": achievement.get(
-                              "DateEarnedHardcore"
-                          )
-                      }
-                      for achievement_id, achievement
-                      in raw_achievements.items()
-                  ]
-
-                  game["achievements"].sort(
-                      key=lambda achievement: (
-                          not achievement["earned"],
-                          achievement["title"].lower()
-                      )
-                  )
-
-              except Exception as error:
-                  print(
-                      f"Could not load {game['title']}: {error}"
-                  )
-                  game["achievements"] = []
-                  game["boxArt"] = ""
-
-              game["steamGridDB"] = get_artwork(
-                  game["title"]
-              )
-
+              game["steamGridDB"] = get_artwork(game["title"])
               time.sleep(0.5)
 
           games.sort(
