@@ -31,65 +31,76 @@ jobs:
           import os
           import urllib.parse
           import urllib.request
+          import urllib.error
           from pathlib import Path
 
-          username = "Gourmetal"
+          USERNAME = "Gourmetal"
+          LOOKBACK_MINUTES = 60
           state_path = Path("data/notified-achievements.json")
 
-          def get_recent(minutes):
+          api_key = os.environ.get("RA_API_KEY")
+          webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+
+          if not api_key:
+              raise RuntimeError("GitHub secret RA_API_KEY is missing.")
+
+          if not webhook_url:
+              raise RuntimeError("GitHub secret DISCORD_WEBHOOK_URL is missing.")
+
+          def get_recent():
               params = urllib.parse.urlencode({
-                  "u": username,
-                  "m": minutes,
-                  "y": os.environ["RA_API_KEY"]
+                  "u": USERNAME,
+                  "m": LOOKBACK_MINUTES,
+                  "y": api_key
               })
+
               url = (
                   "https://retroachievements.org/API/"
                   "API_GetUserRecentAchievements.php?"
                   + params
               )
+
               request = urllib.request.Request(
                   url,
-                  headers={"User-Agent": "Gourmetal-Dashboard/1.0"}
+                  headers={"User-Agent": "GourmeHub/2.0"}
               )
-              with urllib.request.urlopen(request, timeout=30) as response:
-                  return json.loads(response.read().decode("utf-8"))
+
+              try:
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      data = json.loads(response.read().decode("utf-8"))
+              except urllib.error.HTTPError as error:
+                  raise RuntimeError(
+                      f"RetroAchievements API returned HTTP {error.code}."
+                  ) from error
+
+              if not isinstance(data, list):
+                  raise RuntimeError(
+                      "Unexpected response from RetroAchievements API."
+                  )
+
+              return data
 
           def send_discord(achievement):
-              mode = (
-                  "Hardcore"
-                  if int(achievement.get("HardcoreMode") or 0)
-                  else "Softcore"
-              )
-
               title = achievement.get("Title", "Achievement unlocked")
               game = achievement.get("GameTitle", "Unknown game")
               points = achievement.get("Points", 0)
               achievement_id = achievement.get("AchievementID")
               game_id = achievement.get("GameID")
 
-              payload = {
-                  "username": "RetroAchievements Bot",
-                  "allowed_mentions": {"parse": []},
-                  "embeds": [{
-                      "title": "🏆 Achievement Unlocked!",
-                      "description": f"**{title}**",
-                      "color": 16742400,
-                      "fields": [
-                          {"name": "Game", "value": game, "inline": False},
-                          {"name": "Points", "value": str(points), "inline": True},
-                          {"name": "Mode", "value": mode, "inline": True}
-                      ],
-                      "url": (
-                          f"https://retroachievements.org/game/{game_id}"
-                          if game_id else
-                          "https://retroachievements.org"
-                      ),
-                      "footer": {"text": f"Player: {username}"}
-                  }]
-              }
+              mode = (
+                  "Hardcore"
+                  if int(achievement.get("HardcoreMode") or 0)
+                  else "Softcore"
+              )
+
+              fields = [
+                  {"name": "Game", "value": str(game), "inline": False},
+                  {"name": "Points", "value": str(points), "inline": True},
+                  {"name": "Mode", "value": mode, "inline": True}
+              ]
 
               if achievement_id:
-                  payload["embeds"][0]["fields"].append({
+                  fields.append({
                       "name": "Achievement",
                       "value": (
                           f"[View achievement]"
@@ -99,52 +110,83 @@ jobs:
                       "inline": False
                   })
 
+              payload = {
+                  "username": "RetroAchievements Bot",
+                  "allowed_mentions": {"parse": []},
+                  "embeds": [{
+                      "title": "🏆 Achievement Unlocked!",
+                      "description": f"**{title}**",
+                      "color": 16742400,
+                      "fields": fields,
+                      "url": (
+                          f"https://retroachievements.org/game/{game_id}"
+                          if game_id else
+                          "https://retroachievements.org"
+                      ),
+                      "footer": {"text": f"Player: {USERNAME}"}
+                  }]
+              }
+
               request = urllib.request.Request(
-                  os.environ["DISCORD_WEBHOOK_URL"],
+                  webhook_url,
                   data=json.dumps(payload).encode("utf-8"),
                   headers={"Content-Type": "application/json"},
                   method="POST"
               )
 
-              with urllib.request.urlopen(request, timeout=30) as response:
-                  print(f"Discord notification sent: {title} ({mode})")
+              try:
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      print(
+                          f"DISCORD ACCEPTED: {title} — {game} "
+                          f"(HTTP {response.status})"
+                      )
+              except urllib.error.HTTPError as error:
+                  raise RuntimeError(
+                      f"Discord webhook rejected the message: HTTP {error.code}."
+                  ) from error
 
           state_path.parent.mkdir(parents=True, exist_ok=True)
 
           if state_path.exists():
               try:
-                  seen = set(json.loads(state_path.read_text()))
-                  initializing = False
-              except (json.JSONDecodeError, TypeError):
-                  raise RuntimeError("Notification history is invalid.")
+                  stored = json.loads(state_path.read_text())
+                  if not isinstance(stored, list):
+                      raise ValueError("History must be a JSON list.")
+                  seen = set(str(item) for item in stored)
+              except (json.JSONDecodeError, ValueError, TypeError) as error:
+                  raise RuntimeError(
+                      "Notification history is invalid."
+                  ) from error
           else:
               seen = set()
-              initializing = True
 
-          recent = get_recent(60 if initializing else 10)
+          print(f"Checking achievements from the last {LOOKBACK_MINUTES} minutes...")
 
-          if initializing:
-              for item in recent:
-                  seen.add(str(item.get("AchievementID")))
-              print(
-                  f"Initial setup: recorded {len(seen)} recent unlocks. "
-                  "No old achievements were announced."
-              )
-          else:
-              new_items = [
-                  item for item in recent
-                  if str(item.get("AchievementID")) not in seen
-              ]
+          recent = get_recent()
+          print(f"RetroAchievements returned {len(recent)} recent unlocks.")
 
-              for item in reversed(new_items):
-                  send_discord(item)
-                  seen.add(str(item.get("AchievementID")))
+          new_items = [
+              item for item in recent
+              if item.get("AchievementID")
+              and str(item["AchievementID"]) not in seen
+          ]
 
-              print(f"New notifications sent: {len(new_items)}")
+          print(f"New achievements to notify: {len(new_items)}")
+
+          sent_ids = []
+
+          for item in reversed(new_items):
+              send_discord(item)
+              sent_ids.append(str(item["AchievementID"]))
+
+          seen.update(sent_ids)
 
           state_path.write_text(
               json.dumps(sorted(seen), indent=2) + "\n"
           )
+
+          print(f"Notification history now contains {len(seen)} achievement IDs.")
+          print(f"Successfully sent {len(sent_ids)} Discord notification(s).")
           PY
 
       - name: Save notification history
