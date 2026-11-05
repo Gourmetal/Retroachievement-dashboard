@@ -117,5 +117,19 @@
     "hero": "https://cdn2.steamgriddb.com/hero/ee3bbef5592bed79ec82b11d78038df5.png",
     "logo": "https://cdn2.steamgriddb.com/logo/498f2c21688f6451d9f5fd09d53edda7.png",
     "icon": "https://cdn2.steamgriddb.com/icon/191391488d9d0584e57c8d35c3aa773c.ico"
+  },
+  "Pokémon LeafGreen Version": {
+    "gameId": 34216,
+    "grid": "https://cdn2.steamgriddb.com/grid/8cc10a343f7cacddbbc5488786f3f22b.png",
+    "hero": "https://cdn2.steamgriddb.com/hero/9ca63c9e73a047353e17845c6f4cfe5b.png",
+    "logo": "https://cdn2.steamgriddb.com/logo/e1501a4fe35ee0a7ce3e36e396c6fcc2.png",
+    "icon": "https://cdn2.steamgriddb.com/icon/1bc2029a8851ad344a8d503930dfd7f7.png"
+  },
+  "Pokémon LeafGreen Version [Subset - Professor Oak Challenge]": {
+    "gameId": 34216,
+    "grid": "https://cdn2.steamgriddb.com/grid/8cc10a343f7cacddbbc5488786f3f22b.png",
+    "hero": "https://cdn2.steamgriddb.com/hero/9ca63c9e73a047353e17845c6f4cfe5b.png",
+    "logo": "https://cdn2.steamgriddb.com/logo/e1501a4fe35ee0a7ce3e36e396c6fcc2.png",
+    "icon": "https://cdn2.steamgriddb.com/icon/1bc2029a8851ad344a8d503930dfd7f7.png"
   }
 }
