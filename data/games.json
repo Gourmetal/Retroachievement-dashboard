@@ -11,7 +11,7 @@
     "softcorePoints": 754,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-05T04:38:55.760151+00:00",
+  "lastUpdated": "2026-11-05T04:41:38.135512+00:00",
   "games": [
     {
       "gameId": 510,
@@ -687,11 +687,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 37276,
+        "grid": "https://cdn2.steamgriddb.com/grid/a9fcbba7da26095ce5010a39b8a36509.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/18b67afe27829441b0845c36bfbc30d1.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/2831648e9dac9b4618a0ab63d6a81e64.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/c8862fc1a32725712838863fb1a260b9.ico"
       }
     },
     {
@@ -1408,11 +1408,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 37566,
+        "grid": "https://cdn2.steamgriddb.com/grid/c51ba765433ff00146f22da10ed4f73e.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/14b14c86550a0d4c618b4764e11d49db.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/d9749cf32d4dfe38ddc695572dd948b9.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/fbac73ac90d57d8f3faedbe9004233b0.png"
       }
     },
     {
@@ -1579,11 +1579,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 35181,
+        "grid": "https://cdn2.steamgriddb.com/grid/540e2ba6621f16986804812d5241649d.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/47fc570e3957a5078150824ea96416e1.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/288cd2567953f06e460a33951f55daaf.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/adc3548f154308c3f8ece5ab794a1113.png"
       }
     },
     {
@@ -1860,11 +1860,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 34754,
+        "grid": "https://cdn2.steamgriddb.com/grid/8939ee74fdfb9e5db353166aaae42c35.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/e39859ef8c895d6d30a79de8a628bb4e.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/0a64ba6b57592efd39bc6b27cdc61f57.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/e5ea6f8a20e3fef83ab617494bc37d80.png"
       }
     },
     {
@@ -2311,11 +2311,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 37371,
+        "grid": "https://cdn2.steamgriddb.com/grid/1883a19a4983372e803beab695ee77f1.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/c31de86411f643ec08e04b38ae397efc.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/33b3214d792caf311e1f00fd22b392c5.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/e8702407d8972e37f5087b189149318b.ico"
       }
     },
     {
@@ -2882,11 +2882,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 85,
+        "grid": "https://cdn2.steamgriddb.com/grid/73e7fb4872d41443c1b08c4199329b9d.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/c58a78e3957eed1e6dcf540cda1a05b3.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/9c805dcddc7db4e825949f20601fc73b.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/d3edfaac7b134307771e928cc3293131.ico"
       }
     },
     {
@@ -4033,11 +4033,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 35848,
+        "grid": "https://cdn2.steamgriddb.com/grid/836400e84922867f1aaba0d09abb538f.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/fcccfc1beffbaa487eb34db63fe3e823.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/18c7c32f90d25fbe5c1b9ac0e8d5e475.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/1f5f5b265100daad35b3a491e1c55351.png"
       }
     },
     {
@@ -6024,11 +6024,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 34971,
+        "grid": "https://cdn2.steamgriddb.com/grid/052938e7b425df3acdd9dc4be44404ef.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/1006ff12c465532f8c574aeaa4461b16.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/69ec5030f78a9b735402d133317bf5f6.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/20d02ea70e8d537cf61ae76a48396292.ico"
       }
     },
     {
@@ -6625,11 +6625,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 37228,
+        "grid": "https://cdn2.steamgriddb.com/grid/583e35c44781c5618d4abdfea9276bc1.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/ba17a1846c1af279c92644ae9b18080f.jpg",
+        "logo": "https://cdn2.steamgriddb.com/logo/5732c659cce083fb6eceea71aec9f6d3.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/be1c84442cfada4acab36fb92233f0b4.png"
       }
     },
     {
@@ -7006,11 +7006,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 35450,
+        "grid": "https://cdn2.steamgriddb.com/grid/fdae0b505f7a578559c3579adf14e8f3.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/27fa0d898aa0a20eba405302ab201cf6.jpg",
+        "logo": "https://cdn2.steamgriddb.com/logo/cebd648f9146a6345d604ab093b02c73.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/22cc70b02596865f1ec15c5b156574fb.png"
       }
     },
     {
@@ -7837,11 +7837,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 21109,
+        "grid": "https://cdn2.steamgriddb.com/grid/c610cfef1f7f60b84c4daae59531dd03.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/eae31887c8969d1bde123982d3d43cd2.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/013c8fb523008502e67c70c9ddc17dc5.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/cf9ad2ca65265e31795644dfe32958db.ico"
       }
     },
     {
@@ -8518,11 +8518,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 34611,
+        "grid": "https://cdn2.steamgriddb.com/grid/0fdcfca5e4be5dd653fcfdfa4788c911.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/11704817e347269b7254e744b5e22dac.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/706bf9581a8f1747195e5c190835a9bc.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/e57323e01dc38ffd09d8d88107468c9e.ico"
       }
     },
     {
@@ -9199,11 +9199,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 34539,
+        "grid": "https://cdn2.steamgriddb.com/grid/a687f78b9842c87225e74921765feb1b.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/87294011f0e8aa7e329fa6184874bc44.jpg",
+        "logo": "https://cdn2.steamgriddb.com/logo/e1dc4bf1f94e87fdfeb2d91ae3dc10ef.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/004e34995df78f6f34f7a819fb426343.png"
       }
     },
     {
@@ -9880,11 +9880,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 35607,
+        "grid": "https://cdn2.steamgriddb.com/grid/05d473743a62f7f3bfc3ecad84c1519c.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/6c2fdcf862a752ca2c9e49866a05e1df.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/383b461a1b257dcd880279c039ebb6af.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/d79e8872a4088f54a84bc69df386e23e.png"
       }
     },
     {
