@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 171644,
+    "totalRanked": 171646,
     "hardcorePoints": 1,
     "softcorePoints": 754,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-05T04:41:38.135512+00:00",
+  "lastUpdated": "2026-11-05T04:52:08.312123+00:00",
   "games": [
     {
       "gameId": 510,
@@ -10581,11 +10581,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 5462842,
+        "grid": "https://cdn2.steamgriddb.com/grid/0061e5ccb1f9ebab7e63ebf501180203.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/081a65f7d7d18dd2ea14a63d7987db82.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/03b0beb0d7776f98399811aa5bdb16ad.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/e1de4a9b6ec5f938943db37ec0ee9264.ico"
       }
     },
     {
@@ -11852,11 +11852,11 @@
         }
       ],
       "steamGridDB": {
-        "gameId": null,
-        "grid": "",
-        "hero": "",
-        "logo": "",
-        "icon": ""
+        "gameId": 5329672,
+        "grid": "https://cdn2.steamgriddb.com/grid/5509012267b0d9d58d32ac8ea33a8c5d.jpg",
+        "hero": "https://cdn2.steamgriddb.com/hero/9e6ca708d97ef491440405888eab8541.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/c42c596f19b653af9f3f21d4f6764cb5.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/5848be3b1e2c48478c02d12f529cddda.png"
       }
     }
   ],
