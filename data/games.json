@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 171718,
+    "totalRanked": 171737,
     "hardcorePoints": 1,
-    "softcorePoints": 754,
+    "softcorePoints": 759,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-05T19:41:41.682249+00:00",
+  "lastUpdated": "2026-11-05T22:00:39.065075+00:00",
   "games": [
     {
       "gameId": 510,
@@ -6633,6 +6633,607 @@
       }
     },
     {
+      "gameId": 793,
+      "title": "Sonic Advance",
+      "console": "Game Boy Advance",
+      "earned": 1,
+      "hardcoreEarned": 0,
+      "total": 58,
+      "progress": 2,
+      "mode": "Softcore",
+      "lastPlayed": "2026-11-05T21:58:30+00:00",
+      "boxArt": "https://retroachievements.org/Images/119088.png",
+      "achievements": [
+        {
+          "id": 31876,
+          "title": "Just as Easy as Ever",
+          "description": "Have a total of 100 rings at once.",
+          "points": 5,
+          "earned": true,
+          "dateEarned": "2026-11-05 21:58:30",
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53461,
+          "title": "A Quick Warm-Up",
+          "description": "Complete Act 1 of Ice Mountain Zone in less than 1:20:00.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53457,
+          "title": "A Trip to Outer Space",
+          "description": "Complete Egg Rocket Zone as Amy.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32773,
+          "title": "A Whole Other World...",
+          "description": "Complete Cosmic Angel Zone as Knuckles.",
+          "points": 3,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53456,
+          "title": "Back to the ARK?",
+          "description": "Complete Egg Rocket Zone as Knuckles.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32754,
+          "title": "Beach Day!",
+          "description": "Complete Neo Green Hill Zone as Amy.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53459,
+          "title": "Breaking the Base",
+          "description": "Complete Act 1 of Secret Base Zone in less than 1:10:00.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 22495,
+          "title": "Chaotic Energy",
+          "description": "Obtain your first Chaos Emerald.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32771,
+          "title": "Chasing Down the Doctor Yet Again",
+          "description": "Complete Cosmic Angel Zone as Sonic.",
+          "points": 3,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53464,
+          "title": "Classic Duo",
+          "description": "Play as Sonic and Tails together.",
+          "points": 3,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53453,
+          "title": "Cracked Eggs",
+          "description": "Complete X-Zone without taking damage and while playing as Sonic alone.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32765,
+          "title": "Fiery Hot Mountain Climb",
+          "description": "Complete Ice Mountain Zone as Knuckles.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53450,
+          "title": "Foxtrot-Class Submarine",
+          "description": "Defeat the Egg Spider in Act 2 of Ice Mountain Zone without taking damage and while playing as Tails. This can't be done in Time Attack mode.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32763,
+          "title": "Great, It's Cold and Wet...",
+          "description": "Complete Ice Mountain Zone as Sonic.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32762,
+          "title": "Hm, Maybe I Can Buy Something Nice for Sonic!",
+          "description": "Complete Casino Paradise Zone as Amy.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53449,
+          "title": "Hot Hammer Hustle",
+          "description": "Defeat the Egg Hammer Tank in Act 2 of Neo Green Hill Zone without taking damage and while playing as Amy. This can't be done in Time Attack mode.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32755,
+          "title": "How Many of These Do You Have, Egghead?",
+          "description": "Complete Secret Base Zone as Sonic.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53465,
+          "title": "Hurry Up! Tails!",
+          "description": "Complete X-Zone as Sonic and Tails together",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 31877,
+          "title": "I Call It \"Spare Change\"",
+          "description": "Have a total of 200 rings at once.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32774,
+          "title": "I See Victory in the Stars",
+          "description": "Complete Cosmic Angel Zone as Amy.",
+          "points": 3,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53455,
+          "title": "Impressive...",
+          "description": "Complete Egg Rocket Zone as Tails.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32768,
+          "title": "It's Been So Long Since We Were Here",
+          "description": "Complete Angel Island Zone as Tails.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32759,
+          "title": "Just a Fancy Light Show",
+          "description": "Complete Casino Paradise Zone as Sonic.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32756,
+          "title": "Lame Tech...",
+          "description": "Complete Secret Base Zone as Tails.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 22488,
+          "title": "Like Old Times",
+          "description": "Complete Neo Green Hill Zone.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32761,
+          "title": "Must... Resist...",
+          "description": "Complete Casino Paradise Zone as Knuckles.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32752,
+          "title": "Neo Emerald Hill",
+          "description": "Complete Neo Green Hill Zone as Tails.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53458,
+          "title": "New Hill, New Speed",
+          "description": "Complete Act 1 of Neo Green Hill Zone in less than 0:45:00.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32786,
+          "title": "No Such Thing as Too Many Lives, Right?",
+          "description": "Have a total of 9 lives at once.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53460,
+          "title": "No Time to Gamble",
+          "description": "Complete Act 1 of Casino Paradise Zone in less than 1:05:00.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53451,
+          "title": "Not Even Good Enough to Be My Fake",
+          "description": "Defeat Mecha Knuckles in Act 2 of Angel Island Zone without taking damage and while playing as Knuckles. This can't be done in Time Attack mode.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32757,
+          "title": "Not So Secret Anymore",
+          "description": "Complete Secret Base Zone as Amy.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32764,
+          "title": "Nothing Like a Refreshingly Cold Swim",
+          "description": "Complete Ice Mountain Zone as Tails.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32780,
+          "title": "Paying for the Doctor's Demise",
+          "description": "Defeat the Egg Press in Act 2 of Secret Base Zone with at least 130 rings. This can't be done in Time Attack mode.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32783,
+          "title": "Prepared for the Worst",
+          "description": "Reach X-Zone with 9 or more lives.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32781,
+          "title": "Protecting What Really Matters... Money!",
+          "description": "Defeat the Egg Ball in Act 2 of Casino Paradise Zone with a green Barrier. This can't be done in Time Attack mode.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 22497,
+          "title": "Putting an End to Eggman's Plans",
+          "description": "Complete X-Zone and stop Dr. Eggman!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53463,
+          "title": "Saving Up for a Rainy Day",
+          "description": "Complete The Moon Zone with at least 25 rings.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53462,
+          "title": "Scaling the Island",
+          "description": "Complete Act 1 of Angel Island Zone in less than 2 minutes without the use of major glitches.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32766,
+          "title": "Smashing Through the Ice",
+          "description": "Complete Ice Mountain Zone as Amy.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32753,
+          "title": "Smooth Gliding",
+          "description": "Complete Neo Green Hill Zone as Knuckles.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53454,
+          "title": "Speedy Rocket Blast",
+          "description": "Complete Egg Rocket Zone as Sonic.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32785,
+          "title": "Super Sonic Style!",
+          "description": "Complete The Moon Zone and see the true ending.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32760,
+          "title": "Taking a Gamble",
+          "description": "Complete Casino Paradise Zone as Tails.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32758,
+          "title": "Tearin' It Down",
+          "description": "Complete Secret Base Zone as Knuckles.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32776,
+          "title": "The Fastest Thing Alive",
+          "description": "Complete X-Zone as Sonic.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32775,
+          "title": "The Intensely Strong Guardian",
+          "description": "Complete X-Zone as Knuckles.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32778,
+          "title": "The Passionate Hammer-Wielder",
+          "description": "Complete X-Zone as Amy.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32777,
+          "title": "The Twin-Tailed Genius",
+          "description": "Complete X-Zone as Tails.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 22496,
+          "title": "Their Power Knows No Bounds",
+          "description": "Obtain all 7 Chaos Emeralds.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32751,
+          "title": "This Feels Familiar...",
+          "description": "Complete Neo Green Hill Zone as Sonic.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32784,
+          "title": "This Isn't Over Yet!",
+          "description": "Reach The Moon Zone.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53452,
+          "title": "Tread Carefully",
+          "description": "Defeat the Egg Snake in Act 2 of Cosmic Angel Zone with at least 100 rings. This can't be done in Time Attack mode.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32769,
+          "title": "Trying to Invade My Home Again?",
+          "description": "Complete Angel Island Zone as Knuckles.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 53466,
+          "title": "Unlike Blaze, I've Only Got ONE Life!",
+          "description": "Starting from Act 1 of Neo Green Hill Zone, beat the game without dying.",
+          "points": 50,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32770,
+          "title": "What a Lovely Island!",
+          "description": "Complete Angel Island Zone as Amy.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32772,
+          "title": "Woah, My Head's Spinning!",
+          "description": "Complete Cosmic Angel Zone as Tails.",
+          "points": 3,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 32767,
+          "title": "You Really Are a Knucklehead!",
+          "description": "Complete Angel Island Zone as Sonic.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        }
+      ],
+      "steamGridDB": {
+        "gameId": 1668,
+        "grid": "https://cdn2.steamgriddb.com/grid/ca1fe6a0844a89e00972540953eb5b6b.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/ee3bbef5592bed79ec82b11d78038df5.png",
+        "logo": "https://cdn2.steamgriddb.com/logo/498f2c21688f6451d9f5fd09d53edda7.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/191391488d9d0584e57c8d35c3aa773c.ico"
+      }
+    },
+    {
       "gameId": 2588,
       "title": "Summon Night: Swordcraft Story",
       "console": "Game Boy Advance",
@@ -11862,8 +12463,8 @@
   ],
   "recentAchievements": [],
   "stats": {
-    "gamesPlayed": 16,
-    "achievementsEarned": 144,
-    "achievementsTotal": 1151
+    "gamesPlayed": 17,
+    "achievementsEarned": 145,
+    "achievementsTotal": 1209
   }
 }
