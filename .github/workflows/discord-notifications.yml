@@ -1,5 +1,5 @@
 
-name: RetroAchievements Discord Notifications
+name: RetroAchievements Phone Notifications
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: discord-achievement-notifications
+  group: achievement-phone-notifications
   cancel-in-progress: false
 
 jobs:
@@ -21,10 +21,10 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Check for new achievements and notify Discord
+      - name: Check for new achievements and notify phone
         env:
           RA_API_KEY: ${{ secrets.RA_API_KEY }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
         run: |
           python - <<'PY'
           import json
@@ -36,16 +36,16 @@ jobs:
 
           USERNAME = "Gourmetal"
           LOOKBACK_MINUTES = 60
-          state_path = Path("data/notified-achievements.json")
 
           api_key = os.environ.get("RA_API_KEY")
-          webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+          topic = os.environ.get("NTFY_TOPIC")
+          state_path = Path("data/notified-achievements.json")
 
           if not api_key:
               raise RuntimeError("GitHub secret RA_API_KEY is missing.")
 
-          if not webhook_url:
-              raise RuntimeError("GitHub secret DISCORD_WEBHOOK_URL is missing.")
+          if not topic:
+              raise RuntimeError("GitHub secret NTFY_TOPIC is missing.")
 
           def get_recent():
               params = urllib.parse.urlencode({
@@ -62,7 +62,7 @@ jobs:
 
               request = urllib.request.Request(
                   url,
-                  headers={"User-Agent": "GourmeHub/2.0"}
+                  headers={"User-Agent": "GourmeHub/3.0"}
               )
 
               try:
@@ -80,9 +80,13 @@ jobs:
 
               return data
 
-          def send_discord(achievement):
-              title = achievement.get("Title", "Achievement unlocked")
-              game = achievement.get("GameTitle", "Unknown game")
+          def send_notification(achievement):
+              title = achievement.get(
+                  "Title", "Achievement unlocked"
+              )
+              game = achievement.get(
+                  "GameTitle", "Unknown game"
+              )
               points = achievement.get("Points", 0)
               achievement_id = achievement.get("AchievementID")
               game_id = achievement.get("GameID")
@@ -93,58 +97,59 @@ jobs:
                   else "Softcore"
               )
 
-              fields = [
-                  {"name": "Game", "value": str(game), "inline": False},
-                  {"name": "Points", "value": str(points), "inline": True},
-                  {"name": "Mode", "value": mode, "inline": True}
-              ]
+              message = (
+                  f"{title}\n\n"
+                  f"Game: {game}\n"
+                  f"Points: {points}\n"
+                  f"Mode: {mode}\n"
+                  f"Player: {USERNAME}"
+              )
 
               if achievement_id:
-                  fields.append({
-                      "name": "Achievement",
-                      "value": (
-                          f"[View achievement]"
-                          f"(https://retroachievements.org/achievement/"
-                          f"{achievement_id})"
-                      ),
-                      "inline": False
-                  })
+                  message += (
+                      "\n\nView achievement: "
+                      "https://retroachievements.org/achievement/"
+                      f"{achievement_id}"
+                  )
 
-              payload = {
-                  "username": "RetroAchievements Bot",
-                  "allowed_mentions": {"parse": []},
-                  "embeds": [{
-                      "title": "🏆 Achievement Unlocked!",
-                      "description": f"**{title}**",
-                      "color": 16742400,
-                      "fields": fields,
-                      "url": (
-                          f"https://retroachievements.org/game/{game_id}"
-                          if game_id else
-                          "https://retroachievements.org"
-                      ),
-                      "footer": {"text": f"Player: {USERNAME}"}
-                  }]
-              }
+              if game_id:
+                  message += (
+                      "\nView game: "
+                      f"https://retroachievements.org/game/{game_id}"
+                  )
+
+              encoded_topic = urllib.parse.quote(topic, safe="")
+              url = f"https://ntfy.sh/{encoded_topic}"
 
               request = urllib.request.Request(
-                  webhook_url,
-                  data=json.dumps(payload).encode("utf-8"),
-                  headers={"Content-Type": "application/json"},
+                  url,
+                  data=message.encode("utf-8"),
+                  headers={
+                      "Content-Type": "text/plain; charset=utf-8",
+                      "Title": "Achievement Unlocked!",
+                      "Priority": "high",
+                      "Tags": "trophy,video_game"
+                  },
                   method="POST"
               )
 
               try:
                   with urllib.request.urlopen(request, timeout=30) as response:
+                      result = json.loads(
+                          response.read().decode("utf-8")
+                      )
                       print(
-                          f"DISCORD ACCEPTED: {title} — {game} "
+                          f"NTFY ACCEPTED: {title} — {game} "
                           f"(HTTP {response.status})"
                       )
+                      return result
               except urllib.error.HTTPError as error:
-                  details = error.read().decode("utf-8", errors="replace")
-                  print(f"Discord response: {details}")
+                  details = error.read().decode(
+                      "utf-8", errors="replace"
+                  )
+                  print(f"ntfy response: {details}")
                   raise RuntimeError(
-                      f"Discord webhook rejected the message: HTTP {error.code}."
+                      f"ntfy rejected the notification: HTTP {error.code}."
                   ) from error
 
           state_path.parent.mkdir(parents=True, exist_ok=True)
@@ -168,7 +173,9 @@ jobs:
           )
 
           recent = get_recent()
-          print(f"RetroAchievements returned {len(recent)} recent unlocks.")
+          print(
+              f"RetroAchievements returned {len(recent)} recent unlocks."
+          )
 
           new_items = [
               item for item in recent
@@ -181,7 +188,7 @@ jobs:
           sent_ids = []
 
           for item in reversed(new_items):
-              send_discord(item)
+              send_notification(item)
               sent_ids.append(str(item["AchievementID"]))
 
           seen.update(sent_ids)
@@ -191,12 +198,10 @@ jobs:
           )
 
           print(
-              f"Notification history now contains "
-              f"{len(seen)} achievement IDs."
+              f"Notification history now contains {len(seen)} IDs."
           )
           print(
-              f"Successfully sent {len(sent_ids)} "
-              f"Discord notification(s)."
+              f"Successfully sent {len(sent_ids)} phone notification(s)."
           )
           PY
 
@@ -205,5 +210,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/notified-achievements.json
-          git diff --cached --quiet || git commit -m "Track Discord achievement notifications"
+          git diff --cached --quiet || git commit -m "Track phone achievement notifications"
           git push
