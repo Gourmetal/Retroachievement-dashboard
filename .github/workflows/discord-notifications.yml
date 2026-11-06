@@ -49,7 +49,7 @@ jobs:
           if not topic:
               raise RuntimeError("GitHub secret NTFY_TOPIC is missing.")
 
-          # Load each game's box artwork.
+          # Load game artwork.
           game_art = {}
 
           if games_path.exists():
@@ -69,7 +69,7 @@ jobs:
                               )
 
               except (json.JSONDecodeError, AttributeError, TypeError):
-                  print("Could not read game artwork library; using default icons.")
+                  print("Could not read game artwork library.")
 
           print(f"Loaded artwork for {len(game_art)} games.")
 
@@ -143,12 +143,12 @@ jobs:
 
               headers = {
                   "Content-Type": "text/plain; charset=utf-8",
-                  "Title": f"🏆 {game}",
+                  "Title": f"Achievement unlocked: {game}",
                   "Priority": "high",
                   "Tags": "trophy,video_game"
               }
 
-              # Use the matching game's box art as the notification icon.
+              # Use matching game artwork.
               artwork = game_art.get(str(game_id)) if game_id else None
 
               if artwork:
@@ -189,6 +189,7 @@ jobs:
                       f"ntfy rejected the notification: HTTP {error.code}."
                   ) from error
 
+          # Load notification history.
           state_path.parent.mkdir(parents=True, exist_ok=True)
 
           if state_path.exists():
@@ -204,7 +205,6 @@ jobs:
                   raise RuntimeError(
                       "Notification history is invalid."
                   ) from error
-
           else:
               seen = set()
 
@@ -255,4 +255,3 @@ jobs:
           git add data/notified-achievements.json
           git diff --cached --quiet || git commit -m "Track phone achievement notifications"
           git push
-          
