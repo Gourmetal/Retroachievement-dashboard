@@ -1,14 +1,16 @@
 
-/* FEATURED GAME CAROUSEL */
+/* FEATURED GAMES - THREE RANDOM PICKS */
 
 #game-showcase {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  max-width: 850px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  max-width: 1200px;
   margin: 20px auto;
 }
 
 .showcase-card {
+  min-width: 0;
   overflow: hidden;
   padding: 0;
   animation: featuredFade 0.5s ease;
@@ -31,40 +33,20 @@
 }
 
 .showcase-info {
-  padding: 20px;
+  padding: 15px;
 }
 
 .showcase-info h3 {
   margin: 10px 0;
 }
 
-.showcase-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-top: 20px;
-}
-
-.showcase-controls button {
-  background: rgba(255, 155, 20, 0.15);
-  color: #ffb347;
-  border: 1px solid #ff9b14;
-  border-radius: 8px;
-  padding: 10px 14px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.showcase-controls button:hover {
-  background: #ff9b14;
-  color: #08090f;
-}
-
-.showcase-controls span {
-  color: #ffb347;
-  font-size: 13px;
-  white-space: nowrap;
+.showcase-logo {
+  display: block;
+  max-width: 90%;
+  max-height: 55px;
+  object-fit: contain;
+  object-position: left center;
+  margin-bottom: 10px;
 }
 
 @keyframes featuredFade {
@@ -79,13 +61,14 @@
   }
 }
 
-@media (max-width: 500px) {
-  .showcase-controls {
-    gap: 6px;
+@media (max-width: 800px) {
+  #game-showcase {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
 
-  .showcase-controls button {
-    padding: 9px 10px;
-    font-size: 12px;
+@media (max-width: 600px) {
+  #game-showcase {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
