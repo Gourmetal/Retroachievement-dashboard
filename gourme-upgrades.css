@@ -1,71 +1,117 @@
 
 /* =========================================
-   GOURME HUB — FEATURED GAME ARTWORK
+   GOURME HUB — ANIMATED PROGRESS RINGS
    ========================================= */
 
-.showcase-card {
+@property --gh-ring-progress {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 0%;
+}
+
+.game-progress-ring {
+  --gh-ring-progress: 0%;
+
   position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(255,155,20,.45);
-  border-radius: 17px;
-  background: linear-gradient(145deg, #21170d, #090b11);
-  box-shadow: 0 8px 25px rgba(0,0,0,.4);
-  transition: transform .3s ease, box-shadow .3s ease;
-}
-
-.showcase-card:hover {
-  transform: translateY(-6px);
-  border-color: #ffad42;
-  box-shadow:
-    0 0 24px rgba(255,155,20,.35),
-    0 14px 30px rgba(0,0,0,.5);
-}
-
-.showcase-art {
-  display: block;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  background: #17120d;
-  filter: saturate(1.12) contrast(1.06);
-  transition: transform .55s ease, filter .4s ease;
-}
-
-.showcase-card:hover .showcase-art {
-  transform: scale(1.055);
-  filter: saturate(1.25) contrast(1.08);
-}
-
-.showcase-info {
-  position: relative;
-  padding: 17px;
-  background: linear-gradient(
-    180deg,
-    rgba(255,155,20,.06),
-    rgba(0,0,0,.2)
+  background: conic-gradient(
+    from -90deg,
+    #ffd16a 0%,
+    #ff9b14 var(--gh-ring-progress),
+    #ff6500 var(--gh-ring-progress),
+    #292018 var(--gh-ring-progress),
+    #292018 100%
   );
+
+  animation: ghRingFill 1.6s cubic-bezier(.2,.8,.2,1) forwards;
+
+  box-shadow:
+    0 0 12px rgba(255,120,0,.35),
+    0 0 24px rgba(255,120,0,.12);
 }
 
-.showcase-info h3 {
-  color: #fff;
-  text-shadow: 0 0 12px rgba(255,155,20,.25);
+@keyframes ghRingFill {
+  from {
+    --gh-ring-progress: 0%;
+    filter: brightness(1.5);
+  }
+
+  to {
+    --gh-ring-progress: var(--game-progress, 0%);
+    filter: brightness(1);
+  }
 }
 
-.showcase-logo {
-  max-width: 90%;
-  max-height: 60px;
-  object-fit: contain;
-  filter: drop-shadow(0 0 7px rgba(255,155,20,.3));
+.game-ring-center {
+  position: relative;
+  z-index: 1;
+  background: #101010;
+  box-shadow: inset 0 0 12px rgba(255,155,20,.08);
 }
 
-.showcase-info .game-meta {
-  color: #ffc477;
-  font-weight: 700;
+.game-ring-center strong {
+  color: #ffd18a;
+  text-shadow: 0 0 9px rgba(255,155,20,.5);
+  animation: ghPercentageReveal 1s ease-out both;
+}
+
+@keyframes ghPercentageReveal {
+  from {
+    opacity: .3;
+    transform: scale(.75);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* COMPLETED GAME CELEBRATION */
+
+.game-progress-ring[style*="100%"] {
+  box-shadow:
+    0 0 15px rgba(255,190,75,.5),
+    0 0 30px rgba(255,120,0,.25);
+}
+
+.game-progress-ring[style*="100%"] .game-ring-center strong {
+  color: #ffe3a3;
+  text-shadow:
+    0 0 8px #ffb52e,
+    0 0 18px rgba(255,155,20,.7);
+}
+
+/* RING HOVER EFFECT */
+
+.game-card:hover .game-progress-ring {
+  filter: brightness(1.15);
+  box-shadow:
+    0 0 18px rgba(255,155,20,.5),
+    0 0 30px rgba(255,100,0,.2);
+}
+
+/* MOBILE AND ACCESSIBILITY */
+
+@media (max-width: 500px) {
+  .game-progress-ring {
+    width: 62px;
+    height: 62px;
+    flex-basis: 62px;
+  }
+
+  .game-ring-center {
+    width: 49px;
+    height: 49px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .showcase-card,
-  .showcase-art {
-    transition: none !important;
+  .game-progress-ring,
+  .game-ring-center strong {
+    animation: none !important;
+  }
+
+  .game-progress-ring {
+    --gh-ring-progress: var(--game-progress, 0%);
   }
 }
