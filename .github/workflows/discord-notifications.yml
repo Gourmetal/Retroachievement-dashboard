@@ -3,6 +3,11 @@ name: RetroAchievements Phone Notifications
 
 on:
   workflow_dispatch:
+    inputs:
+      resend_achievement_id:
+        description: "Achievement ID to resend (leave blank for normal checking)"
+        required: false
+        type: string
   schedule:
     - cron: "*/5 * * * *"
 
@@ -25,6 +30,7 @@ jobs:
         env:
           RA_API_KEY: ${{ secrets.RA_API_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          RESEND_ACHIEVEMENT_ID: ${{ inputs.resend_achievement_id }}
         run: |
           python - <<'PY'
           import json
@@ -39,6 +45,7 @@ jobs:
 
           api_key = os.environ.get("RA_API_KEY")
           topic = os.environ.get("NTFY_TOPIC")
+          resend_id = os.environ.get("RESEND_ACHIEVEMENT_ID", "").strip()
 
           state_path = Path("data/notified-achievements.json")
           games_path = Path("data/games.json")
@@ -48,6 +55,32 @@ jobs:
 
           if not topic:
               raise RuntimeError("GitHub secret NTFY_TOPIC is missing.")
+
+          def api_get(endpoint, params):
+              params["y"] = api_key
+              url = (
+                  "https://retroachievements.org/API/"
+                  + endpoint
+                  + "?"
+                  + urllib.parse.urlencode(params)
+              )
+
+              request = urllib.request.Request(
+                  url,
+                  headers={"User-Agent": "GourmeHub/3.0"}
+              )
+
+              try:
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      return json.loads(response.read().decode("utf-8"))
+
+              except urllib.error.HTTPError as error:
+                  details = error.read().decode(
+                      "utf-8", errors="replace"
+                  )
+                  raise RuntimeError(
+                      f"{endpoint} returned HTTP {error.code}: {details}"
+                  ) from error
 
           # Load artwork already stored in Gourme Hub.
           game_art = {}
@@ -73,7 +106,7 @@ jobs:
 
           print(f"Loaded artwork for {len(game_art)} games.")
 
-          # Cache API lookups during this workflow run.
+          # Cache artwork lookups during this workflow run.
           artwork_lookup_cache = {}
 
           def get_game_artwork(game_id):
@@ -82,28 +115,12 @@ jobs:
               if game_id in artwork_lookup_cache:
                   return artwork_lookup_cache[game_id]
 
-              params = urllib.parse.urlencode({
-                  "i": game_id,
-                  "y": api_key
-              })
-
-              url = (
-                  "https://retroachievements.org/API/"
-                  "API_GetGame.php?" + params
-              )
-
-              request = urllib.request.Request(
-                  url,
-                  headers={"User-Agent": "GourmeHub/3.0"}
-              )
-
               try:
-                  with urllib.request.urlopen(request, timeout=30) as response:
-                      game_data = json.loads(
-                          response.read().decode("utf-8")
-                      )
+                  game_data = api_get(
+                      "API_GetGame.php",
+                      {"i": game_id}
+                  )
 
-                  # Prefer official box art.
                   image = (
                       game_data.get("ImageBoxArt")
                       or game_data.get("ImageIcon")
@@ -121,43 +138,23 @@ jobs:
                   if image:
                       print(f"Found official artwork for game ID {game_id}.")
                   else:
-                      print(f"No official artwork available for game ID {game_id}.")
+                      print(f"No official artwork for game ID {game_id}.")
 
                   return image
 
               except Exception as error:
-                  print(
-                      f"Artwork lookup failed for game ID {game_id}: {error}"
-                  )
+                  print(f"Artwork lookup failed: {error}")
                   artwork_lookup_cache[game_id] = None
                   return None
 
           def get_recent():
-              params = urllib.parse.urlencode({
-                  "u": USERNAME,
-                  "m": LOOKBACK_MINUTES,
-                  "y": api_key
-              })
-
-              url = (
-                  "https://retroachievements.org/API/"
-                  "API_GetUserRecentAchievements.php?"
-                  + params
+              data = api_get(
+                  "API_GetUserRecentAchievements.php",
+                  {
+                      "u": USERNAME,
+                      "m": LOOKBACK_MINUTES
+                  }
               )
-
-              request = urllib.request.Request(
-                  url,
-                  headers={"User-Agent": "GourmeHub/3.0"}
-              )
-
-              try:
-                  with urllib.request.urlopen(request, timeout=30) as response:
-                      data = json.loads(response.read().decode("utf-8"))
-
-              except urllib.error.HTTPError as error:
-                  raise RuntimeError(
-                      f"RetroAchievements API returned HTTP {error.code}."
-                  ) from error
 
               if not isinstance(data, list):
                   raise RuntimeError(
@@ -207,10 +204,9 @@ jobs:
                   "Tags": "trophy,video_game"
               }
 
-              # First try the local artwork library.
+              # Use local artwork first, then look it up automatically.
               artwork = game_art.get(str(game_id)) if game_id else None
 
-              # If missing, request artwork directly from RetroAchievements.
               if not artwork and game_id:
                   print(f"Local artwork missing for {game}.")
                   artwork = get_game_artwork(game_id)
@@ -219,7 +215,7 @@ jobs:
                   headers["Icon"] = artwork
                   print(f"Using artwork for: {game}")
               else:
-                  print(f"Sending notification without artwork for: {game}")
+                  print(f"Sending without artwork: {game}")
 
               encoded_topic = urllib.parse.quote(topic, safe="")
               url = f"https://ntfy.sh/{encoded_topic}"
@@ -253,66 +249,141 @@ jobs:
                       f"ntfy rejected the notification: HTTP {error.code}."
                   ) from error
 
-          # Load notification history.
-          state_path.parent.mkdir(parents=True, exist_ok=True)
-
-          if state_path.exists():
-              try:
-                  stored = json.loads(state_path.read_text())
-
-                  if not isinstance(stored, list):
-                      raise ValueError("History must be a JSON list.")
-
-                  seen = set(str(item) for item in stored)
-
-              except (json.JSONDecodeError, ValueError, TypeError) as error:
+          # MANUAL RESEND MODE
+          # This path does not change notification history.
+          if resend_id:
+              if not resend_id.isdigit():
                   raise RuntimeError(
-                      "Notification history is invalid."
-                  ) from error
+                      "Enter a numeric RetroAchievements achievement ID."
+                  )
+
+              print(f"Manual resend requested for achievement {resend_id}.")
+
+              achievement_data = api_get(
+                  "API_GetAchievementUnlocks.php",
+                  {
+                      "a": resend_id,
+                      "c": 1
+                  }
+              )
+
+              achievement_info = achievement_data.get("Achievement", {})
+              game_info = achievement_data.get("Game", {})
+
+              if not achievement_info.get("ID") or not game_info.get("ID"):
+                  raise RuntimeError(
+                      "Could not find that achievement. Check the ID."
+                  )
+
+              game_id = str(game_info["ID"])
+
+              # Verify that Gourmetal actually earned this achievement.
+              progress = api_get(
+                  "API_GetGameInfoAndUserProgress.php",
+                  {
+                      "g": game_id,
+                      "u": USERNAME
+                  }
+              )
+
+              achievements = progress.get("Achievements", {})
+              earned = achievements.get(str(resend_id))
+
+              if not earned or not earned.get("DateEarned"):
+                  raise RuntimeError(
+                      "This achievement does not appear as earned "
+                      "on the Gourmetal account."
+                  )
+
+              notification = {
+                  "AchievementID": str(resend_id),
+                  "Title": achievement_info.get("Title", "Achievement unlocked"),
+                  "Points": achievement_info.get("Points", 0),
+                  "GameID": game_id,
+                  "GameTitle": game_info.get("Title", "Unknown game"),
+                  "HardcoreMode": (
+                      1 if earned.get("DateEarnedHardcore") else 0
+                  )
+              }
+
+              print(
+                  f"Verified achievement: {notification['Title']} "
+                  f"— {notification['GameTitle']}"
+              )
+
+              send_notification(notification)
+
+              print("Manual resend completed.")
+              print("Notification history was not changed.")
+
+          # NORMAL AUTOMATIC CHECKING MODE
           else:
-              seen = set()
+              state_path.parent.mkdir(parents=True, exist_ok=True)
 
-          print(
-              f"Checking achievements from the last "
-              f"{LOOKBACK_MINUTES} minutes..."
-          )
+              if state_path.exists():
+                  try:
+                      stored = json.loads(state_path.read_text())
 
-          recent = get_recent()
+                      if not isinstance(stored, list):
+                          raise ValueError("History must be a JSON list.")
 
-          print(
-              f"RetroAchievements returned {len(recent)} recent unlocks."
-          )
+                      seen = set(str(item) for item in stored)
 
-          new_items = [
-              item for item in recent
-              if item.get("AchievementID")
-              and str(item["AchievementID"]) not in seen
-          ]
+                  except (json.JSONDecodeError, ValueError, TypeError) as error:
+                      raise RuntimeError(
+                          "Notification history is invalid."
+                      ) from error
+              else:
+                  seen = set()
 
-          print(f"New achievements to notify: {len(new_items)}")
+              print(
+                  f"Checking achievements from the last "
+                  f"{LOOKBACK_MINUTES} minutes..."
+              )
 
-          sent_ids = []
+              recent = get_recent()
 
-          for item in reversed(new_items):
-              send_notification(item)
-              sent_ids.append(str(item["AchievementID"]))
+              print(
+                  f"RetroAchievements returned {len(recent)} recent unlocks."
+              )
 
-          seen.update(sent_ids)
+              new_items = [
+                  item for item in recent
+                  if item.get("AchievementID")
+                  and str(item["AchievementID"]) not in seen
+              ]
 
-          state_path.write_text(
-              json.dumps(sorted(seen), indent=2) + "\n"
-          )
+              print(f"New achievements to notify: {len(new_items)}")
 
-          print(
-              f"Notification history now contains {len(seen)} IDs."
-          )
+              sent_ids = []
 
-          print(
-              f"Successfully sent {len(sent_ids)} phone notification(s)."
-          )
+              for item in reversed(new_items):
+                  send_notification(item)
+                  sent_ids.append(str(item["AchievementID"]))
+
+              seen.update(sent_ids)
+
+              state_path.write_text(
+                  json.dumps(sorted(seen), indent=2) + "\n"
+              )
+
+              print(
+                  f"Notification history now contains {len(seen)} IDs."
+              )
+
+              print(
+                  f"Successfully sent {len(sent_ids)} phone notification(s)."
+              )
           PY
 
       - name: Save notification history
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/notified-achievements.json
+          git diff --cached --quiet || git commit -m "Track phone achievement notifications"
+          git push
+tory
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
