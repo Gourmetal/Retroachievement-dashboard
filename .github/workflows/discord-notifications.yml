@@ -217,7 +217,9 @@ jobs:
 
               if artwork:
                   headers["Icon"] = artwork
+                  headers["Attach"] = artwork
                   print(f"Using artwork for: {game}")
+                  print(f"Attaching game artwork for: {game}")
               else:
                   print(f"Sending without artwork: {game}")
 
@@ -375,9 +377,7 @@ jobs:
                   json.dumps(sorted(seen), indent=2) + "\n"
               )
 
-              print(
-                  f"Notification history now contains {len(seen)} IDs."
-              )
+              print(f"Notification history now contains {len(seen)} IDs.")
 
               print(
                   f"Successfully sent {len(sent_ids)} phone notification(s)."
