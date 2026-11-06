@@ -2,7 +2,7 @@
 let games = [];
 let activeFilter = "all";
 
-let featuredIndex = 0;
+let featuredGames = [];
 let featuredTimer = null;
 
 const gamesContainer = document.getElementById("games-container");
@@ -203,123 +203,110 @@ function renderRecentAchievements() {
   `).join("");
 }
 
-/* FEATURED GAMES CAROUSEL */
+/* FEATURED GAMES - THREE RANDOM PICKS */
 
-function getFeaturedGames() {
-  return [...games].sort((a, b) =>
-    (Number(b.progress) || 0) - (Number(a.progress) || 0)
-  );
+function chooseFeaturedGames() {
+  const shuffled = [...games];
+
+  // Shuffle the games randomly.
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  const nextPicks = shuffled.slice(0, 3);
+
+  // Avoid repeating the exact same group twice in a row.
+  if (
+    nextPicks.length === featuredGames.length &&
+    nextPicks.length > 0 &&
+    nextPicks.every(game =>
+      featuredGames.some(oldGame =>
+        oldGame.id === game.id && oldGame.title === game.title
+      )
+    )
+  ) {
+    nextPicks.push(nextPicks.shift());
+  }
+
+  featuredGames = nextPicks;
 }
 
 function renderShowcase() {
   const container = document.getElementById("game-showcase");
   if (!container) return;
 
-  const featured = getFeaturedGames();
-
-  if (!featured.length) {
+  if (!featuredGames.length) {
     container.innerHTML =
       '<p class="loading-message">Your featured games will appear here.</p>';
     return;
   }
 
-  featuredIndex = featuredIndex % featured.length;
+  container.innerHTML = featuredGames.map(game => {
+    const art = game.steamGridDB || {};
 
-  const game = featured[featuredIndex];
-  const art = game.steamGridDB || {};
+    const image = safeImage(art.hero) ||
+      safeImage(art.grid) ||
+      safeImage(game.boxArt);
 
-  const image = safeImage(art.hero) ||
-    safeImage(art.grid) ||
-    safeImage(game.boxArt);
+    const logo = safeImage(art.logo);
 
-  const logo = safeImage(art.logo);
+    const progress = Math.max(
+      0,
+      Math.min(100, Number(game.progress) || 0)
+    );
 
-  const progress = Math.max(
-    0,
-    Math.min(100, Number(game.progress) || 0)
-  );
+    return `
+      <article class="game-card showcase-card">
+        ${image ? `
+          <img class="showcase-art"
+               src="${escapeHTML(image)}"
+               alt="${escapeHTML(game.title)} artwork"
+               loading="lazy">
+        ` : `
+          <div class="showcase-placeholder">🎮</div>
+        `}
 
-  container.innerHTML = `
-    <article class="game-card showcase-card">
-      ${image ? `
-        <img class="showcase-art"
-             src="${escapeHTML(image)}"
-             alt="${escapeHTML(game.title)} artwork">
-      ` : `
-        <div class="showcase-placeholder">🎮</div>
-      `}
+        <div class="showcase-info">
+          ${logo ? `
+            <img class="showcase-logo"
+                 src="${escapeHTML(logo)}"
+                 alt="${escapeHTML(game.title)} logo"
+                 loading="lazy">
+          ` : ""}
 
-      <div class="showcase-info">
-        ${logo ? `
-          <img class="showcase-logo"
-               src="${escapeHTML(logo)}"
-               alt="${escapeHTML(game.title)} logo">
-        ` : ""}
+          <h3>${escapeHTML(game.title)}</h3>
 
-        <h3>${escapeHTML(game.title)}</h3>
+          <p class="game-meta">
+            ${escapeHTML(game.console || "")}
+          </p>
 
-        <p class="game-meta">
-          ${escapeHTML(game.console || "")}
-        </p>
+          <p class="game-meta">
+            ${Number(game.earned) || 0} /
+            ${Number(game.total) || 0} achievements earned
+          </p>
 
-        <p class="game-meta">
-          ${Number(game.earned) || 0} /
-          ${Number(game.total) || 0} achievements earned
-        </p>
+          <div class="progress-track">
+            <div class="progress-fill"
+                 style="width:${progress}%"></div>
+          </div>
 
-        <div class="progress-track">
-          <div class="progress-fill"
-               style="width:${progress}%"></div>
+          <p class="game-meta">${progress}% complete</p>
         </div>
-
-        <p class="game-meta">${progress}% complete</p>
-
-        <div class="showcase-controls">
-          <button id="featured-prev" type="button">
-            ❮ Previous
-          </button>
-
-          <span>
-            ${featuredIndex + 1} / ${featured.length}
-          </span>
-
-          <button id="featured-next" type="button">
-            Next ❯
-          </button>
-        </div>
-      </div>
-    </article>
-  `;
-
-  document.getElementById("featured-prev").onclick = () => {
-    featuredIndex =
-      (featuredIndex - 1 + featured.length) % featured.length;
-
-    renderShowcase();
-    restartFeaturedTimer();
-  };
-
-  document.getElementById("featured-next").onclick = () => {
-    featuredIndex =
-      (featuredIndex + 1) % featured.length;
-
-    renderShowcase();
-    restartFeaturedTimer();
-  };
+      </article>
+    `;
+  }).join("");
 }
 
 function restartFeaturedTimer() {
   clearInterval(featuredTimer);
 
-  if (getFeaturedGames().length <= 1) return;
+  if (games.length <= 3) return;
 
   featuredTimer = setInterval(() => {
-    const featured = getFeaturedGames();
-
-    featuredIndex = (featuredIndex + 1) % featured.length;
-
+    chooseFeaturedGames();
     renderShowcase();
-  }, 5000);
+  }, 30000);
 }
 
 /* GAME LIBRARY */
@@ -527,8 +514,11 @@ async function loadDashboard() {
     renderProfile(data);
     renderProgress(earned, total);
     renderRecentAchievements();
+
+    chooseFeaturedGames();
     renderShowcase();
     restartFeaturedTimer();
+
     renderGames();
 
   } catch (error) {
@@ -558,3 +548,4 @@ if (filterSelect) {
 
 createParticles();
 loadDashboard();
+  
