@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,8 +8,8 @@
 
   <title>Gourme Hub | RetroAchievements</title>
 
-  <link rel="stylesheet" href="styles.css?v=gh-clean-20261106">
-  <link rel="stylesheet" href="gourme-upgrades.css?v=gh-clean-20261106">
+  <link rel="stylesheet" href="styles.css?v=gh-upgrade-20261106">
+  <link rel="stylesheet" href="gourme-upgrades.css?v=gh-upgrade-20261106">
 </head>
 
 <body>
@@ -43,6 +42,33 @@
         </div>
       </div>
     </header>
+
+    <!-- THEME SWITCHER -->
+
+    <section class="gh-upgrade-toolbar" aria-label="Dashboard theme">
+      <div>
+        <strong>🎨 Dashboard Theme</strong>
+        <p>Choose your Gourme Hub look</p>
+      </div>
+
+      <div class="gh-theme-buttons">
+        <button
+          type="button"
+          class="gh-theme-button"
+          data-theme-choice="midnight"
+          aria-pressed="false">
+          🌙 Midnight
+        </button>
+
+        <button
+          type="button"
+          class="gh-theme-button"
+          data-theme-choice="retro-neon"
+          aria-pressed="false">
+          💜 Retro Neon
+        </button>
+      </div>
+    </section>
 
     <section class="stats-section">
       <h2>Player Statistics</h2>
@@ -93,6 +119,25 @@
       </div>
     </section>
 
+    <!-- ACHIEVEMENT SHOWCASE -->
+
+    <section class="achievement-showcase-section">
+      <div class="section-heading">
+        <h2>🏆 Achievement Showcase</h2>
+        <span class="section-count">Latest Unlocks</span>
+      </div>
+
+      <div
+        id="achievement-showcase"
+        class="achievement-showcase-grid"
+        aria-live="polite">
+
+        <p class="loading-message">
+          Loading achievements...
+        </p>
+      </div>
+    </section>
+
     <section class="recent-section">
       <div class="section-heading">
         <h2>Recent Achievements</h2>
@@ -130,6 +175,8 @@
       </div>
     </section>
 
+    <!-- EXISTING FEATURED GAMES SECTION -->
+
     <section class="showcase-section">
       <h2>Featured Games</h2>
 
@@ -146,7 +193,31 @@
 
   </main>
 
-  <script src="app.js?v=gh-clean-20261106"></script>
-  <script src="gourme-upgrades.js?v=gh-clean-20261106"></script>
+  <!-- GAME DETAIL POPUP -->
+
+  <div
+    id="gh-game-modal"
+    class="gh-modal-backdrop"
+    aria-hidden="true">
+
+    <div
+      class="gh-game-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="gh-modal-title">
+
+      <button
+        type="button"
+        class="gh-modal-close"
+        aria-label="Close game details">
+        ×
+      </button>
+
+      <div id="gh-modal-content"></div>
+    </div>
+  </div>
+
+  <script src="app.js?v=gh-upgrade-20261106"></script>
+  <script src="gourme-upgrades.js?v=gh-upgrade-20261106"></script>
 </body>
 </html>
