@@ -8,6 +8,7 @@ on:
         description: "Achievement ID to resend (leave blank for normal checking)"
         required: false
         type: string
+        default: ""
   schedule:
     - cron: "*/5 * * * *"
 
@@ -26,7 +27,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Check for new achievements and notify phone
+      - name: Check achievements and notify phone
         env:
           RA_API_KEY: ${{ secrets.RA_API_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
@@ -57,12 +58,14 @@ jobs:
               raise RuntimeError("GitHub secret NTFY_TOPIC is missing.")
 
           def api_get(endpoint, params):
-              params["y"] = api_key
+              query = dict(params)
+              query["y"] = api_key
+
               url = (
                   "https://retroachievements.org/API/"
                   + endpoint
                   + "?"
-                  + urllib.parse.urlencode(params)
+                  + urllib.parse.urlencode(query)
               )
 
               request = urllib.request.Request(
@@ -72,8 +75,9 @@ jobs:
 
               try:
                   with urllib.request.urlopen(request, timeout=30) as response:
-                      return json.loads(response.read().decode("utf-8"))
-
+                      return json.loads(
+                          response.read().decode("utf-8")
+                      )
               except urllib.error.HTTPError as error:
                   details = error.read().decode(
                       "utf-8", errors="replace"
@@ -158,7 +162,7 @@ jobs:
 
               if not isinstance(data, list):
                   raise RuntimeError(
-                      "Unexpected response from RetroAchievements API."
+                      "Unexpected response from recent achievements API."
                   )
 
               return data
@@ -229,7 +233,9 @@ jobs:
 
               try:
                   with urllib.request.urlopen(request, timeout=30) as response:
-                      result = json.loads(response.read().decode("utf-8"))
+                      result = json.loads(
+                          response.read().decode("utf-8")
+                      )
 
                       print(
                           f"NTFY ACCEPTED: {title} — {game} "
@@ -277,7 +283,7 @@ jobs:
 
               game_id = str(game_info["ID"])
 
-              # Verify that Gourmetal actually earned this achievement.
+              # Verify that Gourmetal earned this achievement.
               progress = api_get(
                   "API_GetGameInfoAndUserProgress.php",
                   {
@@ -297,8 +303,96 @@ jobs:
 
               notification = {
                   "AchievementID": str(resend_id),
-                  "Title": achievement_info.get("Title", "Achievement unlocked"),
+                  "Title": achievement_info.get(
+                      "Title", "Achievement unlocked"
+                  ),
                   "Points": achievement_info.get("Points", 0),
+                  "GameID": game_id,
+                  "GameTitle": game_info.get("Title", "Unknown game"),
+                  "HardcoreMode": (
+                      1 if earned.get("DateEarnedHardcore") else 0
+                  )
+              }
+
+              print(
+                  f"Verified achievement: {notification['Title']} "
+                  f"— {notification['GameTitle']}"
+              )
+
+              send_notification(notification)
+
+              print("Manual resend completed.")
+              print("Notification history was not changed.")
+
+          # NORMAL AUTOMATIC CHECKING MODE
+          else:
+              state_path.parent.mkdir(parents=True, exist_ok=True)
+
+              if state_path.exists():
+                  try:
+                      stored = json.loads(state_path.read_text())
+
+                      if not isinstance(stored, list):
+                          raise ValueError("History must be a JSON list.")
+
+                      seen = set(str(item) for item in stored)
+
+                  except (json.JSONDecodeError, ValueError, TypeError) as error:
+                      raise RuntimeError(
+                          "Notification history is invalid."
+                      ) from error
+              else:
+                  seen = set()
+
+              print(
+                  f"Checking achievements from the last "
+                  f"{LOOKBACK_MINUTES} minutes..."
+              )
+
+              recent = get_recent()
+
+              print(
+                  f"RetroAchievements returned {len(recent)} recent unlocks."
+              )
+
+              new_items = [
+                  item for item in recent
+                  if item.get("AchievementID")
+                  and str(item["AchievementID"]) not in seen
+              ]
+
+              print(f"New achievements to notify: {len(new_items)}")
+
+              sent_ids = []
+
+              for item in reversed(new_items):
+                  send_notification(item)
+                  sent_ids.append(str(item["AchievementID"]))
+
+              seen.update(sent_ids)
+
+              state_path.write_text(
+                  json.dumps(sorted(seen), indent=2) + "\n"
+              )
+
+              print(
+                  f"Notification history now contains {len(seen)} IDs."
+              )
+
+              print(
+                  f"Successfully sent {len(sent_ids)} phone notification(s)."
+              )
+          PY
+
+      - name: Save notification history
+        if: ${{ inputs.resend_achievement_id == '' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/notified-achievements.json
+          git diff --cached --quiet || git commit -m "Track phone achievement notifications"
+          git push
+s": achievement_info.get("Points", 0),
                   "GameID": game_id,
                   "GameTitle": game_info.get("Title", "Unknown game"),
                   "HardcoreMode": (
