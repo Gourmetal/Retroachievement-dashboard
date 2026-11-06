@@ -39,13 +39,37 @@ jobs:
 
           api_key = os.environ.get("RA_API_KEY")
           topic = os.environ.get("NTFY_TOPIC")
+
           state_path = Path("data/notified-achievements.json")
+          games_path = Path("data/games.json")
 
           if not api_key:
               raise RuntimeError("GitHub secret RA_API_KEY is missing.")
 
           if not topic:
               raise RuntimeError("GitHub secret NTFY_TOPIC is missing.")
+
+          # Build a lookup of game IDs to their existing box artwork.
+          game_art = {}
+
+          if games_path.exists():
+              try:
+                  library = json.loads(games_path.read_text())
+                  for game in library.get("games", []):
+                      game_id = game.get("gameId")
+                      artwork = game.get("boxArt")
+
+                      if game_id and artwork:
+                          if artwork.startswith("https://"):
+                              game_art[str(game_id)] = artwork
+                          elif artwork.startswith("/"):
+                              game_art[str(game_id)] = (
+                                  "https://retroachievements.org" + artwork
+                              )
+              except (json.JSONDecodeError, AttributeError, TypeError):
+                  print("Could not read game artwork library; using default icons.")
+
+          print(f"Loaded artwork for {len(game_art)} games.")
 
           def get_recent():
               params = urllib.parse.urlencode({
@@ -81,12 +105,8 @@ jobs:
               return data
 
           def send_notification(achievement):
-              title = achievement.get(
-                  "Title", "Achievement unlocked"
-              )
-              game = achievement.get(
-                  "GameTitle", "Unknown game"
-              )
+              title = achievement.get("Title", "Achievement unlocked")
+              game = achievement.get("GameTitle", "Unknown game")
               points = achievement.get("Points", 0)
               achievement_id = achievement.get("AchievementID")
               game_id = achievement.get("GameID")
@@ -118,26 +138,33 @@ jobs:
                       f"https://retroachievements.org/game/{game_id}"
                   )
 
+              headers = {
+                  "Content-Type": "text/plain; charset=utf-8",
+                  "Title": "Achievement Unlocked!",
+                  "Priority": "high",
+                  "Tags": "trophy,video_game"
+              }
+
+              # Use the matching game's box art as the phone notification icon.
+              artwork = game_art.get(str(game_id)) if game_id else None
+
+              if artwork:
+                  headers["Icon"] = artwork
+                  print(f"Using game artwork for: {game}")
+
               encoded_topic = urllib.parse.quote(topic, safe="")
               url = f"https://ntfy.sh/{encoded_topic}"
 
               request = urllib.request.Request(
                   url,
                   data=message.encode("utf-8"),
-                  headers={
-                      "Content-Type": "text/plain; charset=utf-8",
-                      "Title": "Achievement Unlocked!",
-                      "Priority": "high",
-                      "Tags": "trophy,video_game"
-                  },
+                  headers=headers,
                   method="POST"
               )
 
               try:
                   with urllib.request.urlopen(request, timeout=30) as response:
-                      result = json.loads(
-                          response.read().decode("utf-8")
-                      )
+                      result = json.loads(response.read().decode("utf-8"))
                       print(
                           f"NTFY ACCEPTED: {title} — {game} "
                           f"(HTTP {response.status})"
