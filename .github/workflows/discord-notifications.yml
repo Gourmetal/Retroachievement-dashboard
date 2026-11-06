@@ -1,395 +1,71 @@
 
-name: RetroAchievements Phone Notifications
-
-on:
-  workflow_dispatch:
-    inputs:
-      resend_achievement_id:
-        description: "Achievement ID to resend (leave blank for normal checking)"
-        required: false
-        type: string
-        default: ""
-  schedule:
-    - cron: "*/5 * * * *"
-
-permissions:
-  contents: write
-
-concurrency:
-  group: achievement-phone-notifications
-  cancel-in-progress: false
-
-jobs:
-  notify:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Check achievements and notify phone
-        env:
-          RA_API_KEY: ${{ secrets.RA_API_KEY }}
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          RESEND_ACHIEVEMENT_ID: ${{ inputs.resend_achievement_id }}
-        run: |
-          python - <<'PY'
-          import json
-          import os
-          import urllib.parse
-          import urllib.request
-          import urllib.error
-          from pathlib import Path
-
-          USERNAME = "Gourmetal"
-          LOOKBACK_MINUTES = 60
-
-          api_key = os.environ.get("RA_API_KEY")
-          topic = os.environ.get("NTFY_TOPIC")
-          resend_id = os.environ.get("RESEND_ACHIEVEMENT_ID", "").strip()
-
-          state_path = Path("data/notified-achievements.json")
-          games_path = Path("data/games.json")
-
-          if not api_key:
-              raise RuntimeError("GitHub secret RA_API_KEY is missing.")
-
-          if not topic:
-              raise RuntimeError("GitHub secret NTFY_TOPIC is missing.")
-
-          def api_get(endpoint, params):
-              query = dict(params)
-              query["y"] = api_key
-
-              url = (
-                  "https://retroachievements.org/API/"
-                  + endpoint
-                  + "?"
-                  + urllib.parse.urlencode(query)
-              )
-
-              request = urllib.request.Request(
-                  url,
-                  headers={"User-Agent": "GourmeHub/3.0"}
-              )
-
-              try:
-                  with urllib.request.urlopen(request, timeout=30) as response:
-                      return json.loads(
-                          response.read().decode("utf-8")
-                      )
-              except urllib.error.HTTPError as error:
-                  details = error.read().decode(
-                      "utf-8", errors="replace"
-                  )
-                  raise RuntimeError(
-                      f"{endpoint} returned HTTP {error.code}: {details}"
-                  ) from error
-
-          # Load artwork already stored in Gourme Hub.
-          game_art = {}
-
-          if games_path.exists():
-              try:
-                  library = json.loads(games_path.read_text())
-
-                  for game in library.get("games", []):
-                      game_id = game.get("gameId")
-                      artwork = game.get("boxArt")
-
-                      if game_id and artwork:
-                          if artwork.startswith("https://"):
-                              game_art[str(game_id)] = artwork
-                          elif artwork.startswith("/"):
-                              game_art[str(game_id)] = (
-                                  "https://retroachievements.org" + artwork
-                              )
-
-              except (json.JSONDecodeError, AttributeError, TypeError):
-                  print("Could not read local artwork library.")
-
-          print(f"Loaded artwork for {len(game_art)} games.")
-
-          # Cache artwork lookups during this workflow run.
-          artwork_lookup_cache = {}
-
-          def get_game_artwork(game_id):
-              game_id = str(game_id)
-
-              if game_id in artwork_lookup_cache:
-                  return artwork_lookup_cache[game_id]
-
-              try:
-                  game_data = api_get(
-                      "API_GetGame.php",
-                      {"i": game_id}
-                  )
-
-                  image = (
-                      game_data.get("ImageBoxArt")
-                      or game_data.get("ImageIcon")
-                      or game_data.get("GameIcon")
-                  )
-
-                  if image and image.startswith("/"):
-                      image = "https://retroachievements.org" + image
-
-                  if image and not image.startswith("https://"):
-                      image = None
-
-                  artwork_lookup_cache[game_id] = image
-
-                  if image:
-                      print(f"Found official artwork for game ID {game_id}.")
-                  else:
-                      print(f"No official artwork for game ID {game_id}.")
-
-                  return image
-
-              except Exception as error:
-                  print(f"Artwork lookup failed: {error}")
-                  artwork_lookup_cache[game_id] = None
-                  return None
-
-          def get_recent():
-              data = api_get(
-                  "API_GetUserRecentAchievements.php",
-                  {
-                      "u": USERNAME,
-                      "m": LOOKBACK_MINUTES
-                  }
-              )
-
-              if not isinstance(data, list):
-                  raise RuntimeError(
-                      "Unexpected response from recent achievements API."
-                  )
-
-              return data
-
-          def send_notification(achievement):
-              title = achievement.get("Title", "Achievement unlocked")
-              game = achievement.get("GameTitle", "Unknown game")
-              points = achievement.get("Points", 0)
-              achievement_id = achievement.get("AchievementID")
-              game_id = achievement.get("GameID")
-
-              mode = (
-                  "Hardcore"
-                  if int(achievement.get("HardcoreMode") or 0)
-                  else "Softcore"
-              )
-
-              message = (
-                  f"🏆 {title}\n\n"
-                  f"🎮 Game: {game}\n"
-                  f"⭐ Points: {points}\n"
-                  f"🎯 Mode: {mode}\n"
-                  f"👤 Player: {USERNAME}"
-              )
-
-              if achievement_id:
-                  message += (
-                      "\n\nView achievement: "
-                      "https://retroachievements.org/achievement/"
-                      f"{achievement_id}"
-                  )
-
-              if game_id:
-                  message += (
-                      "\nView game: "
-                      f"https://retroachievements.org/game/{game_id}"
-                  )
-
-              headers = {
-                  "Content-Type": "text/plain; charset=utf-8",
-                  "Title": f"Achievement unlocked: {game}",
-                  "Priority": "high",
-                  "Tags": "trophy,video_game"
-              }
-
-              # Use local artwork first, then look it up automatically.
-              artwork = game_art.get(str(game_id)) if game_id else None
-
-              if not artwork and game_id:
-                  print(f"Local artwork missing for {game}.")
-                  artwork = get_game_artwork(game_id)
-
-              if artwork:
-                  headers["Icon"] = artwork
-                  headers["Attach"] = artwork
-                  print(f"Using artwork for: {game}")
-                  print(f"Attaching game artwork for: {game}")
-              else:
-                  print(f"Sending without artwork: {game}")
-
-              encoded_topic = urllib.parse.quote(topic, safe="")
-              url = f"https://ntfy.sh/{encoded_topic}"
-
-              request = urllib.request.Request(
-                  url,
-                  data=message.encode("utf-8"),
-                  headers=headers,
-                  method="POST"
-              )
-
-              try:
-                  with urllib.request.urlopen(request, timeout=30) as response:
-                      result = json.loads(
-                          response.read().decode("utf-8")
-                      )
-
-                      print(
-                          f"NTFY ACCEPTED: {title} — {game} "
-                          f"(HTTP {response.status})"
-                      )
-
-                      return result
-
-              except urllib.error.HTTPError as error:
-                  details = error.read().decode(
-                      "utf-8", errors="replace"
-                  )
-
-                  print(f"ntfy response: {details}")
-
-                  raise RuntimeError(
-                      f"ntfy rejected the notification: HTTP {error.code}."
-                  ) from error
-
-          # MANUAL RESEND MODE
-          # This path does not change notification history.
-          if resend_id:
-              if not resend_id.isdigit():
-                  raise RuntimeError(
-                      "Enter a numeric RetroAchievements achievement ID."
-                  )
-
-              print(f"Manual resend requested for achievement {resend_id}.")
-
-              achievement_data = api_get(
-                  "API_GetAchievementUnlocks.php",
-                  {
-                      "a": resend_id,
-                      "c": 1
-                  }
-              )
-
-              achievement_info = achievement_data.get("Achievement", {})
-              game_info = achievement_data.get("Game", {})
-
-              if not achievement_info.get("ID") or not game_info.get("ID"):
-                  raise RuntimeError(
-                      "Could not find that achievement. Check the ID."
-                  )
-
-              game_id = str(game_info["ID"])
-
-              # Verify that Gourmetal earned this achievement.
-              progress = api_get(
-                  "API_GetGameInfoAndUserProgress.php",
-                  {
-                      "g": game_id,
-                      "u": USERNAME
-                  }
-              )
-
-              achievements = progress.get("Achievements", {})
-              earned = achievements.get(str(resend_id))
-
-              if not earned or not earned.get("DateEarned"):
-                  raise RuntimeError(
-                      "This achievement does not appear as earned "
-                      "on the Gourmetal account."
-                  )
-
-              notification = {
-                  "AchievementID": str(resend_id),
-                  "Title": achievement_info.get(
-                      "Title", "Achievement unlocked"
-                  ),
-                  "Points": achievement_info.get("Points", 0),
-                  "GameID": game_id,
-                  "GameTitle": game_info.get("Title", "Unknown game"),
-                  "HardcoreMode": (
-                      1 if earned.get("DateEarnedHardcore") else 0
-                  )
-              }
-
-              print(
-                  f"Verified achievement: {notification['Title']} "
-                  f"— {notification['GameTitle']}"
-              )
-
-              send_notification(notification)
-
-              print("Manual resend completed.")
-              print("Notification history was not changed.")
-
-          # NORMAL AUTOMATIC CHECKING MODE
-          else:
-              state_path.parent.mkdir(parents=True, exist_ok=True)
-
-              if state_path.exists():
-                  try:
-                      stored = json.loads(state_path.read_text())
-
-                      if not isinstance(stored, list):
-                          raise ValueError("History must be a JSON list.")
-
-                      seen = set(str(item) for item in stored)
-
-                  except (json.JSONDecodeError, ValueError, TypeError) as error:
-                      raise RuntimeError(
-                          "Notification history is invalid."
-                      ) from error
-              else:
-                  seen = set()
-
-              print(
-                  f"Checking achievements from the last "
-                  f"{LOOKBACK_MINUTES} minutes..."
-              )
-
-              recent = get_recent()
-
-              print(
-                  f"RetroAchievements returned {len(recent)} recent unlocks."
-              )
-
-              new_items = [
-                  item for item in recent
-                  if item.get("AchievementID")
-                  and str(item["AchievementID"]) not in seen
-              ]
-
-              print(f"New achievements to notify: {len(new_items)}")
-
-              sent_ids = []
-
-              for item in reversed(new_items):
-                  send_notification(item)
-                  sent_ids.append(str(item["AchievementID"]))
-
-              seen.update(sent_ids)
-
-              state_path.write_text(
-                  json.dumps(sorted(seen), indent=2) + "\n"
-              )
-
-              print(f"Notification history now contains {len(seen)} IDs.")
-
-              print(
-                  f"Successfully sent {len(sent_ids)} phone notification(s)."
-              )
-          PY
-
-      - name: Save notification history
-        if: ${{ inputs.resend_achievement_id == '' }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/notified-achievements.json
-          git diff --cached --quiet || git commit -m "Track phone achievement notifications"
-          git push
-          
+/* =========================================
+   GOURME HUB — FEATURED GAME ARTWORK
+   ========================================= */
+
+.showcase-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255,155,20,.45);
+  border-radius: 17px;
+  background: linear-gradient(145deg, #21170d, #090b11);
+  box-shadow: 0 8px 25px rgba(0,0,0,.4);
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.showcase-card:hover {
+  transform: translateY(-6px);
+  border-color: #ffad42;
+  box-shadow:
+    0 0 24px rgba(255,155,20,.35),
+    0 14px 30px rgba(0,0,0,.5);
+}
+
+.showcase-art {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #17120d;
+  filter: saturate(1.12) contrast(1.06);
+  transition: transform .55s ease, filter .4s ease;
+}
+
+.showcase-card:hover .showcase-art {
+  transform: scale(1.055);
+  filter: saturate(1.25) contrast(1.08);
+}
+
+.showcase-info {
+  position: relative;
+  padding: 17px;
+  background: linear-gradient(
+    180deg,
+    rgba(255,155,20,.06),
+    rgba(0,0,0,.2)
+  );
+}
+
+.showcase-info h3 {
+  color: #fff;
+  text-shadow: 0 0 12px rgba(255,155,20,.25);
+}
+
+.showcase-logo {
+  max-width: 90%;
+  max-height: 60px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 7px rgba(255,155,20,.3));
+}
+
+.showcase-info .game-meta {
+  color: #ffc477;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .showcase-card,
+  .showcase-art {
+    transition: none !important;
+  }
+}
