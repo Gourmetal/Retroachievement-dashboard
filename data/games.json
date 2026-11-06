@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 171803,
+    "totalRanked": 171849,
     "hardcorePoints": 1,
-    "softcorePoints": 760,
+    "softcorePoints": 787,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-06T13:56:20.649007+00:00",
+  "lastUpdated": "2026-11-06T21:24:32.720986+00:00",
   "games": [
     {
       "gameId": 510,
@@ -1865,6 +1865,1828 @@
         "hero": "https://cdn2.steamgriddb.com/hero/e39859ef8c895d6d30a79de8a628bb4e.png",
         "logo": "https://cdn2.steamgriddb.com/logo/0a64ba6b57592efd39bc6b27cdc61f57.png",
         "icon": "https://cdn2.steamgriddb.com/icon/e5ea6f8a20e3fef83ab617494bc37d80.png"
+      }
+    },
+    {
+      "gameId": 771,
+      "title": "Mario & Luigi: Superstar Saga",
+      "console": "Game Boy Advance",
+      "earned": 3,
+      "hardcoreEarned": 0,
+      "total": 85,
+      "progress": 4,
+      "mode": "Softcore",
+      "lastPlayed": "2026-11-06T18:55:30+00:00",
+      "boxArt": "https://retroachievements.org/Images/014492.png",
+      "achievements": [
+        {
+          "id": 40691,
+          "title": "Cruisin for a Bruisin",
+          "description": "Defeat Fawful on Koopa Cruiser.",
+          "points": 10,
+          "earned": true,
+          "dateEarned": "2026-11-06 18:43:28",
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40694,
+          "title": "Mario and Luigi's Flying Circus",
+          "description": "Get High Jump and Spin Jump.",
+          "points": 1,
+          "earned": true,
+          "dateEarned": "2026-11-06 18:55:30",
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40689,
+          "title": "The Perfect Classic Conflict",
+          "description": "Defeat Bowser at Peach's Castle without taking damage!",
+          "points": 10,
+          "earned": true,
+          "dateEarned": "2026-11-06 18:32:48",
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40690,
+          "title": "A Little Help Goes a Long Way",
+          "description": "Help Toads and Koopas before boarding the Koopa Cruiser!",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40722,
+          "title": "A Monkey of Barrels",
+          "description": "Get 20 points in the mini-game Barrel. (Arcade or Boat before it sails away, NO PRACTICE.)",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469980,
+          "title": "Air B'n'Bean",
+          "description": "Collect every bean in the beanholes of the Beanbean Airport",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40727,
+          "title": "Battle on the Morton Bridge",
+          "description": "Defeat Morton Koopa Jr. at Bowser's Castle!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469976,
+          "title": "Bean Bonanza",
+          "description": "Collect every bean in the beanholes of Beanbean Outskirts",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40707,
+          "title": "Beanlets for Breakfast",
+          "description": "Help a dude out, get five beanlets for a Golden Mushroom.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469981,
+          "title": "Beanrudo Valley",
+          "description": "Collect every bean in the beanholes of Teehee Valley",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40693,
+          "title": "Behind Enemy Lines",
+          "description": "Clear COMPLETE Border Jump!",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40755,
+          "title": "Bouncing Here and There and Everywhere",
+          "description": "Upgrade Bounce Brothers to ADVANCE Level!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40743,
+          "title": "Breakout the Salt",
+          "description": "Get at least 40 points in Chuckola Bounce.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40712,
+          "title": "Burying Treesure in the Desert",
+          "description": "Defeat Trunkle at Teehee Valley, then follow Peach into Little Fungitown.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40740,
+          "title": "Business Members Receive Half-Off Next Purchase",
+          "description": "Get the Cobalt Necktie from Professor E. Gadd!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40739,
+          "title": "By Grabthar's Hammer ... What a Savings",
+          "description": "Get the Power Grip from Professor E. Gadd!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40751,
+          "title": "CANNONBALLLLL!!",
+          "description": "Upgrade Splash Brothers to ADVANCE Level!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40736,
+          "title": "Check Your G-Diffusers for Bonus Reward Points",
+          "description": "Get the Bonus Ring from Professor E. Gadd!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40711,
+          "title": "Clean-Up on Aisle Del-Beano",
+          "description": "Defeat Mom Piranha at the airport!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40733,
+          "title": "Colonel Mustard's Last Stand",
+          "description": "Defeat Fawful for the last time!",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40706,
+          "title": "Cyberdyne Systems' Liquid-Joke Beverage",
+          "description": "Sentient soda has escaped, terminate with extreme prejudice.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40735,
+          "title": "Do You Have Our Greed-is-Good Rewards Card?",
+          "description": "Get the Greed Wallet from Professor E. Gadd!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40758,
+          "title": "Electricity? Careful There! Or It'll Toast Your Eyeballs!",
+          "description": "Upgrade Thunder Brothers to ADVANCE Level!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40737,
+          "title": "Exciting Rewards on Your Next Visit",
+          "description": "Get the Excite Spring from Professor E. Gadd!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469974,
+          "title": "Extra Hot Extra Life",
+          "description": "Receive a 1-Up Super as a gift from a Celebrity Mole in Bowser's Castle",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40724,
+          "title": "Fortress of Serious-tude",
+          "description": "Defeat Jojora and her friend at Joke's End.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40745,
+          "title": "Fwuffy Lamby Jammies",
+          "description": "Win the Wool Trousers from a Celebrity Mole course.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40753,
+          "title": "GET TO DAH CHOPPA BRAHZAHs",
+          "description": "Upgrade Chopper Brothers to ADVANCE Level!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469978,
+          "title": "Give me a B! Give me an EAN!",
+          "description": "Collect every bean in the beanholes of Woohoo Hooniversity",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40704,
+          "title": "Gold That IS Worth a Hill of Beans",
+          "description": "Get a Spike Badge from a Gold Beanie!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40757,
+          "title": "Gone With the Wimp",
+          "description": "Upgrade Cyclone Brothers to ADVANCE Level!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40716,
+          "title": "Good Fella(s)",
+          "description": "Defeat Popple in Chucklehuck Woods!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40747,
+          "title": "He's A Sweet Soul Brother",
+          "description": "Gift Hermie the III with Spangle for the Soulful Badge.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469970,
+          "title": "Hoo Has Celebrity Status",
+          "description": "Receive a Golden Mushroom and a Max Nut as a gift from a Celebrity Mole in Hoohoo Village and Mountain Base",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40744,
+          "title": "I AM IRON PANTS",
+          "description": "Win the Iron Pants from a Celebrity Mole course.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40714,
+          "title": "I Swear That Never Happens",
+          "description": "Grab the pearls for new upgraded hand abilities.",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40741,
+          "title": "I'm Sorry, Your Reward Card Has EXPIRED",
+          "description": "Get the Gameboy Horror SP from Professor E. Gadd!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40726,
+          "title": "Iggy's Dizzy Lava Land",
+          "description": "Defeat Iggy Koopa at Bowser's Castle!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40732,
+          "title": "Larry's Last Match of Color TV-Game 6",
+          "description": "Defeat Larry Koopa at Bowser's Castle!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40709,
+          "title": "Learning is Bower",
+          "description": "Fight Popple and Rookie for the Beanstar!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40708,
+          "title": "Learning is Mario FUNdamentals",
+          "description": "Defeat Cackletta at Woohoo Hooniversity!",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469977,
+          "title": "Lost Beans",
+          "description": "Collect every bean in the beanholes of Chateau de Chucklehuck and Chucklehuck Woods (Not counting required beans)",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40729,
+          "title": "Ludwig's Last Performance",
+          "description": "Defeat Ludwig von Koopa at Bowser's Castle!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40713,
+          "title": "Luigi's Adventure Quest",
+          "description": "Get the Crabbie Grass from Luigi's Quest",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40692,
+          "title": "Make a Run for the Border",
+          "description": "Clear Border Jump with no miss.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40717,
+          "title": "Make Neon Eggs, Throw Neon Eggs",
+          "description": "Collect all seven neon eggs to get a beanstar piece.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40696,
+          "title": "Making a Molehill out of a Mountain",
+          "description": "Crush the Hoohoo Mountain midboss, Hoohooros!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40699,
+          "title": "Mine Cart Carnage",
+          "description": "Complete Level 05 of Mysterious Mine Carts!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40698,
+          "title": "Mine Cart Madness",
+          "description": "Clear Mysterious Mine Carts through Hoohoo Mountain.",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469972,
+          "title": "Mole O-hoy",
+          "description": "Receive a 1-Up Super as a gift from a Celebrity Mole in Oho Ocean",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469975,
+          "title": "Mountains out of a Beanhole",
+          "description": "Collect every bean in the beanholes of Hoohoo Village, Mountain, and Mountain Base",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40725,
+          "title": "My Cousin Vinny-essa",
+          "description": "Defeat Popple and Birdo in Teehee Valley.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40719,
+          "title": "No Receipt, No Refund",
+          "description": "Create every design and receive Harhall's Pants.",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40703,
+          "title": "Of Mice and Moles",
+          "description": "Get the two goblets by using your new hammer abilities!",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469973,
+          "title": "Peppers to Heat Up the Cold",
+          "description": "Receive Red and Green Peppers as a gift from a Celebrity Mole in Joke's End",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40748,
+          "title": "Plumber Ninja Thief Guy",
+          "description": "Get Secret Scroll 1 to unlock the \"Swing Brothers\" move.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40700,
+          "title": "Real Actual Plumbing Work",
+          "description": "Do your job and fix Beanbean Castle's plumbing.",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469971,
+          "title": "Rewards in the Outskirts",
+          "description": "Receive a Golden Mushroom, 1-Up Mushroom, and Red and Green Peppers as a gift from Celebrity Moles in BeanBean Outskirts",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40697,
+          "title": "ROCK THE DRAGON!",
+          "description": "Defeat Dragohoho at the top of Hoohoo Mountain!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469979,
+          "title": "Somewhere Beyond the Bean",
+          "description": "Collect every bean in the beanholes of Oho Oasis and the Seabed",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40721,
+          "title": "Super 'Stache Brothers the Arcade Game",
+          "description": "Get over 480 points in Star 'Stache Smash.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40720,
+          "title": "Super Badge Bros, Rock-Rock ON!",
+          "description": "Get the Bros Rock Badge by finding all of the Beanstones.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40723,
+          "title": "Surfin' BBK",
+          "description": "Win the Casual Corals by competing in the surfing mini-game.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40752,
+          "title": "Swing Your Brother, Round'n'Round",
+          "description": "Upgrade Swing Brothers to ADVANCE Level!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40742,
+          "title": "Taking Luigi's Milk Money",
+          "description": "Luigi's been holding out! Get 100 CONSECUTIVE coins from him! (Must have less than max coins)",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469983,
+          "title": "The Bean is the Punchline",
+          "description": "Collect every bean in the beanholes of Joke's End",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469984,
+          "title": "The Final Beans",
+          "description": "Collect every bean in the beanholes of Bowser's Castle",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40756,
+          "title": "The Whack-Attack is Back, Jack!",
+          "description": "Upgrade Knockback Brothers to ADVANCE Level!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40715,
+          "title": "Theriouthly You Guyth, Thop Ith",
+          "description": "Defeat Hermie III for the Beanstar Piece!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40754,
+          "title": "They Wake Up the Next Day and They're on Fire",
+          "description": "Upgrade Fire Brothers to ADVANCE Level!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40710,
+          "title": "This Hand of Mine Glows with an Awesome Power",
+          "description": "Grab both of the hand-abilities for each brother.",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40728,
+          "title": "THIS IS A VOLCANO",
+          "description": "Defeat Lemmy Koopa at Bowser's Castle!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40730,
+          "title": "This Isn't Your Castle, Roy!",
+          "description": "Defeat Roy Koopa at Bowser's Castle!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40746,
+          "title": "To the Literal High-Ends of the Earth",
+          "description": "Win the High-End Badge from a Celebrity Mole course.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40695,
+          "title": "Tolstar Recall",
+          "description": "Defeat the tollbooth tyrant, Tolstar!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40749,
+          "title": "Tornado, Hold Luigi",
+          "description": "Get Secret Scroll 2 to unlock the \"Cyclone Brothers\" move.",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 469982,
+          "title": "Washed Up Beans",
+          "description": "Collect every bean in the beanholes of Gwarhar Lagoon",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40702,
+          "title": "WE'RE Shakin' Up the Soda Here Now, See?",
+          "description": "Defeat Popple and Rookie at Chateau de Chucklehuck!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40731,
+          "title": "Whack-A-Wendy",
+          "description": "Defeat Wendy O. Koopa at Bowser's Castle!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40718,
+          "title": "What Not to Care",
+          "description": "Get the Beanstar Piece from Harhall.",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40705,
+          "title": "Wiggle Me This, Fatman!",
+          "description": "Defeat Wiggler in Chucklehuck Woods!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40738,
+          "title": "With Great Force Comes Great Reward Points",
+          "description": "Get the Great Force from Professor E. Gadd!",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40750,
+          "title": "Worst.  Escape Sequence.  EVER!",
+          "description": "Escape Bowser's Castle within 50 seconds! Touch Blablanadon so \"Speak\" appears.",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40701,
+          "title": "You Won't Like Me When I'm Queenie",
+          "description": "Defeat the hulking-mad Queen Bean!",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 40734,
+          "title": "You're a SUPERSTAR!",
+          "description": "Escape Bowser's Castle after defeating Cackletta!",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        }
+      ],
+      "steamGridDB": {
+        "gameId": 38012,
+        "grid": "https://cdn2.steamgriddb.com/grid/8164a0c13d70c3caee61a85d035d5f25.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/030e65da2b1c944090548d36b244b28d.jpg",
+        "logo": "https://cdn2.steamgriddb.com/logo/72c25197b6a491816d9a84b42d7205f0.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/cf5ff72ca35f112b361de3e312c088f4.png"
+      }
+    },
+    {
+      "gameId": 20230,
+      "title": "Mario & Luigi: Superstar Saga [Subset - Perfect Dodges]",
+      "console": "Game Boy Advance",
+      "earned": 4,
+      "hardcoreEarned": 0,
+      "total": 93,
+      "progress": 4,
+      "mode": "Softcore",
+      "lastPlayed": "2026-11-06T18:53:13+00:00",
+      "boxArt": "https://retroachievements.org/Images/071819.png",
+      "achievements": [
+        {
+          "id": 311282,
+          "title": "Bill Blaster",
+          "description": "Perfectly dodge and defeat a Bill Blaster. (Level <= 3, <= 15 POW)",
+          "points": 1,
+          "earned": true,
+          "dateEarned": "2026-11-06 18:53:13",
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311278,
+          "title": "Bowser, King Koopa",
+          "description": "Perfectly dodge and defeat Bowser in the Mushroom Kingdom Castle.",
+          "points": 1,
+          "earned": true,
+          "dateEarned": "2026-11-06 18:32:47",
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311281,
+          "title": "Fighter Fly",
+          "description": "Perfectly dodge and defeat a Fighter Fly. (Level <= 3, <= 15 POW)",
+          "points": 1,
+          "earned": true,
+          "dateEarned": "2026-11-06 18:46:14",
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311279,
+          "title": "Goomba",
+          "description": "Perfectly dodge and defeat a Goomba. (Level <= 2, <= 13 POW) [Tutorial Battles will not count]",
+          "points": 1,
+          "earned": true,
+          "dateEarned": "2026-11-06 18:40:28",
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311343,
+          "title": "Anuboo",
+          "description": "Perfectly dodge and defeat an Anuboo. (Level <= 20, <= 54 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311284,
+          "title": "Beanie",
+          "description": "Perfectly dodge and defeat a Beanie. (Level <= 5, <= 20 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311359,
+          "title": "Birdo, She'll Remember This!",
+          "description": "Perfectly dodge and defeat Birdo in Teehee's Underground. (Level <= 30, <= 77 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311307,
+          "title": "Blooper",
+          "description": "Perfectly dodge and defeat a Blooper. (Level <= 16, <= 44 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311297,
+          "title": "Blue Virus",
+          "description": "Perfectly dodge and defeat a Blue Virus. (Level <= 13, <= 36 POW) [No Pair Death]",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311329,
+          "title": "Bob-omb",
+          "description": "Perfectly dodge and defeat a Bob-omb. (Level <= 12, <= 34 POW)",
+          "points": 3,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311361,
+          "title": "Boo",
+          "description": "Perfectly dodge and defeat a Boo. (Level <= 31, <= 78 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311349,
+          "title": "Boomerang Bro",
+          "description": "Perfectly dodge and defeat a Boomerang Bro. (Level <= 21, <= 57 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311324,
+          "title": "Bowletta, a King Possessed",
+          "description": "Perfectly dodge and defeat Bowletta in Bowser's Castle. (Level <= 40, <= 96 POW) [Can use Bros. Moves]",
+          "points": 25,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311370,
+          "title": "Cackletta, Finale in the Belly of the Beast",
+          "description": "Perfectly dodge and defeat Cackletta in Bowser's Belly. (Level <= 40, <= 96 POW) [Can use Bros. Moves after 200 HP dealt]",
+          "points": 50,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311300,
+          "title": "Cackletta, the Beanbean Witch",
+          "description": "Perfectly dodge and defeat Cackletta in Woohoo Hooniversity. (Level <= 14, <= 38 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311344,
+          "title": "Cheep Cheep",
+          "description": "Perfectly dodge and defeat a Cheep Cheep. (Level <= 20, <= 54 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311362,
+          "title": "Chomp Bro",
+          "description": "Perfectly dodge and defeat a Chomp Bro. (Level <= 31, <= 78 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311341,
+          "title": "Chuck Guy (Blue)",
+          "description": "Perfectly dodge and defeat a Blue-Cloaked Chuck Guy. (Level <= 20, <= 54 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311293,
+          "title": "Chuck Guy (Purple)",
+          "description": "Perfectly dodge and defeat a Purple-Cloaked Chuck Guy. (Level <= 10, <= 29 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311338,
+          "title": "Chuckolator, A Monstrous Soda",
+          "description": "Perfectly dodge and defeat Chuckolator in Chucklehuck Woods. (Level <= 11, <= 33 POW) - [Can use Bros. Moves, see comments]",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311354,
+          "title": "Clumph",
+          "description": "Perfectly dodge and defeat a Clumph. (Level <= 26, <= 67 POW) [No Burn death]",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311288,
+          "title": "Dragohoho, Mountain Dragon",
+          "description": "Perfectly dodge and defeat Dragohoho at Hoohoo Mountain Summit. (Level <= 6, <= 22 POW)",
+          "points": 4,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311358,
+          "title": "Dry Bones (Purple)",
+          "description": "Perfectly dodge and defeat a Purple-Boned Dry Bones. (Level <= 29, <= 74 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311285,
+          "title": "Dry Bones (White)",
+          "description": "Perfectly dodge and defeat a White-Boned Dry Bones. (Level <= 5, <= 20 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311295,
+          "title": "Eeker",
+          "description": "Perfectly dodge and defeat an Eeker. (Level <= 12, <= 34 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311347,
+          "title": "Elite Troopea",
+          "description": "Perfectly dodge and defeat an Elite Troopea. (Level <= 21, <= 57 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311323,
+          "title": "Fawful, a Reborn Minion",
+          "description": "Perfectly dodge and defeat Fawful in Bowser's Castle. (Level <= 39, <= 95 POW) [Can use Bros. Moves after 150 HP dealt]",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311280,
+          "title": "Fawful, Fink Rat!",
+          "description": "Perfectly dodge and defeat Fawful aboard the Koopa Cruiser. (Level <= 2, <= 13 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311336,
+          "title": "Fuzzbush",
+          "description": "Perfectly dodge and defeat a Fuzzbush. (Level <= 10, <= 29 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311317,
+          "title": "Glurp",
+          "description": "Perfectly dodge and defeat a Glurp. (Level <= 26, <= 67 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311335,
+          "title": "Gold Beanie",
+          "description": "Perfectly dodge and defeat a Gold Beanie. (Level <= 12, <= 34 POW)",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311306,
+          "title": "Goomdiver",
+          "description": "Perfectly dodge and defeat a Goomdiver. (Level <= 16, <= 44 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311348,
+          "title": "Gritty Goomba (Green Spear)",
+          "description": "Perfectly dodge and defeat a Green-Speared Gritty Goomba. (Level <= 21, <= 57 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311310,
+          "title": "Gritty Goomba (Red Spear)",
+          "description": "Perfectly dodge and defeat a Red-Speared Gritty Goomba. (Level <= 18, <= 49 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311320,
+          "title": "Gunner Guy",
+          "description": "Perfectly dodge and defeat a Gunner Guy. (Level <= 31, <= 78 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311360,
+          "title": "Hammer Bro",
+          "description": "Perfectly dodge and defeat a Hammer Bro. (Level <= 31, <= 78 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311351,
+          "title": "Hermie III, the Festive Hermit Crab",
+          "description": "Perfectly dodge and defeat Hermie III at Gwahar Lagoon. (Level <= 22, <= 59 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311286,
+          "title": "Hoohooros, Mountain Guardian",
+          "description": "Perfectly dodge and defeat Hoohooros upon Hoohoo Mountain. (Level <= 5, <= 20 POW)",
+          "points": 3,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311353,
+          "title": "Ice Snifit",
+          "description": "Perfectly dodge and defeat an Ice Snifit. (Level <= 26, <= 67 POW) [No Burn death]",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311363,
+          "title": "Iggy, the First Koopaling",
+          "description": "Perfectly dodge and defeat Iggy in Bowser's Castle. (Level <= 35, <= 88 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311357,
+          "title": "Jojora's Friend, a Playful Flirty Friend",
+          "description": "Perfectly dodge and defeat Jojora's Friend at Joke's End. (Level <= 28, <= 72 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311356,
+          "title": "Jojora, the Ending Joke",
+          "description": "Perfectly dodge and defeat Jojora at Joke's End. (Level <= 28, <= 72 POW)",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311326,
+          "title": "Lakipea",
+          "description": "Perfectly dodge and defeat a Lakipea. (Level <= 9, <= 28 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311369,
+          "title": "Larry, the Seventh and Final Koopaling",
+          "description": "Perfectly dodge and defeat Larry in Bowser's Castle. (Level <= 39, <= 95 POW) - [Can use Bros. Moves]",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311294,
+          "title": "Laser Snifit",
+          "description": "Perfectly dodge and defeat a Laser Snifit. (Level <= 12, <= 34 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311366,
+          "title": "Lemmy, the Third Koopaling",
+          "description": "Perfectly dodge and defeat Lemmy in Bowser's Castle. (Level <= 36, <= 90 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311318,
+          "title": "Limbo Bro (Purple Flame)",
+          "description": "Perfectly dodge and defeat a Purple-Flamed Limbo Bro. (Level <= 29, <= 74 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311312,
+          "title": "Limbo Bro (Red Flame)",
+          "description": "Perfectly dodge and defeat a Red-Flamed Limbo Bro. (Level <= 20, <= 54 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311367,
+          "title": "Ludwig, the Fourth Koopaling",
+          "description": "Perfectly dodge and defeat Ludwig in Bowser's Castle. (Level <= 36, <= 90 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311321,
+          "title": "Magikoopa",
+          "description": "Perfectly dodge and defeat a Magikoopa. (Level <= 38, <= 93 POW) - [Can use Red Pepper]",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311313,
+          "title": "Malibut",
+          "description": "Perfectly dodge and defeat a Malibut. (Level <= 20, <= 54 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311314,
+          "title": "Mecha-Blooper",
+          "description": "Perfectly dodge and defeat a Mecha-Blooper. (Level <= 21, <= 57 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311299,
+          "title": "Mecha-Chomp",
+          "description": "Perfectly dodge and defeat a Mecha-Chomp. (Level <= 15, <= 41 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311309,
+          "title": "Mom Piranha, the Airstrip Blockade",
+          "description": "Perfectly dodge and defeat Mom Piranha at Beanbean International Airport. (Level <= 17, <= 46 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311365,
+          "title": "Morton, the Second Koopaling",
+          "description": "Perfectly dodge and defeat Morton in Bowser's Castle. (Level <= 35, <= 88 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311304,
+          "title": "Oho Jee (Blue)",
+          "description": "Perfectly dodge and defeat a Blue Oho Jee. (Level <= 16, <= 44 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311303,
+          "title": "Oho Jee (Red)",
+          "description": "Perfectly dodge and defeat a Red Oho Jee. (Level <= 16, <= 44 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311342,
+          "title": "Oucher Glass",
+          "description": "Perfectly dodge and defeat an Oucher Glass. (Level <= 20, <= 54 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311325,
+          "title": "Parabeanie",
+          "description": "Perfectly dodge and knock the wings off a Parabeanie, and then defeat the Beanie. (Level <= 6, <= 22 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311328,
+          "title": "Paratroopea",
+          "description": "Perfectly dodge and knock the wings off a Paratroopea, and then defeat the Troopea. (Level <= 11, <= 33 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311334,
+          "title": "Pestnut (Green Spines)",
+          "description": "Perfectly dodge and defeat a Green-Spined Pestnut. (Level <= 9, <= 28 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311305,
+          "title": "Pestnut (Purple Spines)",
+          "description": "Perfectly dodge and defeat a Purple-Spined Pestnut. (Level <= 16, <= 44 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311352,
+          "title": "Piranha Bean, Bean Fruit Devourer",
+          "description": "Perfectly dodge and defeat Piranha Bean in NE Beanbean. (Level <= 23, <= 52 POW)",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311308,
+          "title": "Piranha Plant",
+          "description": "Perfectly dodge and defeat a Piranha Plant. (Level <= 16, <= 44 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311319,
+          "title": "Popple, a Family Man",
+          "description": "Perfectly dodge and defeat Popple in Teehee's Underground. (Level <= 30, <= 77 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311332,
+          "title": "Popple, Famous Shadow Thief",
+          "description": "Before defeating Rookie, perfectly dodge and defeat Popple at Chateau de Chucklehuck. (Level <= 9, <= 28 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311316,
+          "title": "Popple, Finder of the Beanstar Piece",
+          "description": "Perfectly dodge and defeat Popple in Chucklehuck Winkle Area. (Level <= 22, <= 59 POW)",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311301,
+          "title": "Popple, the Run-Down Thief",
+          "description": "Before defeating Rookie, perfectly dodge and defeat Popple in Woohoo Hooniversity Basement. (Level <= 15, <= 41 POW)",
+          "points": 10,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311345,
+          "title": "Puffer-Cheep",
+          "description": "Perfectly dodge and defeat a Puffer-Cheep. (Level <= 20, <= 54 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311292,
+          "title": "Queen Bean, Monarch of the Beanbean Kingdom",
+          "description": "Perfectly dodge and defeat Queen bean within Beanbean Castle. (Level <= 7, <= 25 POW)",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311296,
+          "title": "Red Virus",
+          "description": "Perfectly dodge and defeat a Red Virus. (Level <= 13, <= 36 POW) [No Pair Death]",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311287,
+          "title": "Rex",
+          "description": "Perfectly dodge and defeat a Rex. (Level <= 5, <= 20 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311333,
+          "title": "Rookie, A Familiar Face",
+          "description": "Perfectly dodge and defeat Rookie at Chateau de Chucklehuck. (Level <= 9, <= 28 POW)",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311302,
+          "title": "Rookie, King of the Koopamnesiacs",
+          "description": "Perfectly dodge and defeat Rookie in Woohoo Hooniversity Basement. (Level <= 15, <= 41 POW)",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311368,
+          "title": "Roy, the Fifth Koopaling",
+          "description": "Perfectly dodge and defeat Roy in Bowser's Castle. (Level <= 38, <= 93 POW) - [Can use Bros. Moves]",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311315,
+          "title": "Sand Cheep",
+          "description": "Perfectly dodge and defeat a Sand Cheep. (Level <= 21, <= 57 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311355,
+          "title": "Scaratroopea",
+          "description": "Perfectly dodge and knock the wings off a Scaratroopea, then defeat the Elite Troopea. (Level <= 28, <= 72 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311350,
+          "title": "Sharkbone",
+          "description": "Perfectly dodge and defeat a Sharkbone. (Level <= 21, <= 57 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311289,
+          "title": "Sharpea",
+          "description": "Perfectly dodge and defeat a Sharpea. (Level <= 6, <= 22 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311364,
+          "title": "Sniper Bill",
+          "description": "Perfectly dodge and defeat a Sniper Bill. (Level <= 31, <= 78 POW)",
+          "points": 3,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311311,
+          "title": "Spiky Snifit",
+          "description": "Perfectly dodge and defeat a Spiky Snifit. (Level <= 18, <= 49 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311331,
+          "title": "Spiny",
+          "description": "Perfectly dodge and defeat a Spiny. (Level <= 7, <= 25 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311346,
+          "title": "Starkiss",
+          "description": "Perfectly dodge and defeat a Starkiss. (Level <= 20, <= 54 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311330,
+          "title": "Super Fly",
+          "description": "Perfectly dodge and defeat a Super Fly. (Level <= 6, <= 22 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311290,
+          "title": "Sworm",
+          "description": "Perfectly dodge and defeat a Sworm. (Level <= 6, <= 22 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311327,
+          "title": "Tanoomba",
+          "description": "Perfectly dodge and defeat a Tanoomba. (Level <= 9, <= 28 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311283,
+          "title": "Tolstar, Toll Guardian",
+          "description": "Perfectly dodge and defeat Tolstar in Stardust Fields. (Level <= 4, <= 18 POW)",
+          "points": 3,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311291,
+          "title": "Troopea",
+          "description": "Perfectly dodge and defeat a Troopea. (Level <= 11, <= 33 POW)",
+          "points": 1,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311340,
+          "title": "Trunkle, TeeHee Ambusher",
+          "description": "Perfectly dodge and defeat Trunkle at Little Fungitown Elevator. (Level <= 19, <= 51 POW)",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311322,
+          "title": "Wendy, the Sixth Koopaling",
+          "description": "Perfectly dodge and defeat Wendy in Bowser's Castle. (Level <= 38, <= 93 POW) - [Can use Bros. Moves]",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311337,
+          "title": "Wiggler, the Angry Caterpillar",
+          "description": "Perfectly dodge and defeat Wiggler in Chucklehuck Woods. (Level <= 10, <= 29 POW)",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311298,
+          "title": "Yellow Virus",
+          "description": "Perfectly dodge and defeat a Yellow Virus. (Level <= 13, <= 36 POW) [No Pair Death]",
+          "points": 5,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 311339,
+          "title": "Yo Bro",
+          "description": "Perfectly dodge and defeat a Yo Bro. (Level <= 12, <= 34 POW)",
+          "points": 2,
+          "earned": false,
+          "dateEarned": null,
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        }
+      ],
+      "steamGridDB": {
+        "gameId": 38012,
+        "grid": "https://cdn2.steamgriddb.com/grid/8164a0c13d70c3caee61a85d035d5f25.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/030e65da2b1c944090548d36b244b28d.jpg",
+        "logo": "https://cdn2.steamgriddb.com/logo/72c25197b6a491816d9a84b42d7205f0.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/cf5ff72ca35f112b361de3e312c088f4.png"
       }
     },
     {
@@ -6035,12 +7857,12 @@
       "gameId": 788,
       "title": "Pokémon LeafGreen Version",
       "console": "Game Boy Advance",
-      "earned": 1,
+      "earned": 3,
       "hardcoreEarned": 0,
       "total": 128,
-      "progress": 1,
+      "progress": 2,
       "mode": "Softcore",
-      "lastPlayed": "2026-11-05T22:58:06+00:00",
+      "lastPlayed": "2026-11-06T18:19:38+00:00",
       "boxArt": "https://retroachievements.org/Images/052366.png",
       "achievements": [
         {
@@ -6050,6 +7872,26 @@
           "points": 1,
           "earned": true,
           "dateEarned": "2026-11-05 22:58:06",
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 541899,
+          "title": "Now the Adventure Can Start",
+          "description": "Obtain the Pokédex from Professor Oak",
+          "points": 1,
+          "earned": true,
+          "dateEarned": "2026-11-06 18:10:24",
+          "hardcore": false,
+          "dateEarnedHardcore": null
+        },
+        {
+          "id": 541902,
+          "title": "Teaching Through TV",
+          "description": "Obtain the Teachy TV after being taught how to catch Pokémon",
+          "points": 1,
+          "earned": true,
+          "dateEarned": "2026-11-06 18:19:38",
           "hardcore": false,
           "dateEarnedHardcore": null
         },
@@ -6684,16 +8526,6 @@
           "dateEarnedHardcore": null
         },
         {
-          "id": 541899,
-          "title": "Now the Adventure Can Start",
-          "description": "Obtain the Pokédex from Professor Oak",
-          "points": 1,
-          "earned": false,
-          "dateEarned": null,
-          "hardcore": false,
-          "dateEarnedHardcore": null
-        },
-        {
           "id": 541900,
           "title": "Now You Won't Get Lost",
           "description": "Obtain the Town Map from Daisy",
@@ -6998,16 +8830,6 @@
           "title": "Tea Time",
           "description": "Gain access to Saffron City by giving the Guards tea",
           "points": 2,
-          "earned": false,
-          "dateEarned": null,
-          "hardcore": false,
-          "dateEarnedHardcore": null
-        },
-        {
-          "id": 541902,
-          "title": "Teaching Through TV",
-          "description": "Obtain the Teachy TV after being taught how to catch Pokémon",
-          "points": 1,
           "earned": false,
           "dateEarned": null,
           "hardcore": false,
@@ -15145,8 +16967,8 @@
   ],
   "recentAchievements": [],
   "stats": {
-    "gamesPlayed": 19,
-    "achievementsEarned": 147,
-    "achievementsTotal": 1473
+    "gamesPlayed": 21,
+    "achievementsEarned": 156,
+    "achievementsTotal": 1651
   }
 }

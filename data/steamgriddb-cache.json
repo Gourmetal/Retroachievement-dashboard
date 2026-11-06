@@ -131,5 +131,19 @@
     "hero": "https://cdn2.steamgriddb.com/hero/9ca63c9e73a047353e17845c6f4cfe5b.png",
     "logo": "https://cdn2.steamgriddb.com/logo/e1501a4fe35ee0a7ce3e36e396c6fcc2.png",
     "icon": "https://cdn2.steamgriddb.com/icon/1bc2029a8851ad344a8d503930dfd7f7.png"
+  },
+  "Mario & Luigi: Superstar Saga": {
+    "gameId": 38012,
+    "grid": "https://cdn2.steamgriddb.com/grid/8164a0c13d70c3caee61a85d035d5f25.png",
+    "hero": "https://cdn2.steamgriddb.com/hero/030e65da2b1c944090548d36b244b28d.jpg",
+    "logo": "https://cdn2.steamgriddb.com/logo/72c25197b6a491816d9a84b42d7205f0.png",
+    "icon": "https://cdn2.steamgriddb.com/icon/cf5ff72ca35f112b361de3e312c088f4.png"
+  },
+  "Mario & Luigi: Superstar Saga [Subset - Perfect Dodges]": {
+    "gameId": 38012,
+    "grid": "https://cdn2.steamgriddb.com/grid/8164a0c13d70c3caee61a85d035d5f25.png",
+    "hero": "https://cdn2.steamgriddb.com/hero/030e65da2b1c944090548d36b244b28d.jpg",
+    "logo": "https://cdn2.steamgriddb.com/logo/72c25197b6a491816d9a84b42d7205f0.png",
+    "icon": "https://cdn2.steamgriddb.com/icon/cf5ff72ca35f112b361de3e312c088f4.png"
   }
 }
