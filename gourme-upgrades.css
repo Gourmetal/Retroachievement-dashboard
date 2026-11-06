@@ -1,117 +1,91 @@
 
-/* =========================================
-   GOURME HUB — ANIMATED PROGRESS RINGS
-   ========================================= */
+/* FEATURED GAME CAROUSEL */
 
-@property --gh-ring-progress {
-  syntax: "<percentage>";
-  inherits: false;
-  initial-value: 0%;
+#game-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 850px;
+  margin: 20px auto;
 }
 
-.game-progress-ring {
-  --gh-ring-progress: 0%;
-
-  position: relative;
-  background: conic-gradient(
-    from -90deg,
-    #ffd16a 0%,
-    #ff9b14 var(--gh-ring-progress),
-    #ff6500 var(--gh-ring-progress),
-    #292018 var(--gh-ring-progress),
-    #292018 100%
-  );
-
-  animation: ghRingFill 1.6s cubic-bezier(.2,.8,.2,1) forwards;
-
-  box-shadow:
-    0 0 12px rgba(255,120,0,.35),
-    0 0 24px rgba(255,120,0,.12);
+.showcase-card {
+  overflow: hidden;
+  padding: 0;
+  animation: featuredFade 0.5s ease;
 }
 
-@keyframes ghRingFill {
+.showcase-art {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #17120d;
+}
+
+.showcase-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  font-size: 65px;
+  background: rgba(255, 155, 20, 0.08);
+}
+
+.showcase-info {
+  padding: 20px;
+}
+
+.showcase-info h3 {
+  margin: 10px 0;
+}
+
+.showcase-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.showcase-controls button {
+  background: rgba(255, 155, 20, 0.15);
+  color: #ffb347;
+  border: 1px solid #ff9b14;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.showcase-controls button:hover {
+  background: #ff9b14;
+  color: #08090f;
+}
+
+.showcase-controls span {
+  color: #ffb347;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+@keyframes featuredFade {
   from {
-    --gh-ring-progress: 0%;
-    filter: brightness(1.5);
-  }
-
-  to {
-    --gh-ring-progress: var(--game-progress, 0%);
-    filter: brightness(1);
-  }
-}
-
-.game-ring-center {
-  position: relative;
-  z-index: 1;
-  background: #101010;
-  box-shadow: inset 0 0 12px rgba(255,155,20,.08);
-}
-
-.game-ring-center strong {
-  color: #ffd18a;
-  text-shadow: 0 0 9px rgba(255,155,20,.5);
-  animation: ghPercentageReveal 1s ease-out both;
-}
-
-@keyframes ghPercentageReveal {
-  from {
-    opacity: .3;
-    transform: scale(.75);
+    opacity: 0;
+    transform: translateY(8px);
   }
 
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
 }
-
-/* COMPLETED GAME CELEBRATION */
-
-.game-progress-ring[style*="100%"] {
-  box-shadow:
-    0 0 15px rgba(255,190,75,.5),
-    0 0 30px rgba(255,120,0,.25);
-}
-
-.game-progress-ring[style*="100%"] .game-ring-center strong {
-  color: #ffe3a3;
-  text-shadow:
-    0 0 8px #ffb52e,
-    0 0 18px rgba(255,155,20,.7);
-}
-
-/* RING HOVER EFFECT */
-
-.game-card:hover .game-progress-ring {
-  filter: brightness(1.15);
-  box-shadow:
-    0 0 18px rgba(255,155,20,.5),
-    0 0 30px rgba(255,100,0,.2);
-}
-
-/* MOBILE AND ACCESSIBILITY */
 
 @media (max-width: 500px) {
-  .game-progress-ring {
-    width: 62px;
-    height: 62px;
-    flex-basis: 62px;
+  .showcase-controls {
+    gap: 6px;
   }
 
-  .game-ring-center {
-    width: 49px;
-    height: 49px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .game-progress-ring,
-  .game-ring-center strong {
-    animation: none !important;
-  }
-
-  .game-progress-ring {
-    --gh-ring-progress: var(--game-progress, 0%);
+  .showcase-controls button {
+    padding: 9px 10px;
+    font-size: 12px;
   }
 }
