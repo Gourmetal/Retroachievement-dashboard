@@ -49,7 +49,7 @@ jobs:
           if not topic:
               raise RuntimeError("GitHub secret NTFY_TOPIC is missing.")
 
-          # Load game artwork.
+          # Load artwork already stored in Gourme Hub.
           game_art = {}
 
           if games_path.exists():
@@ -69,9 +69,68 @@ jobs:
                               )
 
               except (json.JSONDecodeError, AttributeError, TypeError):
-                  print("Could not read game artwork library.")
+                  print("Could not read local artwork library.")
 
           print(f"Loaded artwork for {len(game_art)} games.")
+
+          # Cache API lookups during this workflow run.
+          artwork_lookup_cache = {}
+
+          def get_game_artwork(game_id):
+              game_id = str(game_id)
+
+              if game_id in artwork_lookup_cache:
+                  return artwork_lookup_cache[game_id]
+
+              params = urllib.parse.urlencode({
+                  "i": game_id,
+                  "y": api_key
+              })
+
+              url = (
+                  "https://retroachievements.org/API/"
+                  "API_GetGame.php?" + params
+              )
+
+              request = urllib.request.Request(
+                  url,
+                  headers={"User-Agent": "GourmeHub/3.0"}
+              )
+
+              try:
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      game_data = json.loads(
+                          response.read().decode("utf-8")
+                      )
+
+                  # Prefer official box art.
+                  image = (
+                      game_data.get("ImageBoxArt")
+                      or game_data.get("ImageIcon")
+                      or game_data.get("GameIcon")
+                  )
+
+                  if image and image.startswith("/"):
+                      image = "https://retroachievements.org" + image
+
+                  if image and not image.startswith("https://"):
+                      image = None
+
+                  artwork_lookup_cache[game_id] = image
+
+                  if image:
+                      print(f"Found official artwork for game ID {game_id}.")
+                  else:
+                      print(f"No official artwork available for game ID {game_id}.")
+
+                  return image
+
+              except Exception as error:
+                  print(
+                      f"Artwork lookup failed for game ID {game_id}: {error}"
+                  )
+                  artwork_lookup_cache[game_id] = None
+                  return None
 
           def get_recent():
               params = urllib.parse.urlencode({
@@ -148,14 +207,19 @@ jobs:
                   "Tags": "trophy,video_game"
               }
 
-              # Use matching game artwork.
+              # First try the local artwork library.
               artwork = game_art.get(str(game_id)) if game_id else None
+
+              # If missing, request artwork directly from RetroAchievements.
+              if not artwork and game_id:
+                  print(f"Local artwork missing for {game}.")
+                  artwork = get_game_artwork(game_id)
 
               if artwork:
                   headers["Icon"] = artwork
-                  print(f"Using game artwork for: {game}")
+                  print(f"Using artwork for: {game}")
               else:
-                  print(f"No game artwork found for: {game}")
+                  print(f"Sending notification without artwork for: {game}")
 
               encoded_topic = urllib.parse.quote(topic, safe="")
               url = f"https://ntfy.sh/{encoded_topic}"
@@ -255,3 +319,4 @@ jobs:
           git add data/notified-achievements.json
           git diff --cached --quiet || git commit -m "Track phone achievement notifications"
           git push
+          
