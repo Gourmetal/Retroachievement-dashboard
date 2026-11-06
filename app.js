@@ -1,5 +1,9 @@
+
 let games = [];
 let activeFilter = "all";
+
+let featuredIndex = 0;
+let featuredTimer = null;
 
 const gamesContainer = document.getElementById("games-container");
 const searchInput = document.getElementById("game-search");
@@ -199,17 +203,19 @@ function renderRecentAchievements() {
   `).join("");
 }
 
-/* FEATURED GAME SHOWCASE */
+/* FEATURED GAMES CAROUSEL */
+
+function getFeaturedGames() {
+  return [...games].sort((a, b) =>
+    (Number(b.progress) || 0) - (Number(a.progress) || 0)
+  );
+}
 
 function renderShowcase() {
   const container = document.getElementById("game-showcase");
   if (!container) return;
 
-  const featured = [...games]
-    .sort((a, b) =>
-      (Number(b.progress) || 0) - (Number(a.progress) || 0)
-    )
-    .slice(0, 4);
+  const featured = getFeaturedGames();
 
   if (!featured.length) {
     container.innerHTML =
@@ -217,43 +223,103 @@ function renderShowcase() {
     return;
   }
 
-  container.innerHTML = featured.map(game => {
-    const art = game.steamGridDB || {};
+  featuredIndex = featuredIndex % featured.length;
 
-    const image = safeImage(art.hero) ||
-      safeImage(art.grid) ||
-      safeImage(game.boxArt);
+  const game = featured[featuredIndex];
+  const art = game.steamGridDB || {};
 
-    const logo = safeImage(art.logo);
+  const image = safeImage(art.hero) ||
+    safeImage(art.grid) ||
+    safeImage(game.boxArt);
 
-    const progress = Math.max(
-      0,
-      Math.min(100, Number(game.progress) || 0)
-    );
+  const logo = safeImage(art.logo);
 
-    return `
-      <article class="game-card showcase-card">
-        ${image ? `
-          <img class="showcase-art"
-               src="${escapeHTML(image)}"
-               alt="${escapeHTML(game.title)} artwork"
-               loading="lazy">
+  const progress = Math.max(
+    0,
+    Math.min(100, Number(game.progress) || 0)
+  );
+
+  container.innerHTML = `
+    <article class="game-card showcase-card">
+      ${image ? `
+        <img class="showcase-art"
+             src="${escapeHTML(image)}"
+             alt="${escapeHTML(game.title)} artwork">
+      ` : `
+        <div class="showcase-placeholder">🎮</div>
+      `}
+
+      <div class="showcase-info">
+        ${logo ? `
+          <img class="showcase-logo"
+               src="${escapeHTML(logo)}"
+               alt="${escapeHTML(game.title)} logo">
         ` : ""}
 
-        <div class="showcase-info">
-          ${logo ? `
-            <img class="showcase-logo"
-                 src="${escapeHTML(logo)}"
-                 alt="${escapeHTML(game.title)} logo"
-                 loading="lazy">
-          ` : ""}
+        <h3>${escapeHTML(game.title)}</h3>
 
-          <h3>${escapeHTML(game.title)}</h3>
-          <p class="game-meta">${progress}% complete</p>
+        <p class="game-meta">
+          ${escapeHTML(game.console || "")}
+        </p>
+
+        <p class="game-meta">
+          ${Number(game.earned) || 0} /
+          ${Number(game.total) || 0} achievements earned
+        </p>
+
+        <div class="progress-track">
+          <div class="progress-fill"
+               style="width:${progress}%"></div>
         </div>
-      </article>
-    `;
-  }).join("");
+
+        <p class="game-meta">${progress}% complete</p>
+
+        <div class="showcase-controls">
+          <button id="featured-prev" type="button">
+            ❮ Previous
+          </button>
+
+          <span>
+            ${featuredIndex + 1} / ${featured.length}
+          </span>
+
+          <button id="featured-next" type="button">
+            Next ❯
+          </button>
+        </div>
+      </div>
+    </article>
+  `;
+
+  document.getElementById("featured-prev").onclick = () => {
+    featuredIndex =
+      (featuredIndex - 1 + featured.length) % featured.length;
+
+    renderShowcase();
+    restartFeaturedTimer();
+  };
+
+  document.getElementById("featured-next").onclick = () => {
+    featuredIndex =
+      (featuredIndex + 1) % featured.length;
+
+    renderShowcase();
+    restartFeaturedTimer();
+  };
+}
+
+function restartFeaturedTimer() {
+  clearInterval(featuredTimer);
+
+  if (getFeaturedGames().length <= 1) return;
+
+  featuredTimer = setInterval(() => {
+    const featured = getFeaturedGames();
+
+    featuredIndex = (featuredIndex + 1) % featured.length;
+
+    renderShowcase();
+  }, 5000);
 }
 
 /* GAME LIBRARY */
@@ -462,6 +528,7 @@ async function loadDashboard() {
     renderProgress(earned, total);
     renderRecentAchievements();
     renderShowcase();
+    restartFeaturedTimer();
     renderGames();
 
   } catch (error) {
