@@ -740,4 +740,4 @@ def get_all_artwork(games):
     print(f"Verified North American spines found: {found_spines}")
 
     return games
-            
+        
