@@ -40,6 +40,10 @@ jobs:
           sgdb_root = "https://www.steamgriddb.com/api/v2"
           launchbox_root = "https://gamesdb.launchbox-app.com"
 
+          # =========================================
+          # GENERAL API REQUESTS
+          # =========================================
+
           def get_json(url, headers=None):
               request_headers = {
                   "User-Agent": "Gourmetal-Dashboard/1.0",
@@ -75,6 +79,7 @@ jobs:
           def ra_data(endpoint, params):
               params["y"] = ra_key
               query = urllib.parse.urlencode(params)
+
               return get_json(
                   f"{ra_root}/API/{endpoint}?{query}"
               )
@@ -91,15 +96,19 @@ jobs:
               print("WARNING: SGDB_API_KEY secret is missing.")
           else:
               print("Testing SteamGridDB API connection...")
-              test = sgdb_data("search/autocomplete/Zelda")
+
+              test = sgdb_data(
+                  "search/autocomplete/Zelda"
+              )
+
               print(
                   "SteamGridDB connection successful. "
                   f"Search returned {len(test.get('data') or [])} results."
               )
 
-          # -----------------------------------------
+          # =========================================
           # STEAMGRIDDB ARTWORK CACHE
-          # -----------------------------------------
+          # =========================================
 
           cache_path = "data/steamgriddb-cache.json"
 
@@ -145,7 +154,10 @@ jobs:
                           "Goodboy Galaxy"
                   }
 
-                  search_title = search_names.get(title, title)
+                  search_title = search_names.get(
+                      title, title
+                  )
+
                   search_term = urllib.parse.quote(
                       search_title, safe=""
                   )
@@ -165,7 +177,9 @@ jobs:
                   sgdb_id = matches[0].get("id")
 
                   if not sgdb_id:
-                      print(f"No SteamGridDB game ID: {search_title}")
+                      print(
+                          f"No SteamGridDB game ID: {search_title}"
+                      )
                       return artwork
 
                   artwork["gameId"] = sgdb_id
@@ -204,7 +218,9 @@ jobs:
                   if has_artwork(artwork):
                       artwork_cache[title] = artwork
                   else:
-                      print(f"No artwork assets found for {title}")
+                      print(
+                          f"No artwork assets found for {title}"
+                      )
 
               except Exception as error:
                   print(
@@ -215,14 +231,16 @@ jobs:
               time.sleep(0.3)
               return artwork
 
-          # -----------------------------------------
-          # LAUNCHBOX NORTH AMERICAN SPINE LOOKUP
-          # -----------------------------------------
+          # =========================================
+          # LAUNCHBOX NORTH AMERICAN SPINE CACHE
+          # =========================================
 
           spine_cache_path = "data/launchbox-spine-cache.json"
 
           try:
-              with open(spine_cache_path, encoding="utf-8") as file:
+              with open(
+                  spine_cache_path, encoding="utf-8"
+              ) as file:
                   launchbox_spine_cache = json.load(file)
           except (FileNotFoundError, json.JSONDecodeError):
               launchbox_spine_cache = {}
@@ -244,10 +262,15 @@ jobs:
                       self.current_text.append(data)
 
               def handle_endtag(self, tag):
-                  if tag.lower() == "a" and self.current_href is not None:
+                  if (
+                      tag.lower() == "a"
+                      and self.current_href is not None
+                  ):
                       self.links.append((
                           self.current_href,
-                          " ".join(" ".join(self.current_text).split())
+                          " ".join(
+                              " ".join(self.current_text).split()
+                          )
                       ))
 
                       self.current_href = None
@@ -284,7 +307,9 @@ jobs:
               )
 
               try:
-                  search_html = get_launchbox_page(search_url)
+                  search_html = get_launchbox_page(
+                      search_url
+                  )
 
                   search_parser = LaunchBoxLinkParser()
                   search_parser.feed(search_html)
@@ -318,6 +343,7 @@ jobs:
                           if href not in candidates:
                               candidates.append(href)
 
+                  # Inspect possible matching game pages.
                   for detail_url in candidates[:8]:
                       try:
                           detail_html = get_launchbox_page(
@@ -330,7 +356,7 @@ jobs:
                           for href, link_text in detail_parser.links:
                               label = link_text.lower()
 
-                              # Strictly North American spine images only.
+                              # ONLY North American box spines.
                               if "box - spine" not in label:
                                   continue
 
@@ -342,6 +368,7 @@ jobs:
 
                               if href.startswith("//"):
                                   href = "https:" + href
+
                               elif href.startswith("/"):
                                   href = launchbox_root + href
 
@@ -375,16 +402,17 @@ jobs:
                       f"{type(error).__name__}: {error}"
                   )
 
-              # Do not cache missing results. Future runs can retry.
+              # Do not cache missing results.
+              # This allows future workflow runs to retry.
               print(
                   f"No North American LaunchBox spine found: {title}"
               )
 
               return ""
 
-          # -----------------------------------------
+          # =========================================
           # RETROACHIEVEMENTS PLAYER PROFILE
-          # -----------------------------------------
+          # =========================================
 
           profile_data = ra_data(
               "API_GetUserSummary.php",
@@ -410,9 +438,9 @@ jobs:
               "truePoints": profile_data.get("TotalTruePoints", 0)
           }
 
-          # -----------------------------------------
+          # =========================================
           # LOAD ALL GAMES
-          # -----------------------------------------
+          # =========================================
 
           all_games = []
           offset = 0
@@ -462,9 +490,9 @@ jobs:
                   )
               })
 
-          # -----------------------------------------
-          # LOAD GAME DETAILS, ACHIEVEMENTS AND ART
-          # -----------------------------------------
+          # =========================================
+          # GAME DETAILS, ACHIEVEMENTS AND ARTWORK
+          # =========================================
 
           for game in games:
               game_id = game.get("gameId")
@@ -551,10 +579,12 @@ jobs:
                   game["achievements"] = []
                   game["boxArt"] = ""
 
+              # Keep existing SteamGridDB artwork.
               game["steamGridDB"] = get_artwork(
                   game["title"]
               )
 
+              # Add North American LaunchBox spine.
               game["launchBoxSpine"] = get_launchbox_spine(
                   game["title"],
                   game.get("console", "")
@@ -562,9 +592,9 @@ jobs:
 
               time.sleep(0.5)
 
-          # -----------------------------------------
+          # =========================================
           # SORT GAMES AND BUILD DASHBOARD DATA
-          # -----------------------------------------
+          # =========================================
 
           games.sort(
               key=lambda game: game["title"].lower()
@@ -576,29 +606,4 @@ jobs:
               "lastUpdated": datetime.now(
                   timezone.utc
               ).isoformat(),
-              "games": games,
-              "recentAchievements": [],
-              "stats": {
-                  "gamesPlayed": len(games),
-                  "achievementsEarned": sum(
-                      game["earned"] for game in games
-                  ),
-                  "achievementsTotal": sum(
-                      game["total"] for game in games
-                  )
-              }
-          }
-
-          os.makedirs("data", exist_ok=True)
-
-          with open(
-              "data/games.json", "w", encoding="utf-8"
-          ) as file:
-              json.dump(
-                  output,
-                  file,
-                  indent=2,
-                  ensure_ascii=False
-              )
-
- 
+  
