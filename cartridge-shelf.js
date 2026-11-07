@@ -1,7 +1,7 @@
+
 /* =========================================
    GOURME HUB — GAMEPLAY VIDEO GALLERY
-   Replaces the Virtual Cartridge Shelf.
-   Keeps the existing game data untouched.
+   Muted autoplay, with player controls.
    ========================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -33,12 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getArtwork(game) {
     const artwork = game.steamGridDB || {};
-
-    const candidates = [
-      artwork.hero,
-      artwork.grid,
-      game.boxArt
-    ];
+    const candidates = [artwork.hero, artwork.grid, game.boxArt];
 
     return candidates.find(url =>
       typeof url === "string" &&
@@ -47,27 +42,20 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function getProgress(game) {
-    return Math.max(
-      0,
-      Math.min(100, Number(game.progress) || 0)
-    );
+    return Math.max(0, Math.min(100, Number(game.progress) || 0));
   }
 
   function getStatus(game) {
     const progress = getProgress(game);
-
     if (progress >= 100) return "completed";
     if (progress > 0) return "in-progress";
-
     return "not-started";
   }
 
   function getStatusLabel(game) {
     const status = getStatus(game);
-
     if (status === "completed") return "Completed";
     if (status === "in-progress") return "In progress";
-
     return "Not started";
   }
 
@@ -82,9 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
       encodeURIComponent(query);
   }
 
-  /* =======================================
-     VIDEO POPUP
-     ======================================= */
+  /* VIDEO POPUP */
 
   const modal = document.createElement("div");
   modal.id = "gh-video-modal";
@@ -97,12 +83,9 @@ document.addEventListener("DOMContentLoaded", () => {
       aria-modal="true"
       aria-labelledby="gh-video-title">
 
-      <button
-        type="button"
+      <button type="button"
         class="gh-video-close"
-        aria-label="Close video preview">
-        ×
-      </button>
+        aria-label="Close video preview">×</button>
 
       <div id="gh-video-content"></div>
     </div>
@@ -118,12 +101,8 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.setAttribute("aria-hidden", "true");
     document.body.style.overflow = "";
 
-    // Stop video playback when the popup closes.
     const frame = modal.querySelector("iframe");
-
-    if (frame) {
-      frame.src = "about:blank";
-    }
+    if (frame) frame.src = "about:blank";
   }
 
   function openVideo(game) {
@@ -139,10 +118,14 @@ document.addEventListener("DOMContentLoaded", () => {
     let videoMarkup = "";
 
     if (/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+      const embedURL =
+        `https://www.youtube-nocookie.com/embed/${videoId}` +
+        "?autoplay=1&mute=1&controls=1&playsinline=1&rel=0";
+
       videoMarkup = `
         <div class="gh-video-player">
           <iframe
-            src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0"
+            src="${embedURL}"
             title="${escapeHTML(game.title)} gameplay video"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowfullscreen
@@ -153,6 +136,10 @@ document.addEventListener("DOMContentLoaded", () => {
         <p class="gh-video-source">
           ${escapeHTML(info.label || "Gameplay video")}
         </p>
+
+        <p class="gh-video-muted-note">
+          Video starts muted. Use the player controls to turn sound on.
+        </p>
       `;
     } else {
       const query = info.search || `${game.title} gameplay`;
@@ -162,15 +149,14 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="gh-video-search-preview">
           <div class="gh-video-search-icon">▶</div>
 
-          <h3>Find gameplay for this game</h3>
+          <h3>Video coming soon</h3>
 
           <p>
-            Open YouTube results for gameplay videos,
-            walkthroughs, and full-game longplays.
+            A verified video ID has not been added for this game yet.
+            You can still search for gameplay videos.
           </p>
 
-          <a
-            class="gh-video-watch-button"
+          <a class="gh-video-watch-button"
             href="${escapeHTML(searchURL)}"
             target="_blank"
             rel="noopener noreferrer">
@@ -184,29 +170,18 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="gh-video-heading">
         ${
           image
-            ? `
-              <img
-                class="gh-video-game-art"
+            ? `<img class="gh-video-game-art"
                 src="${escapeHTML(image)}"
-                alt="${escapeHTML(game.title)} artwork">
-            `
-            : `
-              <div class="gh-video-game-art gh-video-art-fallback">
-                🎮
-              </div>
-            `
+                alt="${escapeHTML(game.title)} artwork">`
+            : `<div class="gh-video-game-art gh-video-art-fallback">🎮</div>`
         }
 
         <div class="gh-video-game-info">
           <p class="gh-video-eyebrow">GOURME HUB GAMEPLAY</p>
 
-          <h2 id="gh-video-title">
-            ${escapeHTML(game.title)}
-          </h2>
+          <h2 id="gh-video-title">${escapeHTML(game.title)}</h2>
 
-          <p>
-            ${escapeHTML(game.console || "Game console unavailable")}
-          </p>
+          <p>${escapeHTML(game.console || "Game console unavailable")}</p>
 
           <p class="gh-video-progress-text">
             ${earned} / ${total} achievements · ${progress}% complete
@@ -225,18 +200,16 @@ document.addEventListener("DOMContentLoaded", () => {
       </p>
     `;
 
-    const artworkImage = modalContent.querySelector(
-      ".gh-video-game-art img"
-    );
+    const artworkImage =
+      modalContent.querySelector("img.gh-video-game-art");
 
     if (artworkImage) {
       artworkImage.addEventListener("error", () => {
-        artworkImage.replaceWith(
-          Object.assign(document.createElement("div"), {
-            className: "gh-video-game-art gh-video-art-fallback",
-            textContent: "🎮"
-          })
-        );
+        const fallback = document.createElement("div");
+        fallback.className =
+          "gh-video-game-art gh-video-art-fallback";
+        fallback.textContent = "🎮";
+        artworkImage.replaceWith(fallback);
       }, { once: true });
     }
 
@@ -249,23 +222,16 @@ document.addEventListener("DOMContentLoaded", () => {
   closeButton.addEventListener("click", closeVideo);
 
   modal.addEventListener("click", event => {
-    if (event.target === modal) {
-      closeVideo();
-    }
+    if (event.target === modal) closeVideo();
   });
 
   document.addEventListener("keydown", event => {
-    if (
-      event.key === "Escape" &&
-      modal.classList.contains("open")
-    ) {
+    if (event.key === "Escape" && modal.classList.contains("open")) {
       closeVideo();
     }
   });
 
-  /* =======================================
-     GAME GALLERY CARDS
-     ======================================= */
+  /* GAME CARDS */
 
   function createGameCard(game, index) {
     const title = String(game.title || "Unknown Game");
@@ -276,25 +242,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const total = Number(game.total) || 0;
 
     const imageMarkup = image
-      ? `
-        <img
-          class="gh-gallery-art"
+      ? `<img class="gh-gallery-art"
           src="${escapeHTML(image)}"
           alt="${escapeHTML(title)} cover artwork"
-          loading="lazy">
-      `
-      : `
-        <div class="gh-gallery-art gh-gallery-art-fallback">
-          🎮
-        </div>
-      `;
+          loading="lazy">`
+      : `<div class="gh-gallery-art gh-gallery-art-fallback">🎮</div>`;
 
     return `
-      <button
-        type="button"
+      <button type="button"
         class="gh-gallery-card ${status}"
         data-game-index="${index}"
-        aria-label="Watch or find gameplay for ${escapeHTML(title)}">
+        aria-label="Open gameplay preview for ${escapeHTML(title)}">
 
         <span class="gh-gallery-image-wrap">
           ${imageMarkup}
@@ -333,9 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
       gallery.innerHTML = `
         <p class="gh-cartridge-empty">
           Your games will appear here when the library loads.
-        </p>
-      `;
-
+        </p>`;
       if (count) count.textContent = "0 Games";
       return;
     }
@@ -344,9 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
       ? search.value.trim().toLowerCase()
       : "";
 
-    const selectedFilter = filter
-      ? filter.value
-      : "all";
+    const selectedFilter = filter ? filter.value : "all";
 
     const visibleGames = allGames.filter(game => {
       const title = String(game.title || "").toLowerCase();
@@ -374,56 +328,41 @@ document.addEventListener("DOMContentLoaded", () => {
       gallery.innerHTML = `
         <p class="gh-cartridge-empty">
           No games match your search.
-        </p>
-      `;
+        </p>`;
       return;
     }
 
     gallery.innerHTML = `
       <div class="gh-video-gallery-grid">
-        ${visibleGames.map(game => {
-          const originalIndex = allGames.indexOf(game);
-          return createGameCard(game, originalIndex);
-        }).join("")}
+        ${visibleGames.map(game =>
+          createGameCard(game, allGames.indexOf(game))
+        ).join("")}
       </div>
     `;
 
     gallery.querySelectorAll(".gh-gallery-art").forEach(image => {
       image.addEventListener("error", () => {
         const fallback = document.createElement("div");
-
         fallback.className =
           "gh-gallery-art gh-gallery-art-fallback";
-
         fallback.textContent = "🎮";
         image.replaceWith(fallback);
       }, { once: true });
     });
   }
 
-  /* =======================================
-     CLICK HANDLING
-     ======================================= */
-
   gallery.addEventListener("click", event => {
     const card = event.target.closest(".gh-gallery-card");
-
     if (!card || !gallery.contains(card)) return;
 
     const index = Number(card.dataset.gameIndex);
-
     if (!Number.isInteger(index)) return;
 
     const selectedGame = getGames()[index];
-
-    if (selectedGame) {
-      openVideo(selectedGame);
-    }
+    if (selectedGame) openVideo(selectedGame);
   });
 
-  /* =======================================
-     LOAD VIDEO DATA
-     ======================================= */
+  /* LOAD VIDEO DATA */
 
   async function loadVideoData() {
     try {
@@ -437,11 +376,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const data = await response.json();
 
-      if (
-        data &&
-        typeof data === "object" &&
-        !Array.isArray(data)
-      ) {
+      if (data && typeof data === "object" && !Array.isArray(data)) {
         videoData = data;
       }
     } catch (error) {
@@ -454,20 +389,11 @@ document.addEventListener("DOMContentLoaded", () => {
     renderGallery();
   }
 
-  if (search) {
-    search.addEventListener("input", renderGallery);
-  }
+  if (search) search.addEventListener("input", renderGallery);
+  if (filter) filter.addEventListener("change", renderGallery);
 
-  if (filter) {
-    filter.addEventListener("change", renderGallery);
-  }
-
-  // Re-render when the main game library finishes loading.
   if (gameLibrary) {
-    const observer = new MutationObserver(() => {
-      renderGallery();
-    });
-
+    const observer = new MutationObserver(renderGallery);
     observer.observe(gameLibrary, {
       childList: true,
       subtree: true
