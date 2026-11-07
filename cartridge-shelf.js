@@ -1,7 +1,7 @@
 
 /* =========================================
    GOURME HUB — GAMEPLAY VIDEO GALLERY
-   Automatic Internet Archive video search
+   GBASnaps-only Internet Archive search
    Muted autoplay with player controls
    ========================================= */
 
@@ -92,11 +92,12 @@ document.addEventListener("DOMContentLoaded", () => {
   /*
    * AUTOMATIC INTERNET ARCHIVE SEARCH
    *
-   * Searches Archive.org beyond the gbasnaps
-   * collection and checks matching item files.
+   * Searches ONLY the GBASnaps collection.
+   * Rejects results whose titles don't match
+   * the requested game.
    */
 
-  async function searchArchive(query, rows = 30) {
+  async function searchArchive(query, rows = 50) {
     const params = new URLSearchParams();
 
     params.append("q", query);
@@ -128,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "full", "gameplay", "longplay", "walkthrough",
       "playthrough", "video", "game", "usa", "europe",
       "japan", "gba", "gbc", "gb", "gameboy",
-      "game", "boy", "advance", "version"
+      "boy", "advance", "version"
     ]);
 
     const titleWords = normalized
@@ -156,16 +157,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return documents.map(doc => {
       const candidate = normalizeTitle(doc.title);
+
       const exact = candidate === terms.normalized ? 100 : 0;
 
       const contains =
-        candidate.includes(terms.normalized) ||
-        terms.normalized.includes(candidate)
+        candidate.includes(terms.normalized)
           ? 35
           : 0;
 
       const matchedWords = wantedWords.filter(word =>
-        candidate.includes(word)
+        candidate.split(" ").includes(word)
       ).length;
 
       return {
@@ -200,8 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!usableVideos.length) return null;
 
-    // Prefer the largest original MP4, which is more likely
-    // to be the complete gameplay video.
+    // Prefer the largest original MP4.
     usableVideos.sort((a, b) =>
       (Number(b.size) || 0) - (Number(a.size) || 0)
     );
@@ -216,29 +216,36 @@ document.addEventListener("DOMContentLoaded", () => {
       return null;
     }
 
+    const collection = "collection:gbasnaps";
+    const mediaType = "mediatype:movies";
+
     const queries = [];
 
-    // First try the full game title.
+    // First try the complete game title.
     queries.push(
-      `mediatype:movies AND title:"${terms.title.replace(/["\\]/g, " ")}"`
+      `${collection} AND ${mediaType} AND title:"${terms.title.replace(/["\\]/g, " ")}"`
     );
 
-    // Then try a broader title-word search.
+    // Then try all meaningful game-title words.
     const broadTitle = terms.titleWords
       .map(word => `title:${word}`)
       .join(" AND ");
 
     if (broadTitle) {
-      queries.push(`mediatype:movies AND ${broadTitle}`);
+      queries.push(
+        `${collection} AND ${mediaType} AND ${broadTitle}`
+      );
     }
 
-    // Finally try the custom search terms from game-videos.json.
+    // Custom search terms remain restricted to GBASnaps.
     const customTitle = terms.customWords
       .map(word => `title:${word}`)
       .join(" AND ");
 
     if (customTitle && customTitle !== broadTitle) {
-      queries.push(`mediatype:movies AND ${customTitle}`);
+      queries.push(
+        `${collection} AND ${mediaType} AND ${customTitle}`
+      );
     }
 
     const allDocuments = new Map();
@@ -253,11 +260,10 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         });
 
-        // Stop searching once we have a useful group of candidates.
-        if (allDocuments.size >= 30) break;
+        if (allDocuments.size >= 50) break;
 
       } catch (error) {
-        console.warn("Archive search attempt failed:", error);
+        console.warn("GBASnaps search attempt failed:", error);
       }
     }
 
@@ -268,12 +274,14 @@ document.addEventListener("DOMContentLoaded", () => {
       terms
     );
 
+    const requiredMatches = Math.min(2, terms.titleWords.length);
+
     for (const match of ranked) {
-      // Require at least two meaningful matching words,
-      // unless the result is an exact or near-exact title.
+      // Require the actual game title words to match.
+      // Never accept a random video based on a weak match.
       if (
-        match.score < 35 &&
-        match.matchedWords < Math.min(2, terms.titleWords.length)
+        match.matchedWords < requiredMatches ||
+        match.score < 35
       ) {
         continue;
       }
@@ -409,7 +417,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <h3>Finding gameplay video…</h3>
 
         <p>
-          Searching Internet Archive for a matching video.
+          Searching the GBASnaps collection for a matching game video.
         </p>
 
       </div>
@@ -503,29 +511,27 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
       } else {
-        const query = `${game.title} GBA gameplay`;
-
         modalContent.innerHTML = heading + `
 
           <div class="gh-video-search-preview">
 
             <div class="gh-video-search-icon">▶</div>
 
-            <h3>No matching Archive video found</h3>
+            <h3>No matching GBASnaps video found</h3>
 
             <p>
-              We couldn't find a confident matching MP4 on
-              Internet Archive. No unrelated clip was selected.
+              We couldn't find a matching MP4 in the GBASnaps collection.
+              No unrelated video was selected.
             </p>
 
             <a class="gh-video-watch-button"
               href="https://archive.org/search?query=${encodeURIComponent(
-                `${game.title} AND mediatype:movies`
+                "collection:gbasnaps AND " + game.title
               )}"
               target="_blank"
               rel="noopener noreferrer">
 
-              Search Internet Archive ↗
+              Search GBASnaps ↗
 
             </a>
 
@@ -539,7 +545,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (error) {
       console.warn(
-        "Gourme Hub: Internet Archive lookup failed.",
+        "Gourme Hub: GBASnaps lookup failed.",
         error
       );
 
@@ -792,4 +798,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadVideoData();
 });
-                                      
+         
