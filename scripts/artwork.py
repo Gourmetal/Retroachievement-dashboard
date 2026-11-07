@@ -103,16 +103,21 @@ def get_steamgriddb_artwork(title, cache, api_key):
                     f"{endpoint}/game/{game_id}",
                     api_key
                 )
+
                 images = result.get("data", [])
 
                 if images:
                     artwork[key] = images[0].get("url", "")
 
             except Exception as error:
-                print(f"SteamGridDB {key} lookup failed for {title}: {error}")
+                print(
+                    f"SteamGridDB {key} lookup failed "
+                    f"for {title}: {error}"
+                )
 
         cache[title] = artwork
         time.sleep(0.3)
+
         return artwork
 
     except Exception as error:
@@ -143,6 +148,7 @@ class LaunchBoxLinkParser(HTMLParser):
                 self.current_href,
                 " ".join(self.current_text).strip()
             ))
+
             self.current_href = None
             self.current_text = []
 
@@ -164,7 +170,7 @@ def absolute_launchbox_url(url):
     if not url:
         return ""
 
-    if url.startswith("http://") or url.startswith("https://"):
+    if url.startswith(("http://", "https://")):
         return url
 
     return urllib.parse.urljoin(LAUNCHBOX_ROOT, url)
@@ -175,12 +181,14 @@ def get_launchbox_spine(title, cache):
         return cache[title]
 
     try:
+        # Corrected LaunchBox search URL.
         search_url = (
-            f"{LAUNCHBOX_ROOT}/games/results?id="
+            f"{LAUNCHBOX_ROOT}/games/results/?title="
             + urllib.parse.quote(title)
         )
 
         search_html = get_launchbox_html(search_url)
+
         search_parser = LaunchBoxLinkParser()
         search_parser.feed(search_html)
 
@@ -208,13 +216,14 @@ def get_launchbox_spine(title, cache):
         for detail_url in candidates[:8]:
             try:
                 detail_html = get_launchbox_html(detail_url)
+
                 detail_parser = LaunchBoxLinkParser()
                 detail_parser.feed(detail_html)
 
                 for href, label in detail_parser.links:
                     label = label.lower()
 
-                    # Strict North American spine filter.
+                    # Only accept North American box spines.
                     if "box - spine" not in label:
                         continue
 
@@ -223,18 +232,27 @@ def get_launchbox_spine(title, cache):
 
                     image_url = absolute_launchbox_url(href)
 
-                    if not image_url.startswith((
+                    allowed_hosts = (
                         "https://images.launchbox-app.com/",
                         "https://gamesdb-images.launchbox.gg/"
-                    )):
+                    )
+
+                    if not image_url.startswith(allowed_hosts):
                         continue
 
                     cache[title] = image_url
-                    print(f"Found North American spine: {title}")
+
+                    print(
+                        f"Found North American spine: {title}"
+                    )
+
                     return image_url
 
             except Exception as error:
-                print(f"LaunchBox detail lookup failed: {error}")
+                print(
+                    f"LaunchBox detail lookup failed "
+                    f"for {title}: {error}"
+                )
 
         print(f"No North American spine found for: {title}")
         return ""
@@ -275,4 +293,4 @@ def get_all_artwork(games):
     save_cache(spine_cache_path, spine_cache)
 
     return games
-      
+        
