@@ -1,39 +1,19 @@
-
 /* =========================================
-   GOURME HUB — REAL GAME CASE SHELVES
-   Manual spines first
-   LaunchBox North American spines second
-   SteamGridDB / RetroAchievements fallback
+   GOURME HUB — GAMEPLAY VIDEO GALLERY
+   Replaces the Virtual Cartridge Shelf.
+   Keeps the existing game data untouched.
    ========================================= */
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const shelf = document.getElementById("gh-cartridge-grid");
+document.addEventListener("DOMContentLoaded", () => {
+  const gallery = document.getElementById("gh-cartridge-grid");
   const count = document.getElementById("gh-cartridge-count");
   const search = document.getElementById("gh-cartridge-search");
   const filter = document.getElementById("gh-cartridge-filter");
   const gameLibrary = document.getElementById("games-container");
 
-  if (!shelf) return;
+  if (!gallery) return;
 
-  const CASES_PER_SHELF = 10;
-  let manualSpines = {};
-
-  // Load custom artwork from its own file.
-  // This file is separate from the automatic game-data updates.
-  try {
-    const response = await fetch("data/manual-spines.json", {
-      cache: "no-store"
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data && typeof data === "object" && !Array.isArray(data)) {
-        manualSpines = data;
-      }
-    }
-  } catch (error) {
-    console.warn("Gourme Hub: manual spine file could not be loaded.", error);
-  }
+  let videoData = {};
 
   function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, character => ({
@@ -45,76 +25,36 @@ document.addEventListener("DOMContentLoaded", async () => {
     })[character]);
   }
 
-  // Accept secure web URLs and safe repository-relative image paths.
-  function safeImage(url) {
-    const value = String(url || "").trim();
-
-    if (/^https:\/\/[^"'<>]+$/i.test(value)) {
-      return value;
-    }
-
-    if (
-      value &&
-      !value.startsWith("/") &&
-      !value.includes("..") &&
-      !/[\s"'<>\\]/.test(value) &&
-      /^[a-z0-9_./-]+\.(png|jpe?g|webp|gif)$/i.test(value)
-    ) {
-      return value;
-    }
-
-    return "";
-  }
-
-  function getDashboardGames() {
-    if (typeof games !== "undefined" && Array.isArray(games)) {
-      return games;
-    }
-
-    return [];
-  }
-
-  // Manual image wins, then LaunchBox, then the existing cover fallback.
-  function getSpine(game) {
-    const manualImage = safeImage(manualSpines[game.title]);
-
-    if (manualImage) {
-      return {
-        url: manualImage,
-        source: "manual"
-      };
-    }
-
-    const launchBoxImage = safeImage(game.launchBoxSpine);
-
-    if (launchBoxImage) {
-      return {
-        url: launchBoxImage,
-        source: "launchbox"
-      };
-    }
-
-    return {
-      url: "",
-      source: ""
-    };
+  function getGames() {
+    return typeof games !== "undefined" && Array.isArray(games)
+      ? games
+      : [];
   }
 
   function getArtwork(game) {
-    const sgdb = game.steamGridDB || {};
+    const artwork = game.steamGridDB || {};
 
-    return (
-      safeImage(sgdb.grid) ||
-      safeImage(game.boxArt) ||
-      ""
-    );
+    const candidates = [
+      artwork.hero,
+      artwork.grid,
+      game.boxArt
+    ];
+
+    return candidates.find(url =>
+      typeof url === "string" &&
+      /^https:\/\/[^"'<>]+$/i.test(url)
+    ) || "";
   }
 
-  function getGameStatus(game) {
-    const progress = Math.max(
+  function getProgress(game) {
+    return Math.max(
       0,
       Math.min(100, Number(game.progress) || 0)
     );
+  }
+
+  function getStatus(game) {
+    const progress = getProgress(game);
 
     if (progress >= 100) return "completed";
     if (progress > 0) return "in-progress";
@@ -122,141 +62,277 @@ document.addEventListener("DOMContentLoaded", async () => {
     return "not-started";
   }
 
-  function getConsoleShortName(consoleName) {
-    const name = String(consoleName || "").toLowerCase();
+  function getStatusLabel(game) {
+    const status = getStatus(game);
 
-    if (name.includes("game boy advance")) return "GBA";
-    if (name.includes("game boy color")) return "GBC";
-    if (name.includes("game boy")) return "GB";
-    if (name.includes("nintendo 64")) return "N64";
-    if (name.includes("super nintendo")) return "SNES";
-    if (name.includes("nes") || name.includes("nintendo entertainment")) return "NES";
-    if (name.includes("playstation 2")) return "PS2";
-    if (name.includes("playstation")) return "PS";
-    if (name.includes("genesis") || name.includes("mega drive")) return "GEN";
-    if (name.includes("dreamcast")) return "DC";
-    if (name.includes("arcade")) return "ARCADE";
+    if (status === "completed") return "Completed";
+    if (status === "in-progress") return "In progress";
 
-    return String(consoleName || "GAME").slice(0, 10).toUpperCase();
+    return "Not started";
   }
 
-  function getCaseClass(status) {
-    if (status === "completed") return "is-completed";
-    if (status === "in-progress") return "is-in-progress";
-
-    return "is-unstarted";
+  function getVideoInfo(game) {
+    return videoData[game.title] || {
+      search: `${game.title} gameplay longplay`
+    };
   }
 
-  function createCase(game, index) {
-    const title = String(game.title || "Unknown Game");
-    const consoleName = String(game.console || "Unknown Console");
-    const consoleShort = getConsoleShortName(consoleName);
+  function getSearchURL(query) {
+    return "https://www.youtube.com/results?search_query=" +
+      encodeURIComponent(query);
+  }
 
-    const spineData = getSpine(game);
-    const spine = spineData.url;
-    const artwork = getArtwork(game);
-    const hasSpine = Boolean(spine);
+  /* =======================================
+     VIDEO POPUP
+     ======================================= */
 
-    const status = getGameStatus(game);
+  const modal = document.createElement("div");
+  modal.id = "gh-video-modal";
+  modal.className = "gh-video-modal";
+  modal.setAttribute("aria-hidden", "true");
 
-    const progress = Math.max(
-      0,
-      Math.min(100, Number(game.progress) || 0)
+  modal.innerHTML = `
+    <div class="gh-video-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="gh-video-title">
+
+      <button
+        type="button"
+        class="gh-video-close"
+        aria-label="Close video preview">
+        ×
+      </button>
+
+      <div id="gh-video-content"></div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  const modalContent = modal.querySelector("#gh-video-content");
+  const closeButton = modal.querySelector(".gh-video-close");
+
+  function closeVideo() {
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+
+    // Stop video playback when the popup closes.
+    const frame = modal.querySelector("iframe");
+
+    if (frame) {
+      frame.src = "about:blank";
+    }
+  }
+
+  function openVideo(game) {
+    if (!game) return;
+
+    const info = getVideoInfo(game);
+    const videoId = String(info.videoId || "").trim();
+    const progress = getProgress(game);
+    const earned = Number(game.earned) || 0;
+    const total = Number(game.total) || 0;
+    const image = getArtwork(game);
+
+    let videoMarkup = "";
+
+    if (/^[A-Za-z0-9_-]{11}$/.test(videoId)) {
+      videoMarkup = `
+        <div class="gh-video-player">
+          <iframe
+            src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0"
+            title="${escapeHTML(game.title)} gameplay video"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+            loading="eager">
+          </iframe>
+        </div>
+
+        <p class="gh-video-source">
+          ${escapeHTML(info.label || "Gameplay video")}
+        </p>
+      `;
+    } else {
+      const query = info.search || `${game.title} gameplay`;
+      const searchURL = getSearchURL(query);
+
+      videoMarkup = `
+        <div class="gh-video-search-preview">
+          <div class="gh-video-search-icon">▶</div>
+
+          <h3>Find gameplay for this game</h3>
+
+          <p>
+            Open YouTube results for gameplay videos,
+            walkthroughs, and full-game longplays.
+          </p>
+
+          <a
+            class="gh-video-watch-button"
+            href="${escapeHTML(searchURL)}"
+            target="_blank"
+            rel="noopener noreferrer">
+            Search gameplay videos on YouTube ↗
+          </a>
+        </div>
+      `;
+    }
+
+    modalContent.innerHTML = `
+      <div class="gh-video-heading">
+        ${
+          image
+            ? `
+              <img
+                class="gh-video-game-art"
+                src="${escapeHTML(image)}"
+                alt="${escapeHTML(game.title)} artwork">
+            `
+            : `
+              <div class="gh-video-game-art gh-video-art-fallback">
+                🎮
+              </div>
+            `
+        }
+
+        <div class="gh-video-game-info">
+          <p class="gh-video-eyebrow">GOURME HUB GAMEPLAY</p>
+
+          <h2 id="gh-video-title">
+            ${escapeHTML(game.title)}
+          </h2>
+
+          <p>
+            ${escapeHTML(game.console || "Game console unavailable")}
+          </p>
+
+          <p class="gh-video-progress-text">
+            ${earned} / ${total} achievements · ${progress}% complete
+          </p>
+
+          <div class="gh-video-progress">
+            <span style="width:${progress}%"></span>
+          </div>
+        </div>
+      </div>
+
+      ${videoMarkup}
+
+      <p class="gh-video-footer">
+        ${escapeHTML(getStatusLabel(game))} · RetroAchievements collection
+      </p>
+    `;
+
+    const artworkImage = modalContent.querySelector(
+      ".gh-video-game-art img"
     );
 
+    if (artworkImage) {
+      artworkImage.addEventListener("error", () => {
+        artworkImage.replaceWith(
+          Object.assign(document.createElement("div"), {
+            className: "gh-video-game-art gh-video-art-fallback",
+            textContent: "🎮"
+          })
+        );
+      }, { once: true });
+    }
+
+    modal.classList.add("open");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    closeButton.focus();
+  }
+
+  closeButton.addEventListener("click", closeVideo);
+
+  modal.addEventListener("click", event => {
+    if (event.target === modal) {
+      closeVideo();
+    }
+  });
+
+  document.addEventListener("keydown", event => {
+    if (
+      event.key === "Escape" &&
+      modal.classList.contains("open")
+    ) {
+      closeVideo();
+    }
+  });
+
+  /* =======================================
+     GAME GALLERY CARDS
+     ======================================= */
+
+  function createGameCard(game, index) {
+    const title = String(game.title || "Unknown Game");
+    const image = getArtwork(game);
+    const progress = getProgress(game);
+    const status = getStatus(game);
     const earned = Number(game.earned) || 0;
     const total = Number(game.total) || 0;
 
-    const spineMarkup = hasSpine
+    const imageMarkup = image
       ? `
-        <span class="gh-case-launchbox-wrap">
-          <img
-            class="gh-case-launchbox-spine"
-            src="${escapeHTML(spine)}"
-            alt="${escapeHTML(title)} game case spine"
-            data-spine-source="${escapeHTML(spineData.source)}"
-            loading="lazy">
-        </span>
+        <img
+          class="gh-gallery-art"
+          src="${escapeHTML(image)}"
+          alt="${escapeHTML(title)} cover artwork"
+          loading="lazy">
       `
-      : "";
-
-    const artworkMarkup = !hasSpine
-      ? `
-        <span class="gh-case-cover">
-          ${
-            artwork
-              ? `
-                <img
-                  class="gh-case-artwork"
-                  src="${escapeHTML(artwork)}"
-                  alt="${escapeHTML(title)} cover artwork"
-                  loading="lazy">
-              `
-              : `
-                <span class="gh-case-no-art" aria-hidden="true">🎮</span>
-              `
-          }
-          <span class="gh-case-cover-shine"></span>
-        </span>
-      `
-      : "";
-
-    const titleMarkup = !hasSpine
-      ? `
-        <span class="gh-case-title">
-          ${escapeHTML(title)}
-        </span>
-      `
-      : "";
-
-    const statusText =
-      status === "completed" ? "100% COMPLETE" :
-      status === "in-progress" ? `${progress}% COMPLETE` :
-      "NOT STARTED";
+      : `
+        <div class="gh-gallery-art gh-gallery-art-fallback">
+          🎮
+        </div>
+      `;
 
     return `
       <button
         type="button"
-        class="gh-game-case ${getCaseClass(status)} ${hasSpine ? "has-launchbox-spine" : ""}"
-        data-game-title="${escapeHTML(title)}"
-        aria-label="Open ${escapeHTML(title)}">
+        class="gh-gallery-card ${status}"
+        data-game-index="${index}"
+        aria-label="Watch or find gameplay for ${escapeHTML(title)}">
 
-        <span class="gh-case-plastic-edge"></span>
-
-        <span class="gh-case-spine">
-
-          ${spineMarkup}
-
-          <span class="gh-case-top">
-            <span class="gh-case-platform">${escapeHTML(consoleShort)}</span>
-            <span class="gh-case-number">${String(index + 1).padStart(3, "0")}</span>
-          </span>
-
-          ${artworkMarkup}
-
-          ${titleMarkup}
-
-          <span class="gh-case-bottom">
-            <span class="gh-case-progress">
-              <span style="width:${progress}%"></span>
-            </span>
-            <span class="gh-case-status">${statusText}</span>
-          </span>
-
+        <span class="gh-gallery-image-wrap">
+          ${imageMarkup}
+          <span class="gh-gallery-play">▶</span>
         </span>
 
-        <span class="gh-case-side-highlight"></span>
+        <span class="gh-gallery-card-copy">
+          <strong class="gh-gallery-title">
+            ${escapeHTML(title)}
+          </strong>
+
+          <span class="gh-gallery-console">
+            ${escapeHTML(game.console || "Unknown console")}
+          </span>
+
+          <span class="gh-gallery-achievements">
+            🏆 ${earned} / ${total} achievements
+          </span>
+
+          <span class="gh-gallery-progress">
+            <span style="width:${progress}%"></span>
+          </span>
+
+          <span class="gh-gallery-status">
+            ${escapeHTML(getStatusLabel(game))} · ${progress}%
+          </span>
+        </span>
       </button>
     `;
   }
 
-  function renderShelf() {
-    const allGames = getDashboardGames();
+  function renderGallery() {
+    const allGames = getGames();
 
     if (!allGames.length) {
-      shelf.innerHTML = `
+      gallery.innerHTML = `
         <p class="gh-cartridge-empty">
-          Your game collection will appear here when the library loads.
+          Your games will appear here when the library loads.
         </p>
       `;
 
@@ -274,8 +350,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const visibleGames = allGames.filter(game => {
       const title = String(game.title || "").toLowerCase();
-      const matchesSearch = title.includes(searchTerm);
-      const status = getGameStatus(game);
+      const consoleName = String(game.console || "").toLowerCase();
+
+      const matchesSearch =
+        title.includes(searchTerm) ||
+        consoleName.includes(searchTerm);
+
+      const status = getStatus(game);
 
       const matchesFilter =
         selectedFilter === "all" ||
@@ -290,7 +371,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     if (!visibleGames.length) {
-      shelf.innerHTML = `
+      gallery.innerHTML = `
         <p class="gh-cartridge-empty">
           No games match your search.
         </p>
@@ -298,118 +379,93 @@ document.addEventListener("DOMContentLoaded", async () => {
       return;
     }
 
-    const rows = [];
+    gallery.innerHTML = `
+      <div class="gh-video-gallery-grid">
+        ${visibleGames.map(game => {
+          const originalIndex = allGames.indexOf(game);
+          return createGameCard(game, originalIndex);
+        }).join("")}
+      </div>
+    `;
 
-    for (let i = 0; i < visibleGames.length; i += CASES_PER_SHELF) {
-      const group = visibleGames.slice(i, i + CASES_PER_SHELF);
-
-      const cases = group.map((game, groupIndex) =>
-        createCase(game, i + groupIndex)
-      ).join("");
-
-      rows.push(`
-        <div class="gh-case-shelf-row">
-
-          <div class="gh-case-row-label">
-            <span>GOURME HUB COLLECTION</span>
-            <span>SHELF ${String(rows.length + 1).padStart(2, "0")}</span>
-          </div>
-
-          <div class="gh-case-row-track">
-            ${cases}
-          </div>
-
-          <div class="gh-wood-shelf">
-            <span></span>
-          </div>
-
-        </div>
-      `);
-    }
-
-    shelf.innerHTML = rows.join("");
-
-    // Replace broken images with a controller placeholder.
-    shelf.querySelectorAll(
-      ".gh-case-artwork, .gh-case-launchbox-spine"
-    ).forEach(image => {
+    gallery.querySelectorAll(".gh-gallery-art").forEach(image => {
       image.addEventListener("error", () => {
-        const fallback = document.createElement("span");
+        const fallback = document.createElement("div");
 
-        fallback.className = "gh-case-no-art";
-        fallback.setAttribute("aria-hidden", "true");
+        fallback.className =
+          "gh-gallery-art gh-gallery-art-fallback";
+
         fallback.textContent = "🎮";
-
         image.replaceWith(fallback);
       }, { once: true });
     });
   }
 
-  // Preserve the existing game-detail popup behavior.
-  function openGameFromShelf(title) {
-    if (!gameLibrary) return;
+  /* =======================================
+     CLICK HANDLING
+     ======================================= */
 
-    function findGameSummary() {
-      return Array.from(
-        gameLibrary.querySelectorAll("details.game-card summary")
-      ).find(summary => {
-        const heading = summary.querySelector("h3");
-        return heading && heading.textContent.trim() === title;
-      });
+  gallery.addEventListener("click", event => {
+    const card = event.target.closest(".gh-gallery-card");
+
+    if (!card || !gallery.contains(card)) return;
+
+    const index = Number(card.dataset.gameIndex);
+
+    if (!Number.isInteger(index)) return;
+
+    const selectedGame = getGames()[index];
+
+    if (selectedGame) {
+      openVideo(selectedGame);
     }
-
-    let summary = findGameSummary();
-
-    if (!summary) {
-      const mainSearch = document.getElementById("game-search");
-      const mainFilter = document.getElementById("game-filter");
-
-      if (mainSearch && mainSearch.value) {
-        mainSearch.value = "";
-        mainSearch.dispatchEvent(
-          new Event("input", { bubbles: true })
-        );
-      }
-
-      if (mainFilter && mainFilter.value !== "all") {
-        mainFilter.value = "all";
-        mainFilter.dispatchEvent(
-          new Event("change", { bubbles: true })
-        );
-      }
-
-      summary = findGameSummary();
-    }
-
-    if (summary) {
-      summary.click();
-    }
-  }
-
-  // Case click handling.
-  shelf.addEventListener("click", event => {
-    const gameCase = event.target.closest(".gh-game-case");
-    if (!gameCase) return;
-
-    const title = gameCase.dataset.gameTitle;
-    if (title) openGameFromShelf(title);
   });
 
-  // Search and filters.
+  /* =======================================
+     LOAD VIDEO DATA
+     ======================================= */
+
+  async function loadVideoData() {
+    try {
+      const response = await fetch("data/game-videos.json", {
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+        throw new Error("Could not load game-videos.json");
+      }
+
+      const data = await response.json();
+
+      if (
+        data &&
+        typeof data === "object" &&
+        !Array.isArray(data)
+      ) {
+        videoData = data;
+      }
+    } catch (error) {
+      console.warn(
+        "Gourme Hub: video data could not be loaded.",
+        error
+      );
+    }
+
+    renderGallery();
+  }
+
   if (search) {
-    search.addEventListener("input", renderShelf);
+    search.addEventListener("input", renderGallery);
   }
 
   if (filter) {
-    filter.addEventListener("change", renderShelf);
+    filter.addEventListener("change", renderGallery);
   }
 
-  // Watch the main game library for updates.
+  // Re-render when the main game library finishes loading.
   if (gameLibrary) {
     const observer = new MutationObserver(() => {
-      if (getDashboardGames().length) {
-        renderShelf();
-      }
+      renderGallery();
     });
 
     observer.observe(gameLibrary, {
@@ -418,6 +474,5 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
-  renderShelf();
+  loadVideoData();
 });
-                
