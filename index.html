@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,7 +10,7 @@
   <title>Gourme Hub | RetroAchievements</title>
 
   <link rel="stylesheet" href="styles.css?v=gh-upgrade-20261106">
-  <link rel="stylesheet" href="gourme-upgrades.css?v=gh-upgrade-20261106">
+  <link rel="stylesheet" href="gourme-upgrades.css?v=gh-cosmetics-20261106">
 </head>
 
 <body>
@@ -45,13 +46,21 @@
 
     <!-- THEME SWITCHER -->
 
-    <section class="gh-upgrade-toolbar" aria-label="Dashboard theme">
+    <section class="gh-upgrade-toolbar" aria-label="Dashboard appearance">
       <div>
-        <strong>🎨 Dashboard Theme</strong>
+        <strong>🎨 Dashboard Appearance</strong>
         <p>Choose your Gourme Hub look</p>
       </div>
 
       <div class="gh-theme-buttons">
+        <button
+          type="button"
+          class="gh-theme-button"
+          data-theme-choice="classic"
+          aria-pressed="false">
+          🟠 Classic
+        </button>
+
         <button
           type="button"
           class="gh-theme-button"
@@ -68,6 +77,12 @@
           💜 Retro Neon
         </button>
       </div>
+
+      <label class="gh-crt-control" for="gh-crt-toggle">
+        <input type="checkbox" id="gh-crt-toggle">
+        <span class="gh-crt-switch" aria-hidden="true"></span>
+        <span>CRT Screen Effect</span>
+      </label>
     </section>
 
     <section class="stats-section">
@@ -134,6 +149,31 @@
 
         <p class="loading-message">
           Loading achievements...
+        </p>
+      </div>
+    </section>
+
+    <!-- ACHIEVEMENT TROPHY WALL -->
+
+    <section class="gh-trophy-wall-section">
+      <div class="section-heading">
+        <h2>🏅 Achievement Trophy Wall</h2>
+        <span id="gh-trophy-count" class="section-count">
+          0 Trophies
+        </span>
+      </div>
+
+      <p class="gh-trophy-intro">
+        Every achievement you've earned, collected in one place.
+      </p>
+
+      <div
+        id="gh-trophy-wall"
+        class="gh-trophy-wall"
+        aria-live="polite">
+
+        <p class="loading-message">
+          Loading your trophy collection...
         </p>
       </div>
     </section>
@@ -218,6 +258,6 @@
   </div>
 
   <script src="app.js?v=gh-upgrade-20261106"></script>
-  <script src="gourme-upgrades.js?v=gh-upgrade-20261106"></script>
+  <script src="gourme-upgrades.js?v=gh-cosmetics-20261106"></script>
 </body>
 </html>
