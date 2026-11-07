@@ -53,19 +53,12 @@
 }
 
 @keyframes featuredFade {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* =========================================
-   SHARED ACHIEVEMENT SHOWCASE
+   ACHIEVEMENT SHOWCASE
    ========================================= */
 
 .achievement-showcase-section {
@@ -132,15 +125,8 @@
 }
 
 @keyframes ghCardAppear {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* =========================================
@@ -202,7 +188,7 @@
 }
 
 /* =========================================
-   CLASSIC BLACK & ORANGE THEME
+   CLASSIC THEME
    ========================================= */
 
 body[data-gh-theme="classic"] {
@@ -219,16 +205,8 @@ body[data-gh-theme="classic"] {
     0 0 28px rgba(255, 106, 0, 0.10);
 
   background:
-    radial-gradient(
-      ellipse at 50% 0%,
-      #321a08 0%,
-      transparent 48%
-    ),
-    radial-gradient(
-      ellipse at bottom right,
-      #1b1008 0%,
-      #080808 55%
-    );
+    radial-gradient(ellipse at 50% 0%, #321a08 0%, transparent 48%),
+    radial-gradient(ellipse at bottom right, #1b1008 0%, #080808 55%);
 }
 
 body[data-gh-theme="classic"]::before {
@@ -263,16 +241,8 @@ body[data-gh-theme="midnight"] {
     0 0 28px rgba(80, 130, 255, 0.08);
 
   background:
-    radial-gradient(
-      ellipse at 50% 0%,
-      #17264b 0%,
-      transparent 48%
-    ),
-    radial-gradient(
-      ellipse at bottom right,
-      #101a36 0%,
-      #080b18 55%
-    );
+    radial-gradient(ellipse at 50% 0%, #17264b 0%, transparent 48%),
+    radial-gradient(ellipse at bottom right, #101a36 0%, #080b18 55%);
 }
 
 body[data-gh-theme="midnight"]::before {
@@ -307,16 +277,8 @@ body[data-gh-theme="retro-neon"] {
     0 0 28px rgba(0, 245, 255, 0.12);
 
   background:
-    radial-gradient(
-      ellipse at 50% 0%,
-      #3b0750 0%,
-      transparent 48%
-    ),
-    radial-gradient(
-      ellipse at bottom right,
-      #16002d 0%,
-      #090014 55%
-    );
+    radial-gradient(ellipse at 50% 0%, #3b0750 0%, transparent 48%),
+    radial-gradient(ellipse at bottom right, #16002d 0%, #090014 55%);
 }
 
 body[data-gh-theme="retro-neon"]::before {
@@ -352,7 +314,7 @@ body .gh-upgrade-toolbar {
 }
 
 /* =========================================
-   ACHIEVEMENT TROPHY WALL
+   TROPHY WALL
    ========================================= */
 
 .gh-trophy-wall-section {
@@ -384,9 +346,7 @@ body .gh-upgrade-toolbar {
   border-radius: 13px;
   background: var(--panel);
   box-shadow: var(--glow);
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .gh-trophy-card:hover {
@@ -543,7 +503,6 @@ body:not(.gh-crt-on)::after {
 body.gh-crt-on::before {
   opacity: 0.58 !important;
   mix-blend-mode: screen;
-
   background:
     repeating-linear-gradient(
       to bottom,
@@ -558,7 +517,6 @@ body.gh-crt-on::before {
       transparent 2px,
       rgba(255, 100, 0, 0.025) 4px
     );
-
   animation: ghCrtFlicker 0.16s infinite;
 }
 
@@ -570,7 +528,6 @@ body.gh-crt-on::after {
       rgba(0, 0, 0, 0.28) 72%,
       rgba(0, 0, 0, 0.78) 100%
     );
-
   box-shadow:
     inset 0 0 100px rgba(255, 100, 0, 0.16),
     inset 0 0 190px rgba(0, 0, 0, 0.72),
@@ -578,17 +535,9 @@ body.gh-crt-on::after {
 }
 
 @keyframes ghCrtFlicker {
-  0%, 100% {
-    opacity: 0.58;
-  }
-
-  50% {
-    opacity: 0.48;
-  }
-
-  51% {
-    opacity: 0.62;
-  }
+  0%, 100% { opacity: 0.58; }
+  50% { opacity: 0.48; }
+  51% { opacity: 0.62; }
 }
 
 /* =========================================
@@ -693,7 +642,6 @@ body.gh-crt-on::after {
     opacity: 0;
     transform: translateY(12px) scale(0.98);
   }
-
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -753,11 +701,7 @@ body.gh-crt-on::after {
 .gh-modal-progress > div {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    var(--accent-hot),
-    var(--accent)
-  );
+  background: linear-gradient(90deg, var(--accent-hot), var(--accent));
   box-shadow: var(--glow);
 }
 
@@ -904,5 +848,190 @@ body.gh-crt-on::after {
   body.gh-crt-on::before {
     animation: none !important;
   }
-   }
-   
+}
+
+/* =========================================
+   ARCADE MARQUEE HEADER
+   ========================================= */
+
+.profile-banner {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid var(--accent);
+  box-shadow:
+    0 0 18px rgba(255, 130, 0, 0.22),
+    inset 0 0 25px rgba(255, 100, 0, 0.08);
+}
+
+.profile-banner-art {
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-banner-art::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 15%,
+    rgba(255, 155, 20, 0.03) 35%,
+    rgba(255, 155, 20, 0.23) 50%,
+    rgba(255, 155, 20, 0.03) 65%,
+    transparent 85%
+  );
+  transform: translateX(-110%);
+  animation: ghMarqueeSweep 7s ease-in-out infinite;
+}
+
+.profile-content {
+  position: relative;
+  z-index: 2;
+}
+
+.gh-brand-mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  border: 2px solid var(--accent);
+  border-radius: 13px;
+  color: var(--accent);
+  background: rgba(10, 8, 5, 0.85);
+  font-size: 23px;
+  font-weight: 1000;
+  letter-spacing: -2px;
+  text-shadow:
+    0 0 7px var(--accent),
+    0 0 18px var(--accent-hot);
+  box-shadow:
+    0 0 10px var(--accent),
+    0 0 25px var(--accent-hot),
+    inset 0 0 14px rgba(255, 155, 20, 0.18);
+  animation: ghMarqueePulse 3s ease-in-out infinite;
+}
+
+.profile-details h1,
+#username {
+  text-shadow:
+    0 0 8px var(--accent),
+    0 0 22px var(--accent-hot);
+}
+
+.banner-label {
+  text-shadow: 0 0 9px var(--accent);
+  animation: ghLabelGlow 3s ease-in-out infinite;
+}
+
+@keyframes ghMarqueeSweep {
+  0%, 20% { transform: translateX(-110%); }
+  65%, 100% { transform: translateX(110%); }
+}
+
+@keyframes ghMarqueePulse {
+  0%, 100% {
+    box-shadow:
+      0 0 10px var(--accent),
+      0 0 25px var(--accent-hot),
+      inset 0 0 14px rgba(255, 155, 20, 0.18);
+  }
+  50% {
+    box-shadow:
+      0 0 16px var(--accent),
+      0 0 38px var(--accent-hot),
+      inset 0 0 20px rgba(255, 155, 20, 0.28);
+  }
+}
+
+@keyframes ghLabelGlow {
+  0%, 100% { opacity: 0.65; }
+  50% { opacity: 1; }
+}
+
+/* =========================================
+   ANIMATED GAME CARDS
+   ========================================= */
+
+.game-card {
+  position: relative;
+  isolation: isolate;
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.game-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 20%,
+    rgba(255, 155, 20, 0.13) 48%,
+    transparent 75%
+  );
+  transform: translateX(-100%);
+}
+
+.game-card img {
+  transition:
+    transform 0.45s ease,
+    filter 0.45s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .game-card:hover {
+    transform: translateY(-7px) scale(1.012);
+    border-color: var(--accent);
+    box-shadow:
+      0 0 10px var(--accent),
+      0 0 25px var(--accent-hot),
+      0 15px 35px rgba(0, 0, 0, 0.45);
+  }
+
+  .game-card:hover::before {
+    opacity: 1;
+    animation: ghGameCardSweep 0.8s ease forwards;
+  }
+
+  .game-card:hover img {
+    transform: scale(1.045);
+    filter: brightness(1.12) saturate(1.12);
+  }
+}
+
+.game-card:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 15px var(--accent);
+}
+
+.game-card summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+@keyframes ghGameCardSweep {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+/* Mobile tap feedback */
+
+@media (hover: none) {
+  .game-card:active {
+    border-color: var(--accent);
+    box-shadow: 0 0 14px var(--accent);
+  }
+}
+
+/* ============
