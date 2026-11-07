@@ -1,3 +1,4 @@
+
 name: Update RetroAchievements Dashboard
 
 on:
@@ -317,6 +318,9 @@ jobs:
                           "id": achievement.get(
                               "ID", achievement_id
                           ),
+                          "badgeName": achievement.get(
+                              "BadgeName", ""
+                          ),
                           "title": achievement.get(
                               "Title", "Untitled achievement"
                           ),
@@ -424,3 +428,4 @@ jobs:
           git add data/games.json data/steamgriddb-cache.json
           git diff --cached --quiet || git commit -m "Update RetroAchievements game progress and artwork"
           git push
+          
