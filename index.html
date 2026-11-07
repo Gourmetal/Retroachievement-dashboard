@@ -11,6 +11,7 @@
 
   <link rel="stylesheet" href="styles.css?v=gh-upgrade-20261106">
   <link rel="stylesheet" href="gourme-upgrades.css?v=gh-marquee-cards-20261107">
+  <link rel="stylesheet" href="cartridge-shelf.css?v=gh-cartridge-shelf-20261107">
 </head>
 
 <body>
@@ -212,6 +213,64 @@
       </div>
     </section>
 
+    <!-- VIRTUAL CARTRIDGE SHELF -->
+    <section class="gh-cartridge-section" id="gh-cartridge-section">
+
+      <div class="gh-cartridge-heading">
+        <div>
+          <p class="gh-cartridge-eyebrow">GOURME HUB COLLECTION</p>
+          <h2>🕹️ Virtual Cartridge Shelf</h2>
+          <p class="gh-cartridge-subtitle">
+            Your games. Your collection. Your arcade.
+          </p>
+        </div>
+
+        <span id="gh-cartridge-count" class="gh-cartridge-count">
+          Loading collection...
+        </span>
+      </div>
+
+      <div class="gh-cartridge-controls">
+        <input
+          type="search"
+          id="gh-cartridge-search"
+          placeholder="Find a cartridge..."
+          aria-label="Search cartridge shelf">
+
+        <select id="gh-cartridge-filter"
+          aria-label="Filter cartridges">
+          <option value="all">All Cartridges</option>
+          <option value="completed">Completed</option>
+          <option value="in-progress">In Progress</option>
+          <option value="not-started">Not Started</option>
+        </select>
+      </div>
+
+      <div class="gh-shelf-frame">
+        <div class="gh-shelf-top">
+          <span>PLAYER ONE COLLECTION</span>
+          <span>GH-001</span>
+        </div>
+
+        <div
+          id="gh-cartridge-grid"
+          class="gh-cartridge-grid"
+          aria-live="polite">
+          <p class="gh-cartridge-empty">
+            Loading your cartridges...
+          </p>
+        </div>
+
+        <div class="gh-shelf-plank" aria-hidden="true"></div>
+        <div class="gh-shelf-shadow" aria-hidden="true"></div>
+      </div>
+
+      <p class="gh-cartridge-hint">
+        Tap any cartridge to open its game details.
+      </p>
+
+    </section>
+
     <!-- FEATURED GAMES - EXISTING ROTATION PRESERVED -->
     <section class="showcase-section">
       <h2>Featured Games</h2>
@@ -253,7 +312,7 @@
   <!-- DASHBOARD SCRIPTS -->
   <script src="app.js?v=gh-upgrade-20261106"></script>
   <script src="gourme-upgrades.js?v=gh-upgrade-20261107"></script>
+  <script src="cartridge-shelf.js?v=gh-cartridge-shelf-20261107"></script>
 
 </body>
-  </html>
-  
+</html>
