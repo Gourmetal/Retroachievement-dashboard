@@ -1,3 +1,4 @@
+
 /* =========================================
    GOURME HUB — INTERACTIVE UPGRADES
    ========================================= */
@@ -186,8 +187,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const earned = ghGetEarnedAchievements()
       .sort((a, b) => {
-        const dateA = new Date(a.dateEarned || 0).getTime();
-        const dateB = new Date(b.dateEarned || 0).getTime();
+        const dateA = new Date(
+          String(a.dateEarned || "").replace(" ", "T")
+        ).getTime() || 0;
+
+        const dateB = new Date(
+          String(b.dateEarned || "").replace(" ", "T")
+        ).getTime() || 0;
 
         return dateB - dateA;
       })
@@ -226,6 +232,73 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =======================================
+     ACHIEVEMENT TROPHY WALL
+     ======================================= */
+
+  const trophyWall = document.getElementById("gh-trophy-wall");
+  const trophyCount = document.getElementById("gh-trophy-count");
+
+  function ghRenderTrophyWall() {
+    if (!trophyWall) return;
+
+    const trophies = ghGetEarnedAchievements().sort((a, b) => {
+      const dateA = new Date(
+        String(a.dateEarned || "").replace(" ", "T")
+      ).getTime() || 0;
+
+      const dateB = new Date(
+        String(b.dateEarned || "").replace(" ", "T")
+      ).getTime() || 0;
+
+      return dateB - dateA;
+    });
+
+    if (trophyCount) {
+      trophyCount.textContent =
+        `${trophies.length} ${trophies.length === 1 ? "Trophy" : "Trophies"}`;
+    }
+
+    if (!trophies.length) {
+      trophyWall.innerHTML = `
+        <p class="loading-message">
+          Your earned trophies will appear here.
+        </p>
+      `;
+      return;
+    }
+
+    trophyWall.innerHTML = trophies.map(item => `
+      <article class="gh-trophy-card">
+
+        <div class="gh-trophy-medal" aria-hidden="true">
+          🏆
+        </div>
+
+        <div class="gh-trophy-copy">
+          <h3>${ghEscape(item.title)}</h3>
+
+          <p class="gh-trophy-game">
+            🎮 ${ghEscape(item.gameTitle)}
+          </p>
+
+          <p class="gh-trophy-description">
+            ${ghEscape(item.description || "Achievement unlocked!")}
+          </p>
+
+          <span class="gh-trophy-date">
+            ${ghFormatDate(item.dateEarned)}
+          </span>
+        </div>
+
+        <span class="gh-trophy-points">
+          ⭐ ${Number(item.points) || 0}
+        </span>
+
+      </article>
+    `).join("");
+  }
+
+  /* =======================================
      THEME SWITCHER
      ======================================= */
 
@@ -236,13 +309,14 @@ document.addEventListener("DOMContentLoaded", () => {
   const themeStorageKey = "gourmeHubTheme";
 
   const allowedThemes = [
+    "classic",
     "midnight",
     "retro-neon"
   ];
 
   function ghSetTheme(theme) {
     if (!allowedThemes.includes(theme)) {
-      theme = "midnight";
+      theme = "classic";
     }
 
     document.body.dataset.ghTheme = theme;
@@ -266,13 +340,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  let savedTheme = "midnight";
+  let savedTheme = "classic";
 
   try {
     savedTheme =
-      localStorage.getItem(themeStorageKey) || "midnight";
+      localStorage.getItem(themeStorageKey) || "classic";
   } catch (error) {
-    savedTheme = "midnight";
+    savedTheme = "classic";
   }
 
   ghSetTheme(savedTheme);
@@ -282,6 +356,47 @@ document.addEventListener("DOMContentLoaded", () => {
       ghSetTheme(button.dataset.themeChoice);
     });
   });
+
+  /* =======================================
+     OPTIONAL CRT SCREEN EFFECT
+     ======================================= */
+
+  const crtToggle = document.getElementById("gh-crt-toggle");
+  const crtStorageKey = "gourmeHubCrtEffect";
+
+  function ghSetCrtEffect(enabled) {
+    document.body.classList.toggle("gh-crt-on", enabled);
+
+    if (crtToggle) {
+      crtToggle.checked = enabled;
+    }
+
+    try {
+      localStorage.setItem(
+        crtStorageKey,
+        String(enabled)
+      );
+    } catch (error) {
+      console.warn("Could not save CRT preference.", error);
+    }
+  }
+
+  let savedCrtEffect = false;
+
+  try {
+    savedCrtEffect =
+      localStorage.getItem(crtStorageKey) === "true";
+  } catch (error) {
+    savedCrtEffect = false;
+  }
+
+  ghSetCrtEffect(savedCrtEffect);
+
+  if (crtToggle) {
+    crtToggle.addEventListener("change", () => {
+      ghSetCrtEffect(crtToggle.checked);
+    });
+  }
 
   /* =======================================
      GAME DETAIL POPUP
@@ -499,7 +614,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (gameLibrary) {
     gameLibrary.addEventListener("click", event => {
-      const summary = event.target.closest("summary");
+      const target = event.target;
+
+      if (!target || typeof target.closest !== "function") {
+        return;
+      }
+
+      const summary = target.closest("summary");
 
       if (!summary || !gameLibrary.contains(summary)) {
         return;
@@ -529,12 +650,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =======================================
-     REFRESH SHOWCASE AFTER GAME DATA LOADS
+     REFRESH SHOWCASE AND TROPHY WALL
+     AFTER GAME DATA LOADS
      ======================================= */
 
   function ghRefreshShowcase() {
     if (ghGetGames().length) {
       ghRenderAchievementShowcase();
+      ghRenderTrophyWall();
     }
   }
 
