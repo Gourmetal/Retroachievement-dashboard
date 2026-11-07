@@ -16,6 +16,8 @@ LAUNCHBOX_IMAGE_HOSTS = (
     "gamesdb-images.launchbox.gg"
 )
 
+SPINE_CACHE_VERSION = 2
+
 
 # --------------------------------------------------
 # CACHE HELPERS
@@ -43,6 +45,20 @@ def save_cache(path, cache):
 
     with open(path, "w", encoding="utf-8") as file:
         json.dump(cache, file, indent=2, ensure_ascii=False)
+
+
+def load_spine_cache(path):
+    cache = load_cache(path)
+
+    # Old cache entries may contain screenshots or incorrect artwork.
+    # Reset them once when upgrading to this scraper version.
+    if cache.get("_cache_version") != SPINE_CACHE_VERSION:
+        print("Resetting old LaunchBox spine cache...")
+        cache = {
+            "_cache_version": SPINE_CACHE_VERSION
+        }
+
+    return cache
 
 
 # --------------------------------------------------
@@ -267,9 +283,12 @@ class LaunchBoxHTMLParser(HTMLParser):
             href = node["attrs"].get("href", "")
 
             if href:
+                link_text = " ".join(node["text"]).strip()
+
                 links.append({
                     "href": href,
-                    "text": " ".join(node["text"]).strip()
+                    "text": link_text,
+                    "attrs": node["attrs"]
                 })
 
         return links
@@ -281,55 +300,66 @@ class LaunchBoxHTMLParser(HTMLParser):
             tag = node["tag"]
             attrs = node["attrs"]
 
+            # Only inspect actual image elements.
+            # Do not treat ordinary links or page backgrounds as images.
+            if tag not in ("img", "source"):
+                continue
+
             urls = []
 
-            if tag in ("img", "source"):
-                for key in (
-                    "src",
-                    "data-src",
-                    "data-original",
-                    "data-lazy-src",
-                    "data-url"
-                ):
-                    if attrs.get(key):
-                        urls.append(attrs[key])
+            for key in (
+                "src",
+                "data-src",
+                "data-original",
+                "data-lazy-src",
+                "data-url"
+            ):
+                if attrs.get(key):
+                    urls.append(attrs[key])
 
-                srcset = attrs.get("srcset", "")
+            # Collect image URLs from srcset.
+            srcset = attrs.get("srcset", "")
 
-                if srcset:
-                    first_source = srcset.split(",")[0].strip()
-                    urls.append(first_source.split(" ")[0])
+            if srcset:
+                for item in srcset.split(","):
+                    item = item.strip()
 
-            if tag == "a":
-                href = attrs.get("href", "")
+                    if item:
+                        urls.append(item.split()[0])
 
-                if href:
-                    urls.append(href)
+            # Build separate local contexts.
+            # Do not combine the entire page's text into one context.
+            contexts = []
 
-            style = attrs.get("style", "")
+            image_context = " ".join(
+                str(value)
+                for value in attrs.values()
+                if value
+            )
 
-            if style:
-                matches = re.findall(
-                    r"url\(['\"]?(.*?)['\"]?\)",
-                    style,
-                    flags=re.IGNORECASE
-                )
+            if image_context:
+                contexts.append(image_context)
 
-                urls.extend(matches)
+            # Only inspect the nearest four ancestors.
+            # This prevents labels elsewhere on the page from being
+            # incorrectly associated with an image.
+            nearby_ancestors = node["ancestors"][-4:]
 
-            context_nodes = node["ancestors"][-5:] + [node]
+            for parent in reversed(nearby_ancestors):
+                parts = []
 
-            context_parts = []
-
-            for parent in context_nodes:
-                context_parts.extend(parent["text"])
-                context_parts.extend(
+                parts.extend(
                     str(value)
                     for value in parent["attrs"].values()
                     if value
                 )
 
-            context = " ".join(context_parts)
+                parts.extend(parent["text"])
+
+                context = " ".join(parts).strip()
+
+                if context:
+                    contexts.append(context)
 
             for url in urls:
                 url = html.unescape(str(url).strip())
@@ -339,7 +369,7 @@ class LaunchBoxHTMLParser(HTMLParser):
 
                 candidates.append({
                     "url": url,
-                    "context": context
+                    "contexts": contexts
                 })
 
         return candidates
@@ -402,9 +432,17 @@ def get_game_detail_candidates(title, search_html):
 
         detail_url = absolute_launchbox_url(href)
 
+        link_text = link["text"]
+
+        if not link_text:
+            link_text = (
+                link["attrs"].get("title", "")
+                or link["attrs"].get("aria-label", "")
+            )
+
         score = title_match_score(
             title,
-            link["text"]
+            link_text
         )
 
         if score < 0.45:
@@ -440,7 +478,18 @@ def is_launchbox_image_url(url):
     if parsed.scheme not in ("http", "https"):
         return False
 
-    return parsed.hostname in LAUNCHBOX_IMAGE_HOSTS
+    if parsed.hostname not in LAUNCHBOX_IMAGE_HOSTS:
+        return False
+
+    # Reject detail pages and other non-image URLs.
+    image_path = parsed.path.lower()
+
+    return image_path.endswith((
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp"
+    ))
 
 
 def has_spine_type(context):
@@ -454,7 +503,8 @@ def has_spine_type(context):
 
     patterns = (
         r"\bbox\s*-\s*spine\b",
-        r"\bbox\s+spine\b"
+        r"\bbox\s+spine\b",
+        r"\bmedia\s+type\s*[:=]\s*box\s*-\s*spine\b"
     )
 
     return any(
@@ -466,17 +516,40 @@ def has_spine_type(context):
 def has_north_american_region(context):
     context = html.unescape(context).lower()
 
+    context = re.sub(
+        r"[_–—]",
+        "-",
+        context
+    )
+
     region_patterns = (
         r"\bnorth\s+america\b",
         r"\bnorth\s+american\b",
         r"\bunited\s+states\b",
-        r"\busa\b"
+        r"\busa\b",
+        r"\bntsc\s*-\s*u\b",
+        r"\bntsc-u\b"
     )
 
     return any(
         re.search(pattern, context)
         for pattern in region_patterns
     )
+
+
+def candidate_is_north_american_spine(candidate):
+    contexts = candidate.get("contexts", [])
+
+    # Require both the spine type and region to appear in the
+    # same nearby context. Never mix labels from separate page areas.
+    for context in contexts:
+        if (
+            has_spine_type(context)
+            and has_north_american_region(context)
+        ):
+            return True
+
+    return False
 
 
 def find_north_american_spine(detail_html, title):
@@ -490,19 +563,14 @@ def find_north_american_spine(detail_html, title):
             candidate["url"]
         )
 
-        context = candidate["context"]
-
         if not is_launchbox_image_url(image_url):
             continue
 
-        if not has_spine_type(context):
-            continue
-
-        if not has_north_american_region(context):
+        if not candidate_is_north_american_spine(candidate):
             continue
 
         print(
-            f"Found North American spine: {title}"
+            f"Verified North American spine: {title}"
         )
 
         return image_url
@@ -518,12 +586,12 @@ def get_launchbox_spine(title, cache):
 
     cached = cache.get(title)
 
-    if isinstance(cached, str) and cached.startswith(
-        ("https://", "http://")
+    # Only reuse URLs from the current cache version.
+    if (
+        isinstance(cached, str)
+        and is_launchbox_image_url(cached)
     ):
         return cached
-
-    search_title = clean_game_title(title)
 
     search_urls = [
         (
@@ -594,7 +662,7 @@ def get_launchbox_spine(title, cache):
             )
 
     print(
-        f"No North American spine found for: {title}"
+        f"No verified North American spine found for: {title}"
     )
 
     return ""
@@ -610,7 +678,7 @@ def get_all_artwork(games):
     spine_cache_path = "data/launchbox-spine-cache.json"
 
     sgdb_cache = load_cache(sgdb_cache_path)
-    spine_cache = load_cache(spine_cache_path)
+    spine_cache = load_spine_cache(spine_cache_path)
 
     sgdb_key = os.environ.get("SGDB_API_KEY", "")
 
@@ -624,20 +692,20 @@ def get_all_artwork(games):
             f"Processing artwork {index + 1}/{total}: {title}"
         )
 
-        # SteamGridDB artwork
+        # SteamGridDB artwork remains the fallback.
         game["steamGridDB"] = get_steamgriddb_artwork(
             title,
             sgdb_cache,
             sgdb_key
         )
 
-        # LaunchBox North American case spine
+        # Only verified LaunchBox North American spines are accepted.
         game["launchBoxSpine"] = get_launchbox_spine(
             title,
             spine_cache
         )
 
-        # Save progress periodically
+        # Save progress periodically.
         if (index + 1) % 5 == 0:
             save_cache(
                 sgdb_cache_path,
@@ -649,7 +717,7 @@ def get_all_artwork(games):
                 spine_cache
             )
 
-    # Final cache saves
+    # Final cache saves.
     save_cache(
         sgdb_cache_path,
         sgdb_cache
@@ -669,7 +737,7 @@ def get_all_artwork(games):
     print("")
     print("Artwork update complete.")
     print(f"Games processed: {total}")
-    print(f"North American spines found: {found_spines}")
+    print(f"Verified North American spines found: {found_spines}")
 
     return games
-    
+            
