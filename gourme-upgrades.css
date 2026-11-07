@@ -1,3 +1,4 @@
+
 /* =========================================
    GOURME HUB — FEATURED GAMES
    EXISTING ROTATION STYLING
@@ -64,7 +65,7 @@
 }
 
 /* =========================================
-   GOURME HUB — SHARED UPGRADE STYLING
+   SHARED ACHIEVEMENT SHOWCASE
    ========================================= */
 
 .achievement-showcase-section {
@@ -143,7 +144,7 @@
 }
 
 /* =========================================
-   GOURME HUB — THEME SWITCHER
+   THEME SWITCHER
    ========================================= */
 
 .gh-upgrade-toolbar {
@@ -200,7 +201,53 @@
   outline-offset: 3px;
 }
 
-/* MIDNIGHT THEME */
+/* =========================================
+   CLASSIC BLACK & ORANGE THEME
+   ========================================= */
+
+body[data-gh-theme="classic"] {
+  --bg: #080808;
+  --panel: rgba(20, 20, 20, 0.82);
+  --panel-light: rgba(35, 35, 35, 0.9);
+  --text: #ffffff;
+  --muted: #aaaaaa;
+  --accent: #ff9b14;
+  --accent-hot: #ff6a00;
+  --border: rgba(255, 155, 20, 0.25);
+  --glow:
+    0 0 12px rgba(255, 155, 20, 0.22),
+    0 0 28px rgba(255, 106, 0, 0.10);
+
+  background:
+    radial-gradient(
+      ellipse at 50% 0%,
+      #321a08 0%,
+      transparent 48%
+    ),
+    radial-gradient(
+      ellipse at bottom right,
+      #1b1008 0%,
+      #080808 55%
+    );
+}
+
+body[data-gh-theme="classic"]::before {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent 3px,
+    rgba(255, 155, 20, 0.10) 4px,
+    transparent 5px
+  );
+}
+
+body[data-gh-theme="classic"]::after {
+  box-shadow: inset 0 0 100px rgba(255, 105, 0, 0.055);
+}
+
+/* =========================================
+   MIDNIGHT THEME
+   ========================================= */
 
 body[data-gh-theme="midnight"] {
   --bg: #080b18;
@@ -242,7 +289,9 @@ body[data-gh-theme="midnight"]::after {
   box-shadow: inset 0 0 100px rgba(80, 130, 255, 0.08);
 }
 
-/* RETRO NEON THEME */
+/* =========================================
+   RETRO NEON THEME
+   ========================================= */
 
 body[data-gh-theme="retro-neon"] {
   --bg: #090014;
@@ -284,7 +333,9 @@ body[data-gh-theme="retro-neon"]::after {
   box-shadow: inset 0 0 100px rgba(255, 77, 225, 0.1);
 }
 
-/* Theme transition */
+/* =========================================
+   THEME TRANSITIONS
+   ========================================= */
 
 body,
 body .stat-card,
@@ -301,7 +352,192 @@ body .gh-upgrade-toolbar {
 }
 
 /* =========================================
-   GOURME HUB — GAME DETAIL POPUP
+   ACHIEVEMENT TROPHY WALL
+   ========================================= */
+
+.gh-trophy-wall-section {
+  margin-top: 38px;
+}
+
+.gh-trophy-intro {
+  color: var(--muted);
+  margin: 8px 0 18px;
+  font-size: 0.9rem;
+}
+
+.gh-trophy-wall {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+  margin: 20px auto;
+}
+
+.gh-trophy-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  padding: 15px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--panel);
+  box-shadow: var(--glow);
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.gh-trophy-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+}
+
+.gh-trophy-medal {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 43px;
+  height: 43px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--panel-light);
+  font-size: 23px;
+  box-shadow: var(--glow);
+}
+
+.gh-trophy-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.gh-trophy-copy h3 {
+  margin: 2px 0 7px;
+  color: var(--accent);
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.gh-trophy-game {
+  margin: 4px 0;
+  color: var(--text);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.gh-trophy-description {
+  margin: 7px 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
+.gh-trophy-date {
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.gh-trophy-points {
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* =========================================
+   OPTIONAL CRT SCREEN EFFECT
+   OFF BY DEFAULT
+   ========================================= */
+
+body:not(.gh-crt-on)::before {
+  opacity: 0;
+  background: none;
+}
+
+body:not(.gh-crt-on)::after {
+  background: none;
+  box-shadow: none;
+}
+
+body.gh-crt-on::before {
+  opacity: 0.28;
+  mix-blend-mode: screen;
+}
+
+body.gh-crt-on::after {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 48%,
+    rgba(0, 0, 0, 0.48) 100%
+  );
+}
+
+/* CRT TOGGLE */
+
+.gh-crt-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  user-select: none;
+}
+
+.gh-crt-control input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.gh-crt-switch {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+  width: 42px;
+  height: 23px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--panel-light);
+  transition: 0.2s ease;
+}
+
+.gh-crt-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: 0.2s ease;
+}
+
+.gh-crt-control input:checked + .gh-crt-switch {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: var(--glow);
+}
+
+.gh-crt-control input:checked + .gh-crt-switch::after {
+  left: 21px;
+  background: var(--bg);
+}
+
+.gh-crt-control input:focus-visible + .gh-crt-switch {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* =========================================
+   GAME DETAIL POPUP
    ========================================= */
 
 .gh-modal-backdrop {
@@ -455,11 +691,15 @@ body .gh-upgrade-toolbar {
 }
 
 /* =========================================
-   GOURME HUB — MOBILE SUPPORT
+   MOBILE SUPPORT
    ========================================= */
 
-@media (max-width: 800px) {
+@media (max-width: 900px) {
   #game-showcase {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gh-trophy-wall {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -477,6 +717,10 @@ body .gh-upgrade-toolbar {
 
 @media (max-width: 600px) {
   #game-showcase {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gh-trophy-wall {
     grid-template-columns: minmax(0, 1fr);
   }
 }
@@ -501,18 +745,33 @@ body .gh-upgrade-toolbar {
 
   .gh-theme-button {
     flex: 1;
+    padding: 9px 10px;
+  }
+
+  .gh-crt-control {
+    margin-top: 5px;
+  }
+
+  .gh-trophy-card {
+    padding: 13px;
   }
 }
+
+/* =========================================
+   REDUCED MOTION SUPPORT
+   ========================================= */
 
 @media (prefers-reduced-motion: reduce) {
   .gh-achievement-card,
   .gh-game-modal,
-  .showcase-card {
+  .showcase-card,
+  .gh-trophy-card {
     animation: none !important;
+    transition: none !important;
   }
 
   body,
   body * {
     transition-duration: 0.01ms !important;
   }
-}
+   }
