@@ -10,13 +10,15 @@
   <title>Gourme Hub | RetroAchievements</title>
 
   <link rel="stylesheet" href="styles.css?v=gh-upgrade-20261106">
-  <link rel="stylesheet" href="gourme-upgrades.css?v=gh-cosmetics-20261106">
+  <link rel="stylesheet" href="gourme-upgrades.css?v=gh-crt-20261107">
 </head>
 
 <body>
   <div id="ambient-particles" aria-hidden="true"></div>
 
   <main class="dashboard">
+
+    <!-- PLAYER PROFILE -->
 
     <header class="profile-banner">
       <div class="profile-banner-art">
@@ -44,15 +46,17 @@
       </div>
     </header>
 
-    <!-- THEME SWITCHER -->
+    <!-- DASHBOARD APPEARANCE -->
 
     <section class="gh-upgrade-toolbar" aria-label="Dashboard appearance">
+
       <div>
         <strong>🎨 Dashboard Appearance</strong>
         <p>Choose your Gourme Hub look</p>
       </div>
 
       <div class="gh-theme-buttons">
+
         <button
           type="button"
           class="gh-theme-button"
@@ -76,6 +80,7 @@
           aria-pressed="false">
           💜 Retro Neon
         </button>
+
       </div>
 
       <label class="gh-crt-control" for="gh-crt-toggle">
@@ -83,14 +88,17 @@
         <span class="gh-crt-switch" aria-hidden="true"></span>
         <span>CRT Screen Effect</span>
       </label>
+
     </section>
 
     <!-- PLAYER STATISTICS -->
 
     <section class="stats-section">
+
       <h2>Player Statistics</h2>
 
       <div class="stats-grid">
+
         <article class="stat-card">
           <span class="stat-icon">🏆</span>
           <span class="stat-label">Achievements</span>
@@ -114,15 +122,18 @@
           <span class="stat-label">Softcore Points</span>
           <strong id="softcore-points">0</strong>
         </article>
+
       </div>
     </section>
 
     <!-- OVERALL COMPLETION -->
 
     <section class="progress-section">
+
       <h2>Overall Completion</h2>
 
       <div class="progress-card">
+
         <div class="progress-info">
           <span>Achievement Progress</span>
           <strong id="completion-percent">0%</strong>
@@ -135,12 +146,14 @@
         <p id="achievement-progress-text">
           0 of 0 achievements earned
         </p>
+
       </div>
     </section>
 
     <!-- ACHIEVEMENT SHOWCASE -->
 
     <section class="achievement-showcase-section">
+
       <div class="section-heading">
         <h2>🏆 Achievement Showcase</h2>
         <span class="section-count">Latest Unlocks</span>
@@ -154,6 +167,7 @@
         <p class="loading-message">
           Loading achievements...
         </p>
+
       </div>
     </section>
 
@@ -162,9 +176,11 @@
     <section class="gh-trophy-wall-section">
 
       <div class="section-heading gh-trophy-heading">
+
         <h2>🏅 Achievement Trophy Wall</h2>
 
         <div class="gh-trophy-heading-actions">
+
           <span id="gh-trophy-count" class="section-count">
             0 Trophies
           </span>
@@ -176,6 +192,7 @@
             aria-expanded="true">
             Minimize
           </button>
+
         </div>
       </div>
 
@@ -191,30 +208,38 @@
         <p class="loading-message">
           Loading your trophy collection...
         </p>
+
       </div>
     </section>
 
     <!-- RECENT ACHIEVEMENTS -->
 
     <section class="recent-section">
+
       <div class="section-heading">
         <h2>Recent Achievements</h2>
       </div>
 
       <div id="recent-achievements" class="recent-achievements">
-        <p class="loading-message">Loading recent achievements...</p>
+
+        <p class="loading-message">
+          Loading recent achievements...
+        </p>
+
       </div>
     </section>
 
     <!-- GAME LIBRARY -->
 
     <section class="games-section">
+
       <div class="section-heading">
         <h2>My Game Library</h2>
         <span id="game-count" class="section-count">0 Games</span>
       </div>
 
       <div class="game-controls">
+
         <input
           type="search"
           id="game-search"
@@ -228,29 +253,46 @@
           <option value="in-progress">In Progress</option>
           <option value="not-started">Not Started</option>
         </select>
+
       </div>
 
       <div id="games-container" class="games-grid">
-        <p class="loading-message">Loading game library...</p>
+
+        <p class="loading-message">
+          Loading game library...
+        </p>
+
       </div>
     </section>
 
-    <!-- EXISTING FEATURED GAMES SECTION -->
+    <!-- FEATURED GAMES
+         EXISTING ROTATION PRESERVED -->
 
     <section class="showcase-section">
+
       <h2>Featured Games</h2>
 
       <div id="game-showcase" class="showcase-grid">
-        <p class="loading-message">Loading featured games...</p>
+
+        <p class="loading-message">
+          Loading featured games...
+        </p>
+
       </div>
     </section>
 
     <!-- FOOTER -->
 
     <footer class="dashboard-footer">
+
       <p>Powered by RetroAchievements</p>
-      <p>Keep playing. Keep earning. Keep collecting. 🎮</p>
+
+      <p>
+        Keep playing. Keep earning. Keep collecting. 🎮
+      </p>
+
       <span id="last-updated"></span>
+
     </footer>
 
   </main>
@@ -276,10 +318,14 @@
       </button>
 
       <div id="gh-modal-content"></div>
+
     </div>
   </div>
 
+  <!-- DASHBOARD SCRIPTS -->
+
   <script src="app.js?v=gh-upgrade-20261106"></script>
-  <script src="gourme-upgrades.js?v=gh-cosmetics-20261106"></script>
+  <script src="gourme-upgrades.js?v=gh-upgrade-20261107"></script>
+
 </body>
 </html>
