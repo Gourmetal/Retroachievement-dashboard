@@ -1,7 +1,7 @@
 
 /* =========================================
    GOURME HUB — GAMEPLAY VIDEO GALLERY
-   Internet Archive video search and playback
+   Automatic Internet Archive video search
    Muted autoplay with player controls
    ========================================= */
 
@@ -77,6 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return String(value || "")
       .toLowerCase()
       .replace(/\[[^\]]*\]/g, " ")
+      .replace(/~hack~|~homebrew~/gi, " ")
       .replace(/[^a-z0-9]+/g, " ")
       .trim();
   }
@@ -89,111 +90,198 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /*
-   * INTERNET ARCHIVE SEARCH
+   * AUTOMATIC INTERNET ARCHIVE SEARCH
    *
-   * Searches only the gbasnaps collection.
-   * Requires a reasonably strong title match.
+   * Searches Archive.org beyond the gbasnaps
+   * collection and checks matching item files.
    */
 
-  async function findArchiveVideo(game) {
-    const title = getSearchTitle(game);
-    const normalizedWanted = normalizeTitle(title);
-
-    if (!normalizedWanted) return null;
-
+  async function searchArchive(query, rows = 30) {
     const params = new URLSearchParams();
 
-    params.append(
-      "q",
-      'collection:gbasnaps AND mediatype:movies AND title:"' +
-        title.replace(/["\\]/g, " ") + '"'
-    );
-
+    params.append("q", query);
     params.append("fl[]", "identifier");
     params.append("fl[]", "title");
-    params.append("rows", "20");
+    params.append("rows", String(rows));
     params.append("output", "json");
 
-    const searchURL =
+    const url =
       "https://archive.org/advancedsearch.php?" +
       params.toString();
 
-    const response = await fetch(searchURL);
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error("Internet Archive search failed");
     }
 
     const result = await response.json();
-    const documents = result?.response?.docs || [];
 
-    if (!documents.length) return null;
+    return result?.response?.docs || [];
+  }
 
-    const wantedWords = normalizedWanted
+  function getArchiveSearchTerms(game, info) {
+    const title = getSearchTitle(game);
+    const normalized = normalizeTitle(title);
+
+    const stopWords = new Set([
+      "full", "gameplay", "longplay", "walkthrough",
+      "playthrough", "video", "game", "usa", "europe",
+      "japan", "gba", "gbc", "gb", "gameboy",
+      "game", "boy", "advance", "version"
+    ]);
+
+    const titleWords = normalized
       .split(" ")
-      .filter(word => word.length > 2);
+      .filter(word => word.length > 1 && !stopWords.has(word));
 
-    const ranked = documents.map(doc => {
+    const customSearch = normalizeTitle(info.search || "")
+      .split(" ")
+      .filter(word => word.length > 2 && !stopWords.has(word));
+
+    const customWords = customSearch.length
+      ? customSearch
+      : titleWords;
+
+    return {
+      title,
+      normalized,
+      titleWords,
+      customWords
+    };
+  }
+
+  function rankArchiveResults(documents, terms) {
+    const wantedWords = terms.titleWords;
+
+    return documents.map(doc => {
       const candidate = normalizeTitle(doc.title);
-
-      const exact = candidate === normalizedWanted ? 100 : 0;
+      const exact = candidate === terms.normalized ? 100 : 0;
 
       const contains =
-        candidate.includes(normalizedWanted) ||
-        normalizedWanted.includes(candidate)
-          ? 30
+        candidate.includes(terms.normalized) ||
+        terms.normalized.includes(candidate)
+          ? 35
           : 0;
 
       const matchedWords = wantedWords.filter(word =>
         candidate.includes(word)
       ).length;
 
-      const score = exact + contains + matchedWords;
-
       return {
         doc,
-        score,
+        score: exact + contains + matchedWords * 10,
         matchedWords
       };
     }).sort((a, b) => b.score - a.score);
+  }
+
+  async function getArchiveMP4(identifier) {
+    const metadataURL =
+      "https://archive.org/metadata/" +
+      encodeURIComponent(identifier);
+
+    const response = await fetch(metadataURL);
+
+    if (!response.ok) return null;
+
+    const metadata = await response.json();
+    const files = metadata?.files || [];
+
+    const usableVideos = files.filter(file => {
+      const name = String(file.name || "");
+
+      return (
+        /\.mp4$/i.test(name) &&
+        !/thumb|thumbnail|sample|preview|trailer|small/i.test(name) &&
+        (!file.source || file.source === "original")
+      );
+    });
+
+    if (!usableVideos.length) return null;
+
+    // Prefer the largest original MP4, which is more likely
+    // to be the complete gameplay video.
+    usableVideos.sort((a, b) =>
+      (Number(b.size) || 0) - (Number(a.size) || 0)
+    );
+
+    return usableVideos[0];
+  }
+
+  async function findArchiveVideo(game, info = {}) {
+    const terms = getArchiveSearchTerms(game, info);
+
+    if (!terms.normalized || !terms.titleWords.length) {
+      return null;
+    }
+
+    const queries = [];
+
+    // First try the full game title.
+    queries.push(
+      `mediatype:movies AND title:"${terms.title.replace(/["\\]/g, " ")}"`
+    );
+
+    // Then try a broader title-word search.
+    const broadTitle = terms.titleWords
+      .map(word => `title:${word}`)
+      .join(" AND ");
+
+    if (broadTitle) {
+      queries.push(`mediatype:movies AND ${broadTitle}`);
+    }
+
+    // Finally try the custom search terms from game-videos.json.
+    const customTitle = terms.customWords
+      .map(word => `title:${word}`)
+      .join(" AND ");
+
+    if (customTitle && customTitle !== broadTitle) {
+      queries.push(`mediatype:movies AND ${customTitle}`);
+    }
+
+    const allDocuments = new Map();
+
+    for (const query of queries) {
+      try {
+        const documents = await searchArchive(query);
+
+        documents.forEach(doc => {
+          if (doc.identifier) {
+            allDocuments.set(doc.identifier, doc);
+          }
+        });
+
+        // Stop searching once we have a useful group of candidates.
+        if (allDocuments.size >= 30) break;
+
+      } catch (error) {
+        console.warn("Archive search attempt failed:", error);
+      }
+    }
+
+    if (!allDocuments.size) return null;
+
+    const ranked = rankArchiveResults(
+      Array.from(allDocuments.values()),
+      terms
+    );
 
     for (const match of ranked) {
-      /*
-       * Avoid selecting unrelated videos.
-       * Require a strong match or multiple title words.
-       */
-
+      // Require at least two meaningful matching words,
+      // unless the result is an exact or near-exact title.
       if (
-        match.score < 30 &&
-        match.matchedWords < Math.min(3, wantedWords.length)
+        match.score < 35 &&
+        match.matchedWords < Math.min(2, terms.titleWords.length)
       ) {
         continue;
       }
 
       const identifier = match.doc.identifier;
-
       if (!identifier) continue;
 
-      const metadataURL =
-        "https://archive.org/metadata/" +
-        encodeURIComponent(identifier);
-
-      const metadataResponse = await fetch(metadataURL);
-
-      if (!metadataResponse.ok) continue;
-
-      const metadata = await metadataResponse.json();
-      const files = metadata?.files || [];
-
-      const video = files.find(file =>
-        /\.mp4$/i.test(file.name || "") &&
-        !/thumb|thumbnail|sample|preview/i.test(file.name || "") &&
-        (!file.source || file.source === "original")
-      ) || files.find(file =>
-        /\.mp4$/i.test(file.name || "") &&
-        !/thumb|thumbnail|sample|preview/i.test(file.name || "")
-      );
-
+      const video = await getArchiveMP4(identifier);
       if (!video) continue;
 
       const encodedFilename = video.name
@@ -202,7 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
         .join("/");
 
       return {
-        title: match.doc.title || title,
+        title: match.doc.title || terms.title,
         identifier,
         url:
           "https://archive.org/download/" +
@@ -321,7 +409,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <h3>Finding gameplay video…</h3>
 
         <p>
-          Searching Internet Archive for a matching GBA video.
+          Searching Internet Archive for a matching video.
         </p>
 
       </div>
@@ -340,29 +428,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const info = getVideoInfo(game);
-
       let match = null;
 
       /*
-       * Allow a manually supplied Archive video URL
-       * to take priority if one is added later.
+       * Manually supplied Archive links take priority.
+       * Supports both /download/ and /0/items/ URLs.
        */
 
       if (
         typeof info.archiveVideo === "string" &&
-        /^https:\/\/archive\.org\/download\//i.test(info.archiveVideo)
+        /^https:\/\/(?:[\w.-]+\.)?archive\.org\/(?:download|0\/items)\//i.test(
+          info.archiveVideo
+        )
       ) {
         match = {
           title: info.label || game.title,
           url: info.archiveVideo
         };
       } else {
-        match = await findArchiveVideo(game);
+        match = await findArchiveVideo(game, info);
       }
-
-      /*
-       * Do not update a popup that has already closed.
-       */
 
       if (!modal.classList.contains("open")) return;
 
@@ -429,16 +514,18 @@ document.addEventListener("DOMContentLoaded", () => {
             <h3>No matching Archive video found</h3>
 
             <p>
-              We couldn't find a confident match in the
-              gbasnaps collection. No unrelated clip was selected.
+              We couldn't find a confident matching MP4 on
+              Internet Archive. No unrelated clip was selected.
             </p>
 
             <a class="gh-video-watch-button"
-              href="${escapeHTML(getSearchURL(query))}"
+              href="https://archive.org/search?query=${encodeURIComponent(
+                `${game.title} AND mediatype:movies`
+              )}"
               target="_blank"
               rel="noopener noreferrer">
 
-              Search YouTube as a fallback ↗
+              Search Internet Archive ↗
 
             </a>
 
@@ -705,4 +792,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadVideoData();
 });
-       
+                                      
