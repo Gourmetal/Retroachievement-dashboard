@@ -398,13 +398,30 @@ body .gh-upgrade-toolbar {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 43px;
-  height: 43px;
+  width: 52px;
+  height: 52px;
+  padding: 3px;
   border: 1px solid var(--border);
-  border-radius: 50%;
+  border-radius: 10px;
   background: var(--panel-light);
   font-size: 23px;
   box-shadow: var(--glow);
+}
+
+.gh-trophy-badge {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.gh-trophy-fallback {
+  font-size: 23px;
+}
+
+.gh-trophy-fallback[hidden] {
+  display: none;
 }
 
 .gh-trophy-copy {
@@ -446,6 +463,63 @@ body .gh-upgrade-toolbar {
   font-size: 0.78rem;
   font-weight: bold;
   white-space: nowrap;
+}
+
+/* =========================================
+   TROPHY WALL MINIMIZE CONTROL
+   ========================================= */
+
+.gh-trophy-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gh-trophy-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gh-trophy-toggle {
+  padding: 8px 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  background: var(--panel-light);
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.gh-trophy-toggle:hover {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.gh-trophy-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.gh-trophy-collapsed .gh-trophy-intro,
+.gh-trophy-collapsed .gh-trophy-wall {
+  display: none;
+}
+
+.gh-trophy-collapsed {
+  padding-bottom: 5px;
+}
+
+.gh-trophy-collapsed .gh-trophy-heading {
+  margin-bottom: 0;
+}
+
+.gh-trophy-collapsed .gh-trophy-toggle {
+  box-shadow: var(--glow);
 }
 
 /* =========================================
@@ -755,6 +829,15 @@ body.gh-crt-on::after {
   .gh-trophy-card {
     padding: 13px;
   }
+
+  .gh-trophy-heading {
+    align-items: flex-start;
+  }
+
+  .gh-trophy-heading-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 /* =========================================
@@ -774,4 +857,4 @@ body.gh-crt-on::after {
   body * {
     transition-duration: 0.01ms !important;
   }
-   }
+}
