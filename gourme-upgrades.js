@@ -318,10 +318,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     trophyWall.innerHTML = trophies.map(item => {
-      const badgeId = String(item.id || "").padStart(5, "0");
 
-      const badgeUrl = badgeId
-        ? `https://media.retroachievements.org/Badge/${badgeId}.png`
+      // BadgeName is supplied by the RetroAchievements API.
+      // It is different from the achievement ID.
+      const badgeName = String(item.badgeName || "").trim();
+
+      const badgeUrl = badgeName
+        ? `https://retroachievements.org/Badge/${encodeURIComponent(badgeName)}.png`
         : "";
 
       return `
@@ -334,7 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 ? `
                   <img
                     class="gh-trophy-badge"
-                    src="${badgeUrl}"
+                    src="${ghEscape(badgeUrl)}"
                     alt="${ghEscape(item.title)} badge"
                     loading="lazy">
                 `
@@ -773,4 +776,3 @@ document.addEventListener("DOMContentLoaded", () => {
   ghRefreshShowcase();
 
 });
-                          
