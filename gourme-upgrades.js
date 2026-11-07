@@ -233,10 +233,60 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /* =======================================
      ACHIEVEMENT TROPHY WALL
+     OFFICIAL RETROACHIEVEMENTS BADGES
      ======================================= */
 
   const trophyWall = document.getElementById("gh-trophy-wall");
   const trophyCount = document.getElementById("gh-trophy-count");
+  const trophySection = document.querySelector(".gh-trophy-wall-section");
+  const trophyToggle = document.getElementById("gh-trophy-toggle");
+
+  const trophyCollapseKey = "gourmeHubTrophyWallCollapsed";
+
+  function ghSetTrophyCollapsed(collapsed) {
+    if (trophySection) {
+      trophySection.classList.toggle(
+        "gh-trophy-collapsed",
+        collapsed
+      );
+    }
+
+    if (trophyToggle) {
+      trophyToggle.textContent = collapsed ? "Expand" : "Minimize";
+
+      trophyToggle.setAttribute(
+        "aria-expanded",
+        String(!collapsed)
+      );
+    }
+
+    try {
+      localStorage.setItem(
+        trophyCollapseKey,
+        String(collapsed)
+      );
+    } catch (error) {
+      // Continue if browser storage is unavailable.
+    }
+  }
+
+  let trophyCollapsed = false;
+
+  try {
+    trophyCollapsed =
+      localStorage.getItem(trophyCollapseKey) === "true";
+  } catch (error) {
+    trophyCollapsed = false;
+  }
+
+  ghSetTrophyCollapsed(trophyCollapsed);
+
+  if (trophyToggle) {
+    trophyToggle.addEventListener("click", () => {
+      trophyCollapsed = !trophyCollapsed;
+      ghSetTrophyCollapsed(trophyCollapsed);
+    });
+  }
 
   function ghRenderTrophyWall() {
     if (!trophyWall) return;
@@ -267,35 +317,78 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
-    trophyWall.innerHTML = trophies.map(item => `
-      <article class="gh-trophy-card">
+    trophyWall.innerHTML = trophies.map(item => {
+      const badgeId = String(item.id || "").padStart(5, "0");
 
-        <div class="gh-trophy-medal" aria-hidden="true">
-          🏆
-        </div>
+      const badgeUrl = badgeId
+        ? `https://media.retroachievements.org/Badge/${badgeId}.png`
+        : "";
 
-        <div class="gh-trophy-copy">
-          <h3>${ghEscape(item.title)}</h3>
+      return `
+        <article class="gh-trophy-card">
 
-          <p class="gh-trophy-game">
-            🎮 ${ghEscape(item.gameTitle)}
-          </p>
+          <div class="gh-trophy-medal">
 
-          <p class="gh-trophy-description">
-            ${ghEscape(item.description || "Achievement unlocked!")}
-          </p>
+            ${
+              badgeUrl
+                ? `
+                  <img
+                    class="gh-trophy-badge"
+                    src="${badgeUrl}"
+                    alt="${ghEscape(item.title)} badge"
+                    loading="lazy">
+                `
+                : ""
+            }
 
-          <span class="gh-trophy-date">
-            ${ghFormatDate(item.dateEarned)}
+            <span
+              class="gh-trophy-fallback"
+              ${badgeUrl ? "hidden" : ""}>
+              🏆
+            </span>
+
+          </div>
+
+          <div class="gh-trophy-copy">
+
+            <h3>${ghEscape(item.title)}</h3>
+
+            <p class="gh-trophy-game">
+              🎮 ${ghEscape(item.gameTitle)}
+            </p>
+
+            <p class="gh-trophy-description">
+              ${ghEscape(item.description || "Achievement unlocked!")}
+            </p>
+
+            <span class="gh-trophy-date">
+              ${ghFormatDate(item.dateEarned)}
+            </span>
+
+          </div>
+
+          <span class="gh-trophy-points">
+            ⭐ ${Number(item.points) || 0}
           </span>
-        </div>
 
-        <span class="gh-trophy-points">
-          ⭐ ${Number(item.points) || 0}
-        </span>
+        </article>
+      `;
+    }).join("");
 
-      </article>
-    `).join("");
+    // Show a trophy emoji if an official badge fails to load.
+    trophyWall.querySelectorAll(".gh-trophy-badge").forEach(image => {
+      image.addEventListener("error", () => {
+        image.hidden = true;
+
+        const fallback = image.parentElement.querySelector(
+          ".gh-trophy-fallback"
+        );
+
+        if (fallback) {
+          fallback.hidden = false;
+        }
+      }, { once: true });
+    });
   }
 
   /* =======================================
@@ -680,3 +773,4 @@ document.addEventListener("DOMContentLoaded", () => {
   ghRefreshShowcase();
 
 });
+                          
