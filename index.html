@@ -5,13 +5,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#08090f">
-  <meta name="description" content="RetroAchievements gaming dashboard">
+  <meta name="description" content="Gourme Hub - RetroAchievements gaming dashboard and gameplay gallery">
 
   <title>Gourme Hub | RetroAchievements</title>
 
   <link rel="stylesheet" href="styles.css?v=gh-upgrade-20261106">
   <link rel="stylesheet" href="gourme-upgrades.css?v=gh-marquee-cards-20261107">
-  <link rel="stylesheet" href="cartridge-shelf.css?v=gh-real-case-spines-20261107">
+  <link rel="stylesheet" href="cartridge-shelf.css?v=gh-gameplay-gallery-20261108">
 </head>
 
 <body>
@@ -213,20 +213,22 @@
       </div>
     </section>
 
-    <!-- VIRTUAL CARTRIDGE SHELF -->
+    <!-- GAMEPLAY VIDEO GALLERY -->
     <section class="gh-cartridge-section" id="gh-cartridge-section">
 
       <div class="gh-cartridge-heading">
         <div>
-          <p class="gh-cartridge-eyebrow">GOURME HUB COLLECTION</p>
-          <h2>🕹️ Virtual Cartridge Shelf</h2>
+          <p class="gh-cartridge-eyebrow">GOURME HUB ARCADE</p>
+
+          <h2>🎬 Gameplay Video Gallery</h2>
+
           <p class="gh-cartridge-subtitle">
-            Your games. Your collection. Your arcade.
+            Tap any game cover to watch gameplay or find a full walkthrough.
           </p>
         </div>
 
         <span id="gh-cartridge-count" class="gh-cartridge-count">
-          Loading collection...
+          Loading games...
         </span>
       </div>
 
@@ -234,28 +236,29 @@
         <input
           type="search"
           id="gh-cartridge-search"
-          placeholder="Find a cartridge..."
-          aria-label="Search cartridge shelf">
+          placeholder="Search games..."
+          aria-label="Search gameplay gallery">
 
-        <select id="gh-cartridge-filter"
-          aria-label="Filter cartridges">
-          <option value="all">All Cartridges</option>
+        <select
+          id="gh-cartridge-filter"
+          aria-label="Filter gameplay gallery">
+
+          <option value="all">All Games</option>
           <option value="completed">Completed</option>
           <option value="in-progress">In Progress</option>
           <option value="not-started">Not Started</option>
         </select>
       </div>
 
-      <!-- REAL GAME CASE DISPLAY -->
-      <div id="gh-cartridge-grid"
-        aria-live="polite">
+      <!-- GAMEPLAY GALLERY CARDS -->
+      <div id="gh-cartridge-grid" aria-live="polite">
         <p class="gh-cartridge-empty">
-          Loading your game collection...
+          Loading your gameplay gallery...
         </p>
       </div>
 
       <p class="gh-cartridge-hint">
-        Tap any game case to open its game details.
+        ▶ Tap a game cover to open its gameplay preview.
       </p>
 
     </section>
@@ -278,7 +281,7 @@
 
   </main>
 
-  <!-- GAME DETAIL POPUP -->
+  <!-- EXISTING GAME DETAIL POPUP -->
   <div id="gh-game-modal"
     class="gh-modal-backdrop"
     aria-hidden="true">
@@ -301,7 +304,7 @@
   <!-- DASHBOARD SCRIPTS -->
   <script src="app.js?v=gh-upgrade-20261106"></script>
   <script src="gourme-upgrades.js?v=gh-upgrade-20261107"></script>
-  <script src="cartridge-shelf.js?v=gh-real-case-spines-20261107"></script>
+  <script src="cartridge-shelf.js?v=gh-gameplay-gallery-20261108"></script>
 
 </body>
 </html>
