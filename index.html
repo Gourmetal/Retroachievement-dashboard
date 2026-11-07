@@ -85,6 +85,8 @@
       </label>
     </section>
 
+    <!-- PLAYER STATISTICS -->
+
     <section class="stats-section">
       <h2>Player Statistics</h2>
 
@@ -114,6 +116,8 @@
         </article>
       </div>
     </section>
+
+    <!-- OVERALL COMPLETION -->
 
     <section class="progress-section">
       <h2>Overall Completion</h2>
@@ -156,11 +160,23 @@
     <!-- ACHIEVEMENT TROPHY WALL -->
 
     <section class="gh-trophy-wall-section">
-      <div class="section-heading">
+
+      <div class="section-heading gh-trophy-heading">
         <h2>🏅 Achievement Trophy Wall</h2>
-        <span id="gh-trophy-count" class="section-count">
-          0 Trophies
-        </span>
+
+        <div class="gh-trophy-heading-actions">
+          <span id="gh-trophy-count" class="section-count">
+            0 Trophies
+          </span>
+
+          <button
+            type="button"
+            id="gh-trophy-toggle"
+            class="gh-trophy-toggle"
+            aria-expanded="true">
+            Minimize
+          </button>
+        </div>
       </div>
 
       <p class="gh-trophy-intro">
@@ -178,6 +194,8 @@
       </div>
     </section>
 
+    <!-- RECENT ACHIEVEMENTS -->
+
     <section class="recent-section">
       <div class="section-heading">
         <h2>Recent Achievements</h2>
@@ -187,6 +205,8 @@
         <p class="loading-message">Loading recent achievements...</p>
       </div>
     </section>
+
+    <!-- GAME LIBRARY -->
 
     <section class="games-section">
       <div class="section-heading">
@@ -224,6 +244,8 @@
         <p class="loading-message">Loading featured games...</p>
       </div>
     </section>
+
+    <!-- FOOTER -->
 
     <footer class="dashboard-footer">
       <p>Powered by RetroAchievements</p>
