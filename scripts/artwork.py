@@ -16,7 +16,8 @@ LAUNCHBOX_IMAGE_HOSTS = (
     "gamesdb-images.launchbox.gg"
 )
 
-SPINE_CACHE_VERSION = 2
+# Increment this whenever the spine lookup method changes.
+SPINE_CACHE_VERSION = 3
 
 
 # --------------------------------------------------
@@ -50,10 +51,9 @@ def save_cache(path, cache):
 def load_spine_cache(path):
     cache = load_cache(path)
 
-    # Old cache entries may contain screenshots or incorrect artwork.
-    # Reset them once when upgrading to this scraper version.
     if cache.get("_cache_version") != SPINE_CACHE_VERSION:
         print("Resetting old LaunchBox spine cache...")
+
         cache = {
             "_cache_version": SPINE_CACHE_VERSION
         }
@@ -282,97 +282,25 @@ class LaunchBoxHTMLParser(HTMLParser):
 
             href = node["attrs"].get("href", "")
 
-            if href:
-                link_text = " ".join(node["text"]).strip()
-
-                links.append({
-                    "href": href,
-                    "text": link_text,
-                    "attrs": node["attrs"]
-                })
-
-        return links
-
-    def get_image_candidates(self):
-        candidates = []
-
-        for node in self.elements:
-            tag = node["tag"]
-            attrs = node["attrs"]
-
-            # Only inspect actual image elements.
-            # Do not treat ordinary links or page backgrounds as images.
-            if tag not in ("img", "source"):
+            if not href:
                 continue
 
-            urls = []
+            # HTMLParser collects child text into the anchor too.
+            text = " ".join(node["text"]).strip()
 
-            for key in (
-                "src",
-                "data-src",
-                "data-original",
-                "data-lazy-src",
-                "data-url"
-            ):
-                if attrs.get(key):
-                    urls.append(attrs[key])
-
-            # Collect image URLs from srcset.
-            srcset = attrs.get("srcset", "")
-
-            if srcset:
-                for item in srcset.split(","):
-                    item = item.strip()
-
-                    if item:
-                        urls.append(item.split()[0])
-
-            # Build separate local contexts.
-            # Do not combine the entire page's text into one context.
-            contexts = []
-
-            image_context = " ".join(
+            attribute_text = " ".join(
                 str(value)
-                for value in attrs.values()
+                for value in node["attrs"].values()
                 if value
             )
 
-            if image_context:
-                contexts.append(image_context)
+            links.append({
+                "href": href,
+                "text": text,
+                "attributes": attribute_text
+            })
 
-            # Only inspect the nearest four ancestors.
-            # This prevents labels elsewhere on the page from being
-            # incorrectly associated with an image.
-            nearby_ancestors = node["ancestors"][-4:]
-
-            for parent in reversed(nearby_ancestors):
-                parts = []
-
-                parts.extend(
-                    str(value)
-                    for value in parent["attrs"].values()
-                    if value
-                )
-
-                parts.extend(parent["text"])
-
-                context = " ".join(parts).strip()
-
-                if context:
-                    contexts.append(context)
-
-            for url in urls:
-                url = html.unescape(str(url).strip())
-
-                if not url:
-                    continue
-
-                candidates.append({
-                    "url": url,
-                    "contexts": contexts
-                })
-
-        return candidates
+        return links
 
 
 # --------------------------------------------------
@@ -395,7 +323,6 @@ def clean_game_title(title):
     )
 
     title = title.lower()
-
     title = re.sub(r"[^a-z0-9]+", " ", title)
 
     return " ".join(title.split())
@@ -432,17 +359,14 @@ def get_game_detail_candidates(title, search_html):
 
         detail_url = absolute_launchbox_url(href)
 
-        link_text = link["text"]
-
-        if not link_text:
-            link_text = (
-                link["attrs"].get("title", "")
-                or link["attrs"].get("aria-label", "")
-            )
+        candidate_title = (
+            link["text"]
+            or link["attributes"]
+        )
 
         score = title_match_score(
             title,
-            link_text
+            candidate_title
         )
 
         if score < 0.45:
@@ -469,7 +393,7 @@ def get_game_detail_candidates(title, search_html):
 
 
 # --------------------------------------------------
-# NORTH AMERICAN SPINE DETECTION
+# LAUNCHBOX IMAGE GALLERY
 # --------------------------------------------------
 
 def is_launchbox_image_url(url):
@@ -481,10 +405,7 @@ def is_launchbox_image_url(url):
     if parsed.hostname not in LAUNCHBOX_IMAGE_HOSTS:
         return False
 
-    # Reject detail pages and other non-image URLs.
-    image_path = parsed.path.lower()
-
-    return image_path.endswith((
+    return parsed.path.lower().endswith((
         ".jpg",
         ".jpeg",
         ".png",
@@ -492,90 +413,118 @@ def is_launchbox_image_url(url):
     ))
 
 
-def has_spine_type(context):
-    context = html.unescape(context).lower()
+def is_north_american_spine_label(label):
+    """
+    Match the actual LaunchBox gallery label.
 
-    context = re.sub(
+    Expected examples:
+      Box - Spine (North America) - 186 x 978
+      Box - Spine (North American) - 190 x 978
+    """
+
+    label = html.unescape(label).lower()
+
+    label = re.sub(
         r"[_–—]",
         "-",
-        context
+        label
     )
 
-    patterns = (
-        r"\bbox\s*-\s*spine\b",
-        r"\bbox\s+spine\b",
-        r"\bmedia\s+type\s*[:=]\s*box\s*-\s*spine\b"
+    has_spine = bool(
+        re.search(
+            r"\bbox\s*-\s*spine\b",
+            label
+        )
     )
 
-    return any(
-        re.search(pattern, context)
-        for pattern in patterns
+    has_north_america = bool(
+        re.search(
+            r"\bnorth\s+america(?:n)?\b",
+            label
+        )
     )
 
-
-def has_north_american_region(context):
-    context = html.unescape(context).lower()
-
-    context = re.sub(
-        r"[_–—]",
-        "-",
-        context
-    )
-
-    region_patterns = (
-        r"\bnorth\s+america\b",
-        r"\bnorth\s+american\b",
-        r"\bunited\s+states\b",
-        r"\busa\b",
-        r"\bntsc\s*-\s*u\b",
-        r"\bntsc-u\b"
-    )
-
-    return any(
-        re.search(pattern, context)
-        for pattern in region_patterns
-    )
+    return has_spine and has_north_america
 
 
-def candidate_is_north_american_spine(candidate):
-    contexts = candidate.get("contexts", [])
+def get_spines_from_gallery(gallery_html, title):
+    """
+    Read the LaunchBox Images gallery.
 
-    # Require both the spine type and region to appear in the
-    # same nearby context. Never mix labels from separate page areas.
-    for context in contexts:
-        if (
-            has_spine_type(context)
-            and has_north_american_region(context)
-        ):
-            return True
+    The gallery links each image with its actual image type
+    and region label. We use that label rather than guessing
+    from surrounding page content.
+    """
 
-    return False
-
-
-def find_north_american_spine(detail_html, title):
     parser = LaunchBoxHTMLParser()
-    parser.feed(detail_html)
+    parser.feed(gallery_html)
 
-    candidates = parser.get_image_candidates()
+    matches = []
 
-    for candidate in candidates:
+    for link in parser.get_links():
+
+        label = " ".join((
+            link.get("text", ""),
+            link.get("attributes", "")
+        ))
+
+        if not is_north_american_spine_label(label):
+            continue
+
         image_url = absolute_launchbox_url(
-            candidate["url"]
+            link.get("href", "")
         )
 
         if not is_launchbox_image_url(image_url):
             continue
 
-        if not candidate_is_north_american_spine(candidate):
+        matches.append(image_url)
+
+    # Remove duplicate image URLs while preserving order.
+    unique = []
+    seen = set()
+
+    for url in matches:
+        if url in seen:
             continue
 
+        seen.add(url)
+        unique.append(url)
+
+    if unique:
         print(
-            f"Verified North American spine: {title}"
+            f"Found {len(unique)} North American spine "
+            f"image(s) in gallery: {title}"
         )
 
-        return image_url
+    return unique
 
-    return ""
+
+def get_launchbox_gallery_url(detail_url):
+    """
+    Convert:
+      /games/details/5681-game-name
+
+    Into:
+      /games/images/5681-game-name
+    """
+
+    parsed = urllib.parse.urlparse(detail_url)
+
+    new_path = parsed.path.replace(
+        "/games/details/",
+        "/games/images/",
+        1
+    )
+
+    return urllib.parse.urlunparse((
+        parsed.scheme,
+        parsed.netloc,
+        new_path,
+        "",
+        "",
+        ""
+    ))
 
 
 # --------------------------------------------------
@@ -586,7 +535,6 @@ def get_launchbox_spine(title, cache):
 
     cached = cache.get(title)
 
-    # Only reuse URLs from the current cache version.
     if (
         isinstance(cached, str)
         and is_launchbox_image_url(cached)
@@ -607,6 +555,7 @@ def get_launchbox_spine(title, cache):
     detail_candidates = []
     seen_details = set()
 
+    # Find the LaunchBox game detail page.
     for search_url in search_urls:
         try:
             print(
@@ -640,29 +589,54 @@ def get_launchbox_spine(title, cache):
 
         return ""
 
+    # Visit each matching game's actual Images gallery.
     for detail_url in detail_candidates[:12]:
-        try:
-            detail_html = get_launchbox_html(detail_url)
 
-            spine = find_north_american_spine(
-                detail_html,
+        gallery_url = get_launchbox_gallery_url(
+            detail_url
+        )
+
+        try:
+            print(
+                f"Opening LaunchBox image gallery: {title}"
+            )
+
+            gallery_html = get_launchbox_html(
+                gallery_url
+            )
+
+            spine_images = get_spines_from_gallery(
+                gallery_html,
                 title
             )
 
-            if spine:
+            if spine_images:
+                # Use the first exact North American spine match.
+                spine = spine_images[0]
+
                 cache[title] = spine
+
+                print(
+                    f"Selected North American spine: {title}"
+                )
+
                 return spine
+
+            print(
+                f"No Box - Spine (North America) "
+                f"entry in gallery: {title}"
+            )
 
             time.sleep(0.2)
 
         except Exception as error:
             print(
-                f"LaunchBox detail lookup failed "
+                f"LaunchBox gallery lookup failed "
                 f"for {title}: {error}"
             )
 
     print(
-        f"No verified North American spine found for: {title}"
+        f"No North American spine found for: {title}"
     )
 
     return ""
@@ -692,20 +666,20 @@ def get_all_artwork(games):
             f"Processing artwork {index + 1}/{total}: {title}"
         )
 
-        # SteamGridDB artwork remains the fallback.
+        # Keep SteamGridDB artwork as the fallback.
         game["steamGridDB"] = get_steamgriddb_artwork(
             title,
             sgdb_cache,
             sgdb_key
         )
 
-        # Only verified LaunchBox North American spines are accepted.
+        # Retrieve only exact LaunchBox gallery spine matches.
         game["launchBoxSpine"] = get_launchbox_spine(
             title,
             spine_cache
         )
 
-        # Save progress periodically.
+        # Save progress every five games.
         if (index + 1) % 5 == 0:
             save_cache(
                 sgdb_cache_path,
@@ -737,7 +711,8 @@ def get_all_artwork(games):
     print("")
     print("Artwork update complete.")
     print(f"Games processed: {total}")
-    print(f"Verified North American spines found: {found_spines}")
+    print(
+        f"North American LaunchBox spines found: {found_spines}"
+    )
 
     return games
-        
