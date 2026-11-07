@@ -523,8 +523,7 @@ body .gh-upgrade-toolbar {
 }
 
 /* =========================================
-   OPTIONAL CRT SCREEN EFFECT
-   OFF BY DEFAULT
+   CRT EFFECT — OFF BY DEFAULT
    ========================================= */
 
 body:not(.gh-crt-on)::before {
@@ -537,20 +536,64 @@ body:not(.gh-crt-on)::after {
   box-shadow: none;
 }
 
+/* =========================================
+   ENHANCED CRT MONITOR EFFECT
+   ========================================= */
+
 body.gh-crt-on::before {
-  opacity: 0.28;
+  opacity: 0.58 !important;
   mix-blend-mode: screen;
+
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 1px,
+      rgba(255, 155, 20, 0.20) 2px,
+      rgba(255, 155, 20, 0.04) 3px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 100, 0, 0.025) 0px,
+      transparent 2px,
+      rgba(255, 100, 0, 0.025) 4px
+    );
+
+  animation: ghCrtFlicker 0.16s infinite;
 }
 
 body.gh-crt-on::after {
-  background: radial-gradient(
-    ellipse at center,
-    transparent 48%,
-    rgba(0, 0, 0, 0.48) 100%
-  );
+  background:
+    radial-gradient(
+      ellipse at center,
+      transparent 38%,
+      rgba(0, 0, 0, 0.28) 72%,
+      rgba(0, 0, 0, 0.78) 100%
+    );
+
+  box-shadow:
+    inset 0 0 100px rgba(255, 100, 0, 0.16),
+    inset 0 0 190px rgba(0, 0, 0, 0.72),
+    inset 0 0 35px rgba(255, 155, 20, 0.10);
 }
 
-/* CRT TOGGLE */
+@keyframes ghCrtFlicker {
+  0%, 100% {
+    opacity: 0.58;
+  }
+
+  50% {
+    opacity: 0.48;
+  }
+
+  51% {
+    opacity: 0.62;
+  }
+}
+
+/* =========================================
+   CRT TOGGLE
+   ========================================= */
 
 .gh-crt-control {
   display: inline-flex;
@@ -857,4 +900,9 @@ body.gh-crt-on::after {
   body * {
     transition-duration: 0.01ms !important;
   }
-}
+
+  body.gh-crt-on::before {
+    animation: none !important;
+  }
+   }
+   
