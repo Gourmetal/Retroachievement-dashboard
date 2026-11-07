@@ -1,7 +1,8 @@
 
 /* =========================================
    GOURME HUB — REAL GAME CASE SHELVES
-   SteamGridDB artwork + physical case spines
+   LaunchBox North American spines first
+   SteamGridDB artwork as fallback
    ========================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -27,7 +28,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function safeImage(url) {
     const value = String(url || "").trim();
-    return /^https:\/\/[^"'<>]+$/i.test(value) ? value : "";
+
+    return /^https:\/\/[^"'<>]+$/i.test(value)
+      ? value
+      : "";
   }
 
   function getDashboardGames() {
@@ -36,6 +40,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     return [];
+  }
+
+  // Prefer real LaunchBox spine artwork.
+  // Fall back to SteamGridDB, then RetroAchievements box art.
+  function getSpine(game) {
+    return safeImage(game.launchBoxSpine);
   }
 
   function getArtwork(game) {
@@ -56,6 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (progress >= 100) return "completed";
     if (progress > 0) return "in-progress";
+
     return "not-started";
   }
 
@@ -80,6 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function getCaseClass(status) {
     if (status === "completed") return "is-completed";
     if (status === "in-progress") return "is-in-progress";
+
     return "is-unstarted";
   }
 
@@ -87,8 +99,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const title = String(game.title || "Unknown Game");
     const consoleName = String(game.console || "Unknown Console");
     const consoleShort = getConsoleShortName(consoleName);
+
+    const spine = getSpine(game);
     const artwork = getArtwork(game);
+    const hasSpine = Boolean(spine);
+
     const status = getGameStatus(game);
+
     const progress = Math.max(
       0,
       Math.min(100, Number(game.progress) || 0)
@@ -97,17 +114,49 @@ document.addEventListener("DOMContentLoaded", () => {
     const earned = Number(game.earned) || 0;
     const total = Number(game.total) || 0;
 
-    const imageMarkup = artwork
+    // Real LaunchBox spine image.
+    const spineMarkup = hasSpine
       ? `
-        <img
-          class="gh-case-artwork"
-          src="${escapeHTML(artwork)}"
-          alt="${escapeHTML(title)} cover artwork"
-          loading="lazy">
+        <span class="gh-case-launchbox-wrap">
+          <img
+            class="gh-case-launchbox-spine"
+            src="${escapeHTML(spine)}"
+            alt="${escapeHTML(title)} North American game case spine"
+            loading="lazy">
+        </span>
       `
-      : `
-        <span class="gh-case-no-art" aria-hidden="true">🎮</span>
-      `;
+      : "";
+
+    // SteamGridDB / RetroAchievements fallback.
+    const artworkMarkup = !hasSpine
+      ? `
+        <span class="gh-case-cover">
+          ${
+            artwork
+              ? `
+                <img
+                  class="gh-case-artwork"
+                  src="${escapeHTML(artwork)}"
+                  alt="${escapeHTML(title)} cover artwork"
+                  loading="lazy">
+              `
+              : `
+                <span class="gh-case-no-art" aria-hidden="true">🎮</span>
+              `
+          }
+          <span class="gh-case-cover-shine"></span>
+        </span>
+      `
+      : "";
+
+    // Avoid duplicating the title printed on a real spine.
+    const titleMarkup = !hasSpine
+      ? `
+        <span class="gh-case-title">
+          ${escapeHTML(title)}
+        </span>
+      `
+      : "";
 
     const statusText =
       status === "completed" ? "100% COMPLETE" :
@@ -117,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return `
       <button
         type="button"
-        class="gh-game-case ${getCaseClass(status)}"
+        class="gh-game-case ${getCaseClass(status)} ${hasSpine ? "has-launchbox-spine" : ""}"
         data-game-title="${escapeHTML(title)}"
         aria-label="Open ${escapeHTML(title)}">
 
@@ -125,19 +174,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         <span class="gh-case-spine">
 
+          ${spineMarkup}
+
           <span class="gh-case-top">
             <span class="gh-case-platform">${escapeHTML(consoleShort)}</span>
             <span class="gh-case-number">${String(index + 1).padStart(3, "0")}</span>
           </span>
 
-          <span class="gh-case-cover">
-            ${imageMarkup}
-            <span class="gh-case-cover-shine"></span>
-          </span>
+          ${artworkMarkup}
 
-          <span class="gh-case-title">
-            ${escapeHTML(title)}
-          </span>
+          ${titleMarkup}
 
           <span class="gh-case-bottom">
             <span class="gh-case-progress">
@@ -164,6 +210,7 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
 
       if (count) count.textContent = "0 Games";
+
       return;
     }
 
@@ -177,6 +224,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const visibleGames = allGames.filter(game => {
       const title = String(game.title || "").toLowerCase();
+
       const matchesSearch = title.includes(searchTerm);
       const status = getGameStatus(game);
 
@@ -198,6 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
           No games match your search.
         </p>
       `;
+
       return;
     }
 
@@ -212,6 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       rows.push(`
         <div class="gh-case-shelf-row">
+
           <div class="gh-case-row-label">
             <span>GOURME HUB COLLECTION</span>
             <span>SHELF ${String(rows.length + 1).padStart(2, "0")}</span>
@@ -224,23 +274,30 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="gh-wood-shelf">
             <span></span>
           </div>
+
         </div>
       `);
     }
 
     shelf.innerHTML = rows.join("");
 
-    shelf.querySelectorAll(".gh-case-artwork").forEach(image => {
+    // Replace broken images with a game controller placeholder.
+    shelf.querySelectorAll(
+      ".gh-case-artwork, .gh-case-launchbox-spine"
+    ).forEach(image => {
       image.addEventListener("error", () => {
         const fallback = document.createElement("span");
+
         fallback.className = "gh-case-no-art";
         fallback.setAttribute("aria-hidden", "true");
         fallback.textContent = "🎮";
+
         image.replaceWith(fallback);
       }, { once: true });
     });
   }
 
+  // Preserve the existing game-detail popup behavior.
   function openGameFromShelf(title) {
     if (!gameLibrary) return;
 
@@ -249,6 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
         gameLibrary.querySelectorAll("details.game-card summary")
       ).find(summary => {
         const heading = summary.querySelector("h3");
+
         return heading && heading.textContent.trim() === title;
       });
     }
@@ -261,12 +319,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (mainSearch && mainSearch.value) {
         mainSearch.value = "";
-        mainSearch.dispatchEvent(new Event("input", { bubbles: true }));
+
+        mainSearch.dispatchEvent(
+          new Event("input", { bubbles: true })
+        );
       }
 
       if (mainFilter && mainFilter.value !== "all") {
         mainFilter.value = "all";
-        mainFilter.dispatchEvent(new Event("change", { bubbles: true }));
+
+        mainFilter.dispatchEvent(
+          new Event("change", { bubbles: true })
+        );
       }
 
       summary = findGameSummary();
@@ -277,20 +341,34 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Case click handling.
   shelf.addEventListener("click", event => {
     const gameCase = event.target.closest(".gh-game-case");
+
     if (!gameCase) return;
 
     const title = gameCase.dataset.gameTitle;
-    if (title) openGameFromShelf(title);
+
+    if (title) {
+      openGameFromShelf(title);
+    }
   });
 
-  if (search) search.addEventListener("input", renderShelf);
-  if (filter) filter.addEventListener("change", renderShelf);
+  // Search and filters.
+  if (search) {
+    search.addEventListener("input", renderShelf);
+  }
 
+  if (filter) {
+    filter.addEventListener("change", renderShelf);
+  }
+
+  // Watch the main game library for updates.
   if (gameLibrary) {
     const observer = new MutationObserver(() => {
-      if (getDashboardGames().length) renderShelf();
+      if (getDashboardGames().length) {
+        renderShelf();
+      }
     });
 
     observer.observe(gameLibrary, {
@@ -301,3 +379,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderShelf();
 });
+       
