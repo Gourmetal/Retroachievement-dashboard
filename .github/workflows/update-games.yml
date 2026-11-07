@@ -92,6 +92,9 @@ jobs:
                   }
               )
 
+          if not ra_key:
+              raise RuntimeError("RA_API_KEY secret is missing.")
+
           if not sgdb_key:
               print("WARNING: SGDB_API_KEY secret is missing.")
           else:
@@ -343,7 +346,6 @@ jobs:
                           if href not in candidates:
                               candidates.append(href)
 
-                  # Inspect possible matching game pages.
                   for detail_url in candidates[:8]:
                       try:
                           detail_html = get_launchbox_page(
@@ -356,7 +358,7 @@ jobs:
                           for href, link_text in detail_parser.links:
                               label = link_text.lower()
 
-                              # ONLY North American box spines.
+                              # Strict North American region filter.
                               if "box - spine" not in label:
                                   continue
 
@@ -368,7 +370,6 @@ jobs:
 
                               if href.startswith("//"):
                                   href = "https:" + href
-
                               elif href.startswith("/"):
                                   href = launchbox_root + href
 
@@ -385,7 +386,7 @@ jobs:
 
                               print(
                                   "North American LaunchBox spine found: "
-                                  f"{title}"
+                                  f"{title} ({console})"
                               )
 
                               return href
@@ -402,10 +403,11 @@ jobs:
                       f"{type(error).__name__}: {error}"
                   )
 
-              # Do not cache missing results.
-              # This allows future workflow runs to retry.
+              # Missing results are not cached.
+              # Future scheduled runs can try again.
               print(
-                  f"No North American LaunchBox spine found: {title}"
+                  f"No North American LaunchBox spine found: "
+                  f"{title} ({console})"
               )
 
               return ""
@@ -466,7 +468,6 @@ jobs:
           for item in all_games:
               possible = int(item.get("MaxPossible") or 0)
               earned = int(item.get("NumAwarded") or 0)
-
               hardcore = int(
                   item.get("NumAwardedHardcore") or 0
               )
@@ -579,12 +580,10 @@ jobs:
                   game["achievements"] = []
                   game["boxArt"] = ""
 
-              # Keep existing SteamGridDB artwork.
               game["steamGridDB"] = get_artwork(
                   game["title"]
               )
 
-              # Add North American LaunchBox spine.
               game["launchBoxSpine"] = get_launchbox_spine(
                   game["title"],
                   game.get("console", "")
@@ -606,4 +605,4 @@ jobs:
               "lastUpdated": datetime.now(
                   timezone.utc
               ).isoformat(),
-  
+              "games": gam
