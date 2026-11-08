@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 172075,
+    "totalRanked": 172152,
     "hardcorePoints": 1,
-    "softcorePoints": 797,
+    "softcorePoints": 798,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-08T12:57:59.311453+00:00",
+  "lastUpdated": "2026-11-08T21:50:33.126757+00:00",
   "games": [
     {
       "gameId": 510,
@@ -3009,14 +3009,25 @@
       "gameId": 20230,
       "title": "Mario & Luigi: Superstar Saga [Subset - Perfect Dodges]",
       "console": "Game Boy Advance",
-      "earned": 4,
+      "earned": 5,
       "hardcoreEarned": 0,
       "total": 93,
-      "progress": 4.3,
+      "progress": 5.38,
       "mode": "Softcore",
       "lastPlayed": "",
       "boxArt": "https://retroachievements.org/Images/071819.png",
       "achievements": [
+        {
+          "id": 311284,
+          "badgeName": "344354",
+          "title": "Beanie",
+          "description": "Perfectly dodge and defeat a Beanie. (Level <= 5, <= 20 POW)",
+          "points": 1,
+          "earned": true,
+          "dateEarned": "2026-11-08 20:39:57",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
         {
           "id": 311282,
           "badgeName": "344352",
@@ -3067,17 +3078,6 @@
           "title": "Anuboo",
           "description": "Perfectly dodge and defeat an Anuboo. (Level <= 20, <= 54 POW)",
           "points": 2,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
-          "id": 311284,
-          "badgeName": "344354",
-          "title": "Beanie",
-          "description": "Perfectly dodge and defeat a Beanie. (Level <= 5, <= 20 POW)",
-          "points": 1,
           "earned": false,
           "dateEarned": "",
           "hardcore": false,
@@ -18640,7 +18640,7 @@
   "recentAchievements": [],
   "stats": {
     "gamesPlayed": 21,
-    "achievementsEarned": 157,
+    "achievementsEarned": 158,
     "achievementsTotal": 1651
   }
 }
