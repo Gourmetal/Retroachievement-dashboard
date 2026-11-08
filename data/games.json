@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 171992,
+    "totalRanked": 172022,
     "hardcorePoints": 1,
-    "softcorePoints": 787,
+    "softcorePoints": 797,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-07T21:36:11.101025+00:00",
+  "lastUpdated": "2026-11-08T02:28:10.676852+00:00",
   "games": [
     {
       "gameId": 510,
@@ -2052,10 +2052,10 @@
       "gameId": 771,
       "title": "Mario & Luigi: Superstar Saga",
       "console": "Game Boy Advance",
-      "earned": 3,
+      "earned": 4,
       "hardcoreEarned": 0,
       "total": 85,
-      "progress": 3.53,
+      "progress": 4.71,
       "mode": "Softcore",
       "lastPlayed": "",
       "boxArt": "https://retroachievements.org/Images/014492.png",
@@ -2090,6 +2090,17 @@
           "points": 10,
           "earned": true,
           "dateEarned": "2026-11-06 18:32:48",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 40695,
+          "badgeName": "186906",
+          "title": "Tolstar Recall",
+          "description": "Defeat the tollbooth tyrant, Tolstar!",
+          "points": 10,
+          "earned": true,
+          "dateEarned": "2026-11-07 23:49:36",
           "hardcore": false,
           "dateEarnedHardcore": ""
         },
@@ -2869,17 +2880,6 @@
           "title": "To the Literal High-Ends of the Earth",
           "description": "Win the High-End Badge from a Celebrity Mole course.",
           "points": 2,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
-          "id": 40695,
-          "badgeName": "186906",
-          "title": "Tolstar Recall",
-          "description": "Defeat the tollbooth tyrant, Tolstar!",
-          "points": 10,
           "earned": false,
           "dateEarned": "",
           "hardcore": false,
@@ -18640,7 +18640,7 @@
   "recentAchievements": [],
   "stats": {
     "gamesPlayed": 21,
-    "achievementsEarned": 156,
+    "achievementsEarned": 157,
     "achievementsTotal": 1651
   }
 }
