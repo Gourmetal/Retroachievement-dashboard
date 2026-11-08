@@ -1,7 +1,7 @@
 
 /* =========================================
    GOURME HUB — GAMEPLAY VIDEO GALLERY
-   GBASnaps-only Internet Archive search
+   Direct GBASnaps directory file search
    Muted autoplay with player controls
    ========================================= */
 
@@ -15,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!gallery) return;
 
   let videoData = {};
+  let gbasnapsFilesPromise = null;
 
   function escapeHTML(value) {
     return String(value ?? "").replace(/[&<>"']/g, character => ({
@@ -68,11 +69,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return videoData[game.title] || {};
   }
 
-  function getSearchURL(query) {
-    return "https://www.youtube.com/results?search_query=" +
-      encodeURIComponent(query);
-  }
-
   function normalizeTitle(value) {
     return String(value || "")
       .toLowerCase()
@@ -90,225 +86,113 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /*
-   * AUTOMATIC INTERNET ARCHIVE SEARCH
+   * GBASnaps DIRECTORY SEARCH
    *
-   * Searches ONLY the GBASnaps collection.
-   * Rejects results whose titles don't match
-   * the requested game.
+   * Reads the actual file listing from the
+   * GBASnaps Archive.org download item.
+   * No general Archive.org search is used.
    */
 
-  async function searchArchive(query, rows = 50) {
-    const params = new URLSearchParams();
-
-    params.append("q", query);
-    params.append("fl[]", "identifier");
-    params.append("fl[]", "title");
-    params.append("rows", String(rows));
-    params.append("output", "json");
-
-    const url =
-      "https://archive.org/advancedsearch.php?" +
-      params.toString();
-
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error("Internet Archive search failed");
-    }
-
-    const result = await response.json();
-
-    return result?.response?.docs || [];
-  }
-
-  function getArchiveSearchTerms(game, info) {
-    const title = getSearchTitle(game);
-    const normalized = normalizeTitle(title);
+  function getGameFilenameTerms(game) {
+    const normalized = normalizeTitle(getSearchTitle(game));
 
     const stopWords = new Set([
+      "the", "and", "of", "in", "a", "an",
       "full", "gameplay", "longplay", "walkthrough",
       "playthrough", "video", "game", "usa", "europe",
       "japan", "gba", "gbc", "gb", "gameboy",
       "boy", "advance", "version"
     ]);
 
-    const titleWords = normalized
+    return normalized
       .split(" ")
       .filter(word => word.length > 1 && !stopWords.has(word));
-
-    const customSearch = normalizeTitle(info.search || "")
-      .split(" ")
-      .filter(word => word.length > 2 && !stopWords.has(word));
-
-    const customWords = customSearch.length
-      ? customSearch
-      : titleWords;
-
-    return {
-      title,
-      normalized,
-      titleWords,
-      customWords
-    };
   }
 
-  function rankArchiveResults(documents, terms) {
-    const wantedWords = terms.titleWords;
+  async function getGBASnapsFiles() {
+    if (!gbasnapsFilesPromise) {
+      gbasnapsFilesPromise = (async () => {
+        const response = await fetch(
+          "https://archive.org/metadata/gbasnaps",
+          { cache: "no-store" }
+        );
 
-    return documents.map(doc => {
-      const candidate = normalizeTitle(doc.title);
+        if (!response.ok) {
+          throw new Error("Could not load the GBASnaps directory listing");
+        }
 
-      const exact = candidate === terms.normalized ? 100 : 0;
+        const metadata = await response.json();
+        const files = metadata?.files || [];
 
-      const contains =
-        candidate.includes(terms.normalized)
-          ? 35
-          : 0;
+        return files.filter(file => {
+          const name = String(file.name || "");
+
+          return (
+            /\.mp4$/i.test(name) &&
+            !/thumb|thumbnail|sample|preview|trailer|small/i.test(name) &&
+            (!file.source || file.source === "original")
+          );
+        });
+      })().catch(error => {
+        gbasnapsFilesPromise = null;
+        throw error;
+      });
+    }
+
+    return gbasnapsFilesPromise;
+  }
+
+  async function findArchiveVideo(game) {
+    const wantedWords = getGameFilenameTerms(game);
+
+    if (!wantedWords.length) return null;
+
+    const files = await getGBASnapsFiles();
+
+    const minimumMatches = Math.max(
+      1,
+      Math.ceil(wantedWords.length * 0.75)
+    );
+
+    const matches = files.map(file => {
+      const filename = normalizeTitle(
+        String(file.name || "").split("/").pop()
+      );
+
+      const filenameWords = new Set(filename.split(" "));
 
       const matchedWords = wantedWords.filter(word =>
-        candidate.split(" ").includes(word)
+        filenameWords.has(word)
       ).length;
 
       return {
-        doc,
-        score: exact + contains + matchedWords * 10,
-        matchedWords
+        file,
+        matchedWords,
+        score: matchedWords / wantedWords.length
       };
-    }).sort((a, b) => b.score - a.score);
-  }
-
-  async function getArchiveMP4(identifier) {
-    const metadataURL =
-      "https://archive.org/metadata/" +
-      encodeURIComponent(identifier);
-
-    const response = await fetch(metadataURL);
-
-    if (!response.ok) return null;
-
-    const metadata = await response.json();
-    const files = metadata?.files || [];
-
-    const usableVideos = files.filter(file => {
-      const name = String(file.name || "");
-
-      return (
-        /\.mp4$/i.test(name) &&
-        !/thumb|thumbnail|sample|preview|trailer|small/i.test(name) &&
-        (!file.source || file.source === "original")
-      );
-    });
-
-    if (!usableVideos.length) return null;
-
-    // Prefer the largest original MP4.
-    usableVideos.sort((a, b) =>
-      (Number(b.size) || 0) - (Number(a.size) || 0)
+    }).filter(match =>
+      match.matchedWords >= minimumMatches
+    ).sort((a, b) =>
+      b.score - a.score ||
+      b.matchedWords - a.matchedWords ||
+      (Number(b.file.size) || 0) - (Number(a.file.size) || 0)
     );
 
-    return usableVideos[0];
-  }
+    if (!matches.length) return null;
 
-  async function findArchiveVideo(game, info = {}) {
-    const terms = getArchiveSearchTerms(game, info);
+    const selected = matches[0];
+    const filename = String(selected.file.name || "");
 
-    if (!terms.normalized || !terms.titleWords.length) {
-      return null;
-    }
+    const encodedFilename = filename
+      .split("/")
+      .map(encodeURIComponent)
+      .join("/");
 
-    const collection = "collection:gbasnaps";
-    const mediaType = "mediatype:movies";
-
-    const queries = [];
-
-    // First try the complete game title.
-    queries.push(
-      `${collection} AND ${mediaType} AND title:"${terms.title.replace(/["\\]/g, " ")}"`
-    );
-
-    // Then try all meaningful game-title words.
-    const broadTitle = terms.titleWords
-      .map(word => `title:${word}`)
-      .join(" AND ");
-
-    if (broadTitle) {
-      queries.push(
-        `${collection} AND ${mediaType} AND ${broadTitle}`
-      );
-    }
-
-    // Custom search terms remain restricted to GBASnaps.
-    const customTitle = terms.customWords
-      .map(word => `title:${word}`)
-      .join(" AND ");
-
-    if (customTitle && customTitle !== broadTitle) {
-      queries.push(
-        `${collection} AND ${mediaType} AND ${customTitle}`
-      );
-    }
-
-    const allDocuments = new Map();
-
-    for (const query of queries) {
-      try {
-        const documents = await searchArchive(query);
-
-        documents.forEach(doc => {
-          if (doc.identifier) {
-            allDocuments.set(doc.identifier, doc);
-          }
-        });
-
-        if (allDocuments.size >= 50) break;
-
-      } catch (error) {
-        console.warn("GBASnaps search attempt failed:", error);
-      }
-    }
-
-    if (!allDocuments.size) return null;
-
-    const ranked = rankArchiveResults(
-      Array.from(allDocuments.values()),
-      terms
-    );
-
-    const requiredMatches = Math.min(2, terms.titleWords.length);
-
-    for (const match of ranked) {
-      // Require the actual game title words to match.
-      // Never accept a random video based on a weak match.
-      if (
-        match.matchedWords < requiredMatches ||
-        match.score < 35
-      ) {
-        continue;
-      }
-
-      const identifier = match.doc.identifier;
-      if (!identifier) continue;
-
-      const video = await getArchiveMP4(identifier);
-      if (!video) continue;
-
-      const encodedFilename = video.name
-        .split("/")
-        .map(encodeURIComponent)
-        .join("/");
-
-      return {
-        title: match.doc.title || terms.title,
-        identifier,
-        url:
-          "https://archive.org/download/" +
-          encodeURIComponent(identifier) +
-          "/" +
-          encodedFilename
-      };
-    }
-
-    return null;
+    return {
+      title: filename.split("/").pop(),
+      identifier: "gbasnaps",
+      url: "https://archive.org/download/gbasnaps/" + encodedFilename
+    };
   }
 
   /*
@@ -417,7 +301,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <h3>Finding gameplay video…</h3>
 
         <p>
-          Searching the GBASnaps collection for a matching game video.
+          Checking the actual GBASnaps download directory
+          for this game's video file.
         </p>
 
       </div>
@@ -454,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
           url: info.archiveVideo
         };
       } else {
-        match = await findArchiveVideo(game, info);
+        match = await findArchiveVideo(game);
       }
 
       if (!modal.classList.contains("open")) return;
@@ -520,18 +405,17 @@ document.addEventListener("DOMContentLoaded", () => {
             <h3>No matching GBASnaps video found</h3>
 
             <p>
-              We couldn't find a matching MP4 in the GBASnaps collection.
+              We couldn't find a matching MP4 filename in the
+              GBASnaps download directory.
               No unrelated video was selected.
             </p>
 
             <a class="gh-video-watch-button"
-              href="https://archive.org/search?query=${encodeURIComponent(
-                "collection:gbasnaps AND " + game.title
-              )}"
+              href="https://archive.org/download/gbasnaps"
               target="_blank"
               rel="noopener noreferrer">
 
-              Search GBASnaps ↗
+              Open GBASnaps directory ↗
 
             </a>
 
@@ -798,4 +682,3 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadVideoData();
 });
-         
