@@ -1,4 +1,3 @@
-
 name: RetroAchievements Phone Notifications
 
 on:
@@ -43,6 +42,7 @@ jobs:
 
           USERNAME = "Gourmetal"
           LOOKBACK_MINUTES = 60
+          UNLOCK_PAGE_SIZE = 500
 
           api_key = os.environ.get("RA_API_KEY")
           topic = os.environ.get("NTFY_TOPIC")
@@ -271,7 +271,8 @@ jobs:
                   "API_GetAchievementUnlocks.php",
                   {
                       "a": resend_id,
-                      "c": 1
+                      "c": 1,
+                      "o": 0
                   }
               )
 
@@ -285,22 +286,55 @@ jobs:
 
               game_id = str(game_info["ID"])
 
-              # Verify that Gourmetal earned this achievement.
-              progress = api_get(
-                  "API_GetGameInfoAndUserProgress.php",
-                  {
-                      "g": game_id,
-                      "u": USERNAME
-                  }
+              # Verify the account in the achievement's unlock history.
+              print(
+                  f"Checking unlock history for {USERNAME}, "
+                  f"achievement {resend_id}..."
               )
 
-              achievements = progress.get("Achievements", {})
-              earned = achievements.get(str(resend_id))
+              earned = None
+              offset = 0
 
-              if not earned or not earned.get("DateEarned"):
+              while True:
+                  unlock_data = api_get(
+                      "API_GetAchievementUnlocks.php",
+                      {
+                          "a": resend_id,
+                          "c": UNLOCK_PAGE_SIZE,
+                          "o": offset
+                      }
+                  )
+
+                  unlocks = unlock_data.get("Unlocks", [])
+
+                  if not isinstance(unlocks, list):
+                      raise RuntimeError(
+                          "Unexpected unlock history response from "
+                          "RetroAchievements."
+                      )
+
+                  for unlock in unlocks:
+                      unlock_user = str(
+                          unlock.get("User", "")
+                      ).strip().lower()
+
+                      if unlock_user == USERNAME.lower():
+                          earned = unlock
+                          break
+
+                  if earned:
+                      break
+
+                  if len(unlocks) < UNLOCK_PAGE_SIZE:
+                      break
+
+                  offset += UNLOCK_PAGE_SIZE
+
+              if not earned:
                   raise RuntimeError(
-                      "This achievement does not appear as earned "
-                      "on the Gourmetal account."
+                      f"Achievement {resend_id} was not found in "
+                      f"{USERNAME}'s unlock history. "
+                      "Check the achievement ID and account."
                   )
 
               notification = {
@@ -312,7 +346,9 @@ jobs:
                   "GameID": game_id,
                   "GameTitle": game_info.get("Title", "Unknown game"),
                   "HardcoreMode": (
-                      1 if earned.get("DateEarnedHardcore") else 0
+                      1
+                      if str(earned.get("HardcoreMode", "0")) == "1"
+                      else 0
                   )
               }
 
@@ -392,4 +428,3 @@ jobs:
           git add data/notified-achievements.json
           git diff --cached --quiet || git commit -m "Track phone achievement notifications"
           git push
-          
