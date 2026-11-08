@@ -1,7 +1,7 @@
 
 /* =========================================
    GOURME HUB — GAMEPLAY VIDEO GALLERY
-   Direct GBASnaps directory file search
+   Exact GBASnaps filename matching
    Muted autoplay with player controls
    ========================================= */
 
@@ -72,10 +72,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function normalizeTitle(value) {
     return String(value || "")
       .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/\[[^\]]*\]/g, " ")
       .replace(/~hack~|~homebrew~/gi, " ")
       .replace(/[^a-z0-9]+/g, " ")
-      .trim();
+      .trim()
+      .replace(/\s+/g, " ");
   }
 
   function getSearchTitle(game) {
@@ -93,6 +96,14 @@ document.addEventListener("DOMContentLoaded", () => {
    * No general Archive.org search is used.
    */
 
+  function normalizeArchiveFilename(filename) {
+    return normalizeTitle(
+      String(filename || "")
+        .replace(/\.mp4$/i, "")
+        .replace(/\([^)]*\)/g, " ")
+    );
+  }
+
   function getGameFilenameTerms(game) {
     const normalized = normalizeTitle(getSearchTitle(game));
 
@@ -101,13 +112,53 @@ document.addEventListener("DOMContentLoaded", () => {
       "full", "gameplay", "longplay", "walkthrough",
       "playthrough", "video", "game", "usa", "europe",
       "japan", "gba", "gbc", "gb", "gameboy",
-      "boy", "advance", "version"
+      "boy", "version"
     ]);
 
     return normalized
       .split(" ")
-      .filter(word => word.length > 1 && !stopWords.has(word));
+      .filter(word => word.length > 0 && !stopWords.has(word));
   }
+
+  /*
+   * VERIFIED EXACT TITLE ALIASES
+   *
+   * These prevent similar game names and sequels
+   * from being selected accidentally.
+   */
+
+  const exactFilenameAliases = {
+    "pokemon emerald version": [
+      "pokemon emerald version"
+    ],
+
+    "pokemon leafgreen version": [
+      "pokemon leafgreen version"
+    ],
+
+    "sonic advance": [
+      "sonic advance"
+    ],
+
+    "summon night swordcraft story": [
+      "summon night swordcraft story"
+    ],
+
+    "super mario advance": [
+      "super mario advance"
+    ]
+  };
+
+  /*
+   * These games intentionally have no automatic match.
+   * They are hacks or homebrew and must not receive
+   * an unrelated official-game video.
+   */
+
+  const noAutomaticVideoTitles = new Set([
+    "goodboy galaxy",
+    "pokemon emerald seaglass"
+  ]);
 
   async function getGBASnapsFiles() {
     if (!gbasnapsFilesPromise) {
@@ -143,45 +194,92 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function findArchiveVideo(game) {
-    const wantedWords = getGameFilenameTerms(game);
+    const gameKey = normalizeTitle(getSearchTitle(game));
 
-    if (!wantedWords.length) return null;
+    // Never guess a video for ROM hacks or homebrew.
+    if (noAutomaticVideoTitles.has(gameKey)) {
+      return null;
+    }
 
     const files = await getGBASnapsFiles();
+    const aliases = exactFilenameAliases[gameKey];
 
-    const minimumMatches = Math.max(
-      1,
-      Math.ceil(wantedWords.length * 0.75)
-    );
+    let selected = null;
 
-    const matches = files.map(file => {
-      const filename = normalizeTitle(
-        String(file.name || "").split("/").pop()
+    /*
+     * Exact alias matching.
+     *
+     * For example:
+     * Pokemon Emerald Version
+     * matches:
+     * Pokemon - Emerald Version (USA, Europe).mp4
+     *
+     * Parenthetical region information is ignored.
+     * Additional title words or sequel numbers are not.
+     */
+
+    if (aliases) {
+      const normalizedAliases = aliases.map(alias =>
+        normalizeTitle(alias)
       );
 
-      const filenameWords = new Set(filename.split(" "));
+      selected = files.find(file => {
+        const filename = String(file.name || "").split("/").pop();
+        const normalizedFilename = normalizeArchiveFilename(filename);
 
-      const matchedWords = wantedWords.filter(word =>
-        filenameWords.has(word)
-      ).length;
+        return normalizedAliases.includes(normalizedFilename);
+      }) || null;
 
-      return {
-        file,
-        matchedWords,
-        score: matchedWords / wantedWords.length
-      };
-    }).filter(match =>
-      match.matchedWords >= minimumMatches
-    ).sort((a, b) =>
-      b.score - a.score ||
-      b.matchedWords - a.matchedWords ||
-      (Number(b.file.size) || 0) - (Number(a.file.size) || 0)
-    );
+    } else {
+      /*
+       * Conservative matching for other games.
+       *
+       * Every meaningful title word must match.
+       * Extra sequel numbers are rejected.
+       */
 
-    if (!matches.length) return null;
+      const wantedWords = getGameFilenameTerms(game);
 
-    const selected = matches[0];
-    const filename = String(selected.file.name || "");
+      if (!wantedWords.length) return null;
+
+      const wantedNumbers = wantedWords.filter(word =>
+        /^\d+$/.test(word)
+      );
+
+      const matches = files.map(file => {
+        const filename = String(file.name || "").split("/").pop();
+        const normalizedFilename = normalizeArchiveFilename(filename);
+        const filenameWords = new Set(normalizedFilename.split(" "));
+
+        const hasAllWords = wantedWords.every(word =>
+          filenameWords.has(word)
+        );
+
+        const filenameNumbers = normalizedFilename
+          .split(" ")
+          .filter(word => /^\d+$/.test(word));
+
+        const hasConflictingNumber = filenameNumbers.some(number =>
+          !wantedNumbers.includes(number)
+        );
+
+        return {
+          file,
+          hasAllWords,
+          hasConflictingNumber
+        };
+      });
+
+      const match = matches.find(item =>
+        item.hasAllWords && !item.hasConflictingNumber
+      );
+
+      selected = match ? match.file : null;
+    }
+
+    if (!selected) return null;
+
+    const filename = String(selected.name || "");
 
     const encodedFilename = filename
       .split("/")
@@ -405,7 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <h3>No matching GBASnaps video found</h3>
 
             <p>
-              We couldn't find a matching MP4 filename in the
+              We couldn't find an exact matching MP4 filename in the
               GBASnaps download directory.
               No unrelated video was selected.
             </p>
