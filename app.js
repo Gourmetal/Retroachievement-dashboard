@@ -367,6 +367,15 @@ function renderGames() {
     const earned = Number(game.earned) || 0;
     const total = Number(game.total) || 0;
 
+    const consoleName = String(game.console || "").toLowerCase();
+
+    const consoleClass =
+      consoleName.includes("color") || consoleName.includes("gbc")
+        ? "console-gbc"
+        : consoleName.includes("advance") || consoleName.includes("gba")
+          ? "console-gba"
+          : "console-other";
+
     const achievementRows = achievements.length
       ? achievements.map(item => `
           <div class="achievement-row ${
@@ -393,7 +402,7 @@ function renderGames() {
       : '<p class="loading-message">No achievement details available.</p>';
 
     return `
-      <details class="game-card">
+      <details class="game-card ${consoleClass}">
         ${hero ? `
           <div class="game-hero">
             <img src="${escapeHTML(hero)}"
@@ -548,4 +557,4 @@ if (filterSelect) {
 
 createParticles();
 loadDashboard();
-  
+      
