@@ -83,18 +83,14 @@ jobs:
 
               try:
                   with urllib.request.urlopen(request, timeout=30) as response:
-                      return json.loads(
-                          response.read().decode("utf-8")
-                      )
+                      return json.loads(response.read().decode("utf-8"))
               except urllib.error.HTTPError as error:
-                  details = error.read().decode(
-                      "utf-8", errors="replace"
-                  )
+                  details = error.read().decode("utf-8", errors="replace")
                   raise RuntimeError(
                       f"{endpoint} returned HTTP {error.code}: {details}"
                   ) from error
 
-          # Load artwork already stored in Gourme Hub.
+          # Load game artwork from the dashboard library.
           game_art = {}
 
           if games_path.exists():
@@ -112,13 +108,9 @@ jobs:
                               game_art[str(game_id)] = (
                                   "https://retroachievements.org" + artwork
                               )
-
               except (json.JSONDecodeError, AttributeError, TypeError):
                   print("Could not read local artwork library.")
 
-          print(f"Loaded artwork for {len(game_art)} games.")
-
-          # Cache artwork lookups during this workflow run.
           artwork_lookup_cache = {}
 
           def get_game_artwork(game_id):
@@ -128,15 +120,12 @@ jobs:
                   return artwork_lookup_cache[game_id]
 
               try:
-                  game_data = api_get(
-                      "API_GetGame.php",
-                      {"i": game_id}
-                  )
+                  data = api_get("API_GetGame.php", {"i": game_id})
 
                   image = (
-                      game_data.get("ImageBoxArt")
-                      or game_data.get("ImageIcon")
-                      or game_data.get("GameIcon")
+                      data.get("ImageBoxArt")
+                      or data.get("ImageIcon")
+                      or data.get("GameIcon")
                   )
 
                   if image and image.startswith("/"):
@@ -146,12 +135,6 @@ jobs:
                       image = None
 
                   artwork_lookup_cache[game_id] = image
-
-                  if image:
-                      print(f"Found official artwork for game ID {game_id}.")
-                  else:
-                      print(f"No official artwork for game ID {game_id}.")
-
                   return image
 
               except Exception as error:
@@ -175,61 +158,151 @@ jobs:
 
               return data
 
+          def get_rarity_text(achievement):
+              # Only show a percentage when the API explicitly supplies one.
+              for field in ("Rarity", "RarityPercent", "RarityPercentage"):
+                  value = achievement.get(field)
+
+                  if value is not None:
+                      try:
+                          return f"💎 Rarity: {float(value):g}%"
+                      except (ValueError, TypeError):
+                          pass
+
+              ratio = achievement.get("TrueRatio")
+
+              if ratio is not None:
+                  try:
+                      return f"✨ True Ratio: {float(ratio):g}"
+                  except (ValueError, TypeError):
+                      pass
+
+              return None
+
           def send_notification(achievement):
-              title = achievement.get("Title", "Achievement unlocked")
-              game = achievement.get("GameTitle", "Unknown game")
+              title = achievement.get("Title") or "Achievement unlocked"
+              game = achievement.get("GameTitle") or "Unknown game"
+              description = (
+                  achievement.get("Description")
+                  or achievement.get("AchievementDescription")
+                  or "No description was provided by RetroAchievements."
+              )
+
               points = achievement.get("Points", 0)
               achievement_id = achievement.get("AchievementID")
               game_id = achievement.get("GameID")
 
-              mode = (
-                  "Hardcore"
-                  if int(achievement.get("HardcoreMode") or 0)
-                  else "Softcore"
-              )
+              try:
+                  points_number = int(points or 0)
+              except (ValueError, TypeError):
+                  points_number = 0
 
-              message = (
-                  f"🏆 {title}\n\n"
-                  f"🎮 Game: {game}\n"
-                  f"⭐ Points: {points}\n"
-                  f"🎯 Mode: {mode}\n"
-                  f"👤 Player: {USERNAME}"
-              )
+              hardcore = int(achievement.get("HardcoreMode") or 0) == 1
+              mode = "HARDCORE" if hardcore else "SOFTCORE"
+
+              achievement_url = None
+              game_url = None
 
               if achievement_id:
-                  message += (
-                      "\n\nView achievement: "
+                  achievement_url = (
                       "https://retroachievements.org/achievement/"
-                      f"{achievement_id}"
+                      + str(achievement_id)
                   )
 
               if game_id:
-                  message += (
-                      "\nView game: "
-                      f"https://retroachievements.org/game/{game_id}"
+                  game_url = (
+                      "https://retroachievements.org/game/"
+                      + str(game_id)
                   )
+
+              # Special notification labels and priorities.
+              tags = ["trophy", "video_game"]
+              priority = "default"
+              special_label = "🏆 ACHIEVEMENT UNLOCKED!"
+
+              rarity_text = get_rarity_text(achievement)
+
+              if points_number >= 50:
+                  special_label = "🌟 BIG ACHIEVEMENT UNLOCKED!"
+                  tags.append("star")
+                  priority = "high"
+              elif points_number >= 25:
+                  special_label = "🏆 MAJOR ACHIEVEMENT UNLOCKED!"
+                  tags.append("tada")
+                  priority = "high"
+
+              # True Ratio is a score, not a rarity percentage.
+              # Use it only as an additional indicator, not as a percent.
+              try:
+                  true_ratio = float(achievement.get("TrueRatio") or 0)
+                  if true_ratio >= 10:
+                      special_label = "💎 CHALLENGING ACHIEVEMENT UNLOCKED!"
+                      tags.append("gem")
+                      priority = "high"
+              except (ValueError, TypeError):
+                  pass
+
+              if hardcore:
+                  tags.append("fire")
+              else:
+                  tags.append("video_game")
+
+              # Keep the notification title ASCII for reliable HTTP headers.
+              notification_title = f"Achievement unlocked: {game}"
+
+              lines = [
+                  special_label,
+                  "",
+                  f"🎮 {game}",
+                  "",
+                  f"🏅 {title}",
+                  "",
+                  "📜 DESCRIPTION",
+                  description,
+                  "",
+                  f"⭐ POINTS: {points_number}",
+                  f"🎯 MODE: {mode}",
+                  f"👤 PLAYER: {USERNAME}"
+              ]
+
+              if rarity_text:
+                  lines.extend(["", rarity_text])
+
+              if achievement_url:
+                  lines.extend([
+                      "",
+                      "🔗 VIEW ACHIEVEMENT",
+                      achievement_url
+                  ])
+
+              if game_url:
+                  lines.extend([
+                      "",
+                      "🕹️ VIEW GAME",
+                      game_url
+                  ])
+
+              message = "\n".join(lines)
 
               headers = {
                   "Content-Type": "text/plain; charset=utf-8",
-                  "Title": f"Achievement unlocked: {game}",
-                  "Priority": "high",
-                  "Tags": "trophy,video_game"
+                  "Title": notification_title,
+                  "Priority": priority,
+                  "Tags": ",".join(tags)
               }
 
-              # Use local artwork first, then look it up automatically.
               artwork = game_art.get(str(game_id)) if game_id else None
 
               if not artwork and game_id:
-                  print(f"Local artwork missing for {game}.")
                   artwork = get_game_artwork(game_id)
 
               if artwork:
                   headers["Icon"] = artwork
                   headers["Attach"] = artwork
-                  print(f"Using artwork for: {game}")
-                  print(f"Attaching game artwork for: {game}")
-              else:
-                  print(f"Sending without artwork: {game}")
+                  print(f"Using game artwork for {game}.")
+
+              if achievement_url:
+                  headers["Click"] = achievement_url
 
               encoded_topic = urllib.parse.quote(topic, safe="")
               url = f"https://ntfy.sh/{encoded_topic}"
@@ -243,9 +316,7 @@ jobs:
 
               try:
                   with urllib.request.urlopen(request, timeout=30) as response:
-                      result = json.loads(
-                          response.read().decode("utf-8")
-                      )
+                      result = json.loads(response.read().decode("utf-8"))
 
                       print(
                           f"NTFY ACCEPTED: {title} — {game} "
@@ -255,48 +326,36 @@ jobs:
                       return result
 
               except urllib.error.HTTPError as error:
-                  details = error.read().decode(
-                      "utf-8", errors="replace"
-                  )
-
+                  details = error.read().decode("utf-8", errors="replace")
                   print(f"ntfy response: {details}")
 
                   raise RuntimeError(
-                      f"ntfy rejected the notification: HTTP {error.code}."
+                      f"ntfy rejected notification: HTTP {error.code}."
                   ) from error
 
           # RESEND LAST HOUR MODE
-          # Does not change notification history.
           if resend_last_hour:
               if resend_id:
                   raise RuntimeError(
                       "Choose either a single achievement ID or the last-hour resend, not both."
                   )
 
-              print(
-                  f"Resending every achievement returned for {USERNAME} "
-                  f"in the last {LOOKBACK_MINUTES} minutes..."
-              )
-
               recent = get_recent()
               print(f"Found {len(recent)} achievement(s) in the last hour.")
 
               sent = 0
+
               for item in reversed(recent):
                   send_notification(item)
                   sent += 1
 
-              print(f"Last-hour resend completed: {sent} notification(s) sent.")
+              print(f"Last-hour resend completed: {sent} notification(s).")
               print("Notification history was not changed.")
 
           # MANUAL RESEND MODE
           elif resend_id:
               if not resend_id.isdigit():
-                  raise RuntimeError(
-                      "Enter a numeric RetroAchievements achievement ID."
-                  )
-
-              print(f"Manual resend requested for achievement {resend_id}.")
+                  raise RuntimeError("Enter a numeric achievement ID.")
 
               achievement_data = api_get(
                   "API_GetAchievementUnlocks.php",
@@ -311,17 +370,7 @@ jobs:
               game_info = achievement_data.get("Game", {})
 
               if not achievement_info.get("ID") or not game_info.get("ID"):
-                  raise RuntimeError(
-                      "Could not find that achievement. Check the ID."
-                  )
-
-              game_id = str(game_info["ID"])
-
-              # Verify the account in the achievement's unlock history.
-              print(
-                  f"Checking unlock history for {USERNAME}, "
-                  f"achievement {resend_id}..."
-              )
+                  raise RuntimeError("Could not find that achievement ID.")
 
               earned = None
               offset = 0
@@ -339,17 +388,10 @@ jobs:
                   unlocks = unlock_data.get("Unlocks", [])
 
                   if not isinstance(unlocks, list):
-                      raise RuntimeError(
-                          "Unexpected unlock history response from "
-                          "RetroAchievements."
-                      )
+                      raise RuntimeError("Unexpected unlock history response.")
 
                   for unlock in unlocks:
-                      unlock_user = str(
-                          unlock.get("User", "")
-                      ).strip().lower()
-
-                      if unlock_user == USERNAME.lower():
+                      if str(unlock.get("User", "")).strip().lower() == USERNAME.lower():
                           earned = unlock
                           break
 
@@ -364,29 +406,22 @@ jobs:
               if not earned:
                   raise RuntimeError(
                       f"Achievement {resend_id} was not found in "
-                      f"{USERNAME}'s unlock history. "
-                      "Check the achievement ID and account."
+                      f"{USERNAME}'s unlock history."
                   )
 
               notification = {
                   "AchievementID": str(resend_id),
-                  "Title": achievement_info.get(
-                      "Title", "Achievement unlocked"
-                  ),
+                  "Title": achievement_info.get("Title", "Achievement unlocked"),
+                  "Description": achievement_info.get("Description", ""),
                   "Points": achievement_info.get("Points", 0),
-                  "GameID": game_id,
+                  "TrueRatio": achievement_info.get("TrueRatio"),
+                  "Rarity": achievement_info.get("Rarity"),
+                  "GameID": str(game_info["ID"]),
                   "GameTitle": game_info.get("Title", "Unknown game"),
                   "HardcoreMode": (
-                      1
-                      if str(earned.get("HardcoreMode", "0")) == "1"
-                      else 0
+                      1 if str(earned.get("HardcoreMode", "0")) == "1" else 0
                   )
               }
-
-              print(
-                  f"Verified achievement: {notification['Title']} "
-                  f"— {notification['GameTitle']}"
-              )
 
               send_notification(notification)
 
@@ -413,16 +448,9 @@ jobs:
               else:
                   seen = set()
 
-              print(
-                  f"Checking achievements from the last "
-                  f"{LOOKBACK_MINUTES} minutes..."
-              )
-
               recent = get_recent()
 
-              print(
-                  f"RetroAchievements returned {len(recent)} recent unlocks."
-              )
+              print(f"RetroAchievements returned {len(recent)} recent unlocks.")
 
               new_items = [
                   item for item in recent
@@ -445,10 +473,7 @@ jobs:
               )
 
               print(f"Notification history now contains {len(seen)} IDs.")
-
-              print(
-                  f"Successfully sent {len(sent_ids)} phone notification(s)."
-              )
+              print(f"Successfully sent {len(sent_ids)} notification(s).")
           PY
 
       - name: Save notification history
