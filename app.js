@@ -374,11 +374,15 @@ function renderGames() {
           ? "console-gba"
           : "console-other";
 
-    const consoleLabel = consoleClass === "console-gbc"
-      ? "GAME BOY COLOR"
+    const consoleLogo = consoleClass === "console-gbc"
+      ? "https://commons.wikimedia.org/wiki/Special:FilePath/Game_Boy_Color_logo.svg"
       : consoleClass === "console-gba"
-        ? "GAME BOY ADVANCE"
-        : (game.console || "GAME CARTRIDGE").toUpperCase();
+        ? "https://commons.wikimedia.org/wiki/Special:FilePath/Game_Boy_Advance_logo.svg"
+        : "";
+
+    const consoleAlt = consoleClass === "console-gbc"
+      ? "Game Boy Color"
+      : "Game Boy Advance";
 
     const achievementRows = achievements.length
       ? achievements.map(item => `
@@ -428,7 +432,18 @@ function renderGames() {
             `}
 
             <div class="game-summary-info">
-              <span class="console-cartridge-label">${escapeHTML(consoleLabel)}</span>
+              ${consoleLogo ? `
+                <span class="console-cartridge-label">
+                  <img class="console-cartridge-logo"
+                       src="${consoleLogo}"
+                       alt="${consoleAlt} logo"
+                       loading="lazy">
+                </span>
+              ` : `
+                <span class="console-cartridge-label">
+                  ${escapeHTML((game.console || "GAME CARTRIDGE").toUpperCase())}
+                </span>
+              `}
 
               ${logo ? `
                 <img class="game-logo"
