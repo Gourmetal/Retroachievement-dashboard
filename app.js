@@ -208,7 +208,6 @@ function renderRecentAchievements() {
 function chooseFeaturedGames() {
   const shuffled = [...games];
 
-  // Shuffle the games randomly.
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -216,7 +215,6 @@ function chooseFeaturedGames() {
 
   const nextPicks = shuffled.slice(0, 3);
 
-  // Avoid repeating the exact same group twice in a row.
   if (
     nextPicks.length === featuredGames.length &&
     nextPicks.length > 0 &&
@@ -376,6 +374,12 @@ function renderGames() {
           ? "console-gba"
           : "console-other";
 
+    const consoleLabel = consoleClass === "console-gbc"
+      ? "GAME BOY COLOR"
+      : consoleClass === "console-gba"
+        ? "GAME BOY ADVANCE"
+        : (game.console || "GAME CARTRIDGE").toUpperCase();
+
     const achievementRows = achievements.length
       ? achievements.map(item => `
           <div class="achievement-row ${
@@ -424,6 +428,8 @@ function renderGames() {
             `}
 
             <div class="game-summary-info">
+              <span class="console-cartridge-label">${escapeHTML(consoleLabel)}</span>
+
               ${logo ? `
                 <img class="game-logo"
                      src="${escapeHTML(logo)}"
@@ -557,4 +563,3 @@ if (filterSelect) {
 
 createParticles();
 loadDashboard();
-      
