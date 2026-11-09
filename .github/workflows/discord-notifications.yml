@@ -68,14 +68,10 @@ jobs:
           def api_get(endpoint, params):
               query = dict(params)
               query["y"] = api_key
-
               url = (
                   "https://retroachievements.org/API/"
-                  + endpoint
-                  + "?"
-                  + urllib.parse.urlencode(query)
+                  + endpoint + "?" + urllib.parse.urlencode(query)
               )
-
               request = urllib.request.Request(
                   url,
                   headers={"User-Agent": "GourmeHub/3.0"}
@@ -121,7 +117,6 @@ jobs:
 
               try:
                   data = api_get("API_GetGame.php", {"i": game_id})
-
                   image = (
                       data.get("ImageBoxArt")
                       or data.get("ImageIcon")
@@ -145,10 +140,7 @@ jobs:
           def get_recent():
               data = api_get(
                   "API_GetUserRecentAchievements.php",
-                  {
-                      "u": USERNAME,
-                      "m": LOOKBACK_MINUTES
-                  }
+                  {"u": USERNAME, "m": LOOKBACK_MINUTES}
               )
 
               if not isinstance(data, list):
@@ -158,8 +150,87 @@ jobs:
 
               return data
 
+          # GAME-SPECIFIC NOTIFICATION THEMES
+          def get_game_style(game):
+              name = str(game or "").lower()
+
+              themes = [
+                  {
+                      "match": ["zelda", "minish cap", "ocarina of time",
+                                "majora's mask", "link's awakening",
+                                "a link to the past", "wind waker",
+                                "twilight princess", "skyward sword"],
+                      "banner": "🗡️ HYRULE ADVENTURE!",
+                      "flavor": "Another legend is written in Hyrule."
+                  },
+                  {
+                      "match": ["pokemon", "pokémon"],
+                      "banner": "⚡ POKÉDEX UPDATE!",
+                      "flavor": "A new achievement has joined your collection!"
+                  },
+                  {
+                      "match": ["mario", "super mario", "luigi"],
+                      "banner": "🍄 MUSHROOM KINGDOM NEWS!",
+                      "flavor": "It's-a achievement time!"
+                  },
+                  {
+                      "match": ["sonic", "knuckles", "tails"],
+                      "banner": "💨 SONIC SPEED UNLOCK!",
+                      "flavor": "Gotta go fast! Another achievement secured."
+                  },
+                  {
+                      "match": ["metroid", "samus"],
+                      "banner": "🚀 GALACTIC MISSION COMPLETE!",
+                      "flavor": "Mission progress confirmed, bounty hunter."
+                  },
+                  {
+                      "match": ["castlevania"],
+                      "banner": "🦇 CASTLE VICTORY!",
+                      "flavor": "Another dark challenge has been conquered."
+                  },
+                  {
+                      "match": ["mega man", "megaman", "rockman"],
+                      "banner": "🤖 ROBOT MASTER DEFEATED!",
+                      "flavor": "Another mission successfully completed."
+                  },
+                  {
+                      "match": ["kirby"],
+                      "banner": "⭐ DREAM LAND CELEBRATION!",
+                      "flavor": "A new accomplishment joins the stars!"
+                  },
+                  {
+                      "match": ["donkey kong"],
+                      "banner": "🍌 JUNGLE VICTORY!",
+                      "flavor": "Another challenge conquered in the jungle."
+                  },
+                  {
+                      "match": ["final fantasy"],
+                      "banner": "⚔️ FINAL FANTASY VICTORY!",
+                      "flavor": "Your legend grows stronger with every quest."
+                  },
+                  {
+                      "match": ["street fighter", "mortal kombat",
+                                "tekken", "king of fighters"],
+                      "banner": "🥊 FIGHTER VICTORY!",
+                      "flavor": "Flawless effort! Another challenge cleared."
+                  },
+                  {
+                      "match": ["sonic"],
+                      "banner": "💨 SONIC SPEED UNLOCK!",
+                      "flavor": "Gotta go fast! Another achievement secured."
+                  }
+              ]
+
+              for theme in themes:
+                  if any(keyword in name for keyword in theme["match"]):
+                      return theme
+
+              return {
+                  "banner": "🎮 RETRO GAMING UPDATE!",
+                  "flavor": "Another achievement added to your collection."
+              }
+
           def get_rarity_text(achievement):
-              # Only show a percentage when the API explicitly supplies one.
               for field in ("Rarity", "RarityPercent", "RarityPercentage"):
                   value = achievement.get(field)
 
@@ -215,7 +286,9 @@ jobs:
                       + str(game_id)
                   )
 
-              # Special notification labels and priorities.
+              # Select a theme based on the game title.
+              game_style = get_game_style(game)
+
               tags = ["trophy", "video_game"]
               priority = "default"
               special_label = "🏆 ACHIEVEMENT UNLOCKED!"
@@ -232,7 +305,6 @@ jobs:
                   priority = "high"
 
               # True Ratio is a score, not a rarity percentage.
-              # Use it only as an additional indicator, not as a percent.
               try:
                   true_ratio = float(achievement.get("TrueRatio") or 0)
                   if true_ratio >= 10:
@@ -247,10 +319,13 @@ jobs:
               else:
                   tags.append("video_game")
 
-              # Keep the notification title ASCII for reliable HTTP headers.
+              # Keep the HTTP notification title ASCII.
               notification_title = f"Achievement unlocked: {game}"
 
               lines = [
+                  game_style["banner"],
+                  game_style["flavor"],
+                  "",
                   special_label,
                   "",
                   f"🎮 {game}",
@@ -317,18 +392,16 @@ jobs:
               try:
                   with urllib.request.urlopen(request, timeout=30) as response:
                       result = json.loads(response.read().decode("utf-8"))
-
                       print(
                           f"NTFY ACCEPTED: {title} — {game} "
                           f"(HTTP {response.status})"
                       )
-
+                      print(f"Notification theme: {game_style['banner']}")
                       return result
 
               except urllib.error.HTTPError as error:
                   details = error.read().decode("utf-8", errors="replace")
                   print(f"ntfy response: {details}")
-
                   raise RuntimeError(
                       f"ntfy rejected notification: HTTP {error.code}."
                   ) from error
@@ -359,11 +432,7 @@ jobs:
 
               achievement_data = api_get(
                   "API_GetAchievementUnlocks.php",
-                  {
-                      "a": resend_id,
-                      "c": 1,
-                      "o": 0
-                  }
+                  {"a": resend_id, "c": 1, "o": 0}
               )
 
               achievement_info = achievement_data.get("Achievement", {})
