@@ -1,7 +1,7 @@
 
 /* =========================================
    GOURME HUB — GAMEPLAY VIDEO GALLERY
-   Exact GBASnaps filename matching
+   Console-specific exact video-snap filename matching
    Muted autoplay with player controls
    ========================================= */
 
@@ -89,11 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /*
-   * GBASnaps DIRECTORY SEARCH
-   *
-   * Reads the actual file listing from the
-   * GBASnaps Archive.org download item.
-   * No general Archive.org search is used.
+   * ARCHIVE VIDEO-SNAP MATCHING
    */
 
   function normalizeArchiveFilename(filename) {
@@ -122,9 +118,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /*
    * VERIFIED EXACT TITLE ALIASES
-   *
-   * These prevent similar game names and sequels
-   * from being selected accidentally.
+   * Prevents similar games and sequels matching.
    */
 
   const exactFilenameAliases = {
@@ -146,13 +140,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     "super mario advance": [
       "super mario advance"
+    ],
+
+    "pokemon crystal version": [
+      "pokemon crystal version"
     ]
   };
 
   /*
-   * These games intentionally have no automatic match.
-   * They are hacks or homebrew and must not receive
-   * an unrelated official-game video.
+   * ROM hacks and homebrew do not receive
+   * automatic matches to unrelated official games.
    */
 
   const noAutomaticVideoTitles = new Set([
@@ -160,31 +157,41 @@ document.addEventListener("DOMContentLoaded", () => {
     "pokemon emerald seaglass"
   ]);
 
+  /*
+   * LOAD MP4 FILES FROM AN ARCHIVE ITEM
+   */
+
+  async function getArchiveFiles(identifier) {
+    const response = await fetch(
+      "https://archive.org/metadata/" + encodeURIComponent(identifier),
+      { cache: "no-store" }
+    );
+
+    if (!response.ok) {
+      throw new Error("Could not load Archive.org item: " + identifier);
+    }
+
+    const metadata = await response.json();
+    const files = metadata?.files || [];
+
+    return files.filter(file => {
+      const name = String(file.name || "");
+
+      return (
+        name.toLowerCase().endsWith(".mp4") &&
+        !/thumb|thumbnail|sample|preview|trailer|small/i.test(name) &&
+        (!file.source || file.source === "original")
+      );
+    });
+  }
+
+  /*
+   * GAME BOY ADVANCE COLLECTION
+   */
+
   async function getGBASnapsFiles() {
     if (!gbasnapsFilesPromise) {
-      gbasnapsFilesPromise = (async () => {
-        const response = await fetch(
-          "https://archive.org/metadata/gbasnaps",
-          { cache: "no-store" }
-        );
-
-        if (!response.ok) {
-          throw new Error("Could not load the GBASnaps directory listing");
-        }
-
-        const metadata = await response.json();
-        const files = metadata?.files || [];
-
-        return files.filter(file => {
-          const name = String(file.name || "");
-
-          return (
-            /\.mp4$/i.test(name) &&
-            !/thumb|thumbnail|sample|preview|trailer|small/i.test(name) &&
-            (!file.source || file.source === "original")
-          );
-        });
-      })().catch(error => {
+      gbasnapsFilesPromise = getArchiveFiles("gbasnaps").catch(error => {
         gbasnapsFilesPromise = null;
         throw error;
       });
@@ -193,29 +200,70 @@ document.addEventListener("DOMContentLoaded", () => {
     return gbasnapsFilesPromise;
   }
 
+  /*
+   * GAME BOY COLOR COLLECTION
+   */
+
+  const gbcSnapsFilesCache = { promise: null };
+
+  async function getGBCSnapsFiles() {
+    if (!gbcSnapsFilesCache.promise) {
+      gbcSnapsFilesCache.promise =
+        getArchiveFiles("tonka-raceway-usa_202611").catch(error => {
+          gbcSnapsFilesCache.promise = null;
+          throw error;
+        });
+    }
+
+    return gbcSnapsFilesCache.promise;
+  }
+
+  /*
+   * CHOOSE THE CORRECT COLLECTION BY CONSOLE
+   */
+
+  function getArchiveItemForGame(game) {
+    const consoleName = String(game.console || "").toLowerCase();
+
+    if (consoleName.includes("game boy color")) {
+      return {
+        identifier: "tonka-raceway-usa_202611",
+        filesPromise: getGBCSnapsFiles
+      };
+    }
+
+    if (consoleName.includes("game boy advance")) {
+      return {
+        identifier: "gbasnaps",
+        filesPromise: getGBASnapsFiles
+      };
+    }
+
+    return null;
+  }
+
+  /*
+   * FIND THE CORRECT VIDEO
+   */
+
   async function findArchiveVideo(game) {
     const gameKey = normalizeTitle(getSearchTitle(game));
 
-    // Never guess a video for ROM hacks or homebrew.
     if (noAutomaticVideoTitles.has(gameKey)) {
       return null;
     }
 
-    const files = await getGBASnapsFiles();
+    const archiveItem = getArchiveItemForGame(game);
+
+    if (!archiveItem) return null;
+
+    const files = await archiveItem.filesPromise();
     const aliases = exactFilenameAliases[gameKey];
 
     let selected = null;
 
     /*
-     * Exact alias matching.
-     *
-     * For example:
-     * Pokemon Emerald Version
-     * matches:
-     * Pokemon - Emerald Version (USA, Europe).mp4
-     *
-     * Parenthetical region information is ignored.
-     * Additional title words or sequel numbers are not.
+     * Exact filename matching.
      */
 
     if (aliases) {
@@ -233,9 +281,8 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       /*
        * Conservative matching for other games.
-       *
        * Every meaningful title word must match.
-       * Extra sequel numbers are rejected.
+       * Conflicting sequel numbers are rejected.
        */
 
       const wantedWords = getGameFilenameTerms(game);
@@ -243,7 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!wantedWords.length) return null;
 
       const wantedNumbers = wantedWords.filter(word =>
-        /^\d+$/.test(word)
+        /^[0-9]+$/.test(word)
       );
 
       const matches = files.map(file => {
@@ -257,7 +304,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const filenameNumbers = normalizedFilename
           .split(" ")
-          .filter(word => /^\d+$/.test(word));
+          .filter(word => /^[0-9]+$/.test(word));
 
         const hasConflictingNumber = filenameNumbers.some(number =>
           !wantedNumbers.includes(number)
@@ -288,8 +335,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return {
       title: filename.split("/").pop(),
-      identifier: "gbasnaps",
-      url: "https://archive.org/download/gbasnaps/" + encodedFilename
+      identifier: archiveItem.identifier,
+      url: "https://archive.org/download/" +
+        encodeURIComponent(archiveItem.identifier) + "/" + encodedFilename
     };
   }
 
@@ -399,7 +447,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <h3>Finding gameplay video…</h3>
 
         <p>
-          Checking the actual GBASnaps download directory
+          Checking the matching console video-snap collection
           for this game's video file.
         </p>
 
@@ -423,7 +471,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       /*
        * Manually supplied Archive links take priority.
-       * Supports both /download/ and /0/items/ URLs.
        */
 
       if (
@@ -500,20 +547,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
             <div class="gh-video-search-icon">▶</div>
 
-            <h3>No matching GBASnaps video found</h3>
+            <h3>No matching video snap found</h3>
 
             <p>
               We couldn't find an exact matching MP4 filename in the
-              GBASnaps download directory.
+              console video-snap collection.
               No unrelated video was selected.
             </p>
 
             <a class="gh-video-watch-button"
-              href="https://archive.org/download/gbasnaps"
+              href="https://archive.org/download/tonka-raceway-usa_202611"
               target="_blank"
               rel="noopener noreferrer">
 
-              Open GBASnaps directory ↗
+              Open video-snap collection ↗
 
             </a>
 
@@ -527,7 +574,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } catch (error) {
       console.warn(
-        "Gourme Hub: GBASnaps lookup failed.",
+        "Gourme Hub: Archive video-snap lookup failed.",
         error
       );
 
@@ -780,3 +827,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   loadVideoData();
 });
+     
