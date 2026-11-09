@@ -1,3 +1,4 @@
+
 name: RetroAchievements Phone Notifications
 
 on:
@@ -8,6 +9,11 @@ on:
         required: false
         type: string
         default: ""
+      resend_last_hour:
+        description: "Resend every achievement earned in the last 60 minutes"
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron: "*/5 * * * *"
 
@@ -31,6 +37,7 @@ jobs:
           RA_API_KEY: ${{ secrets.RA_API_KEY }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
           RESEND_ACHIEVEMENT_ID: ${{ inputs.resend_achievement_id }}
+          RESEND_LAST_HOUR: ${{ inputs.resend_last_hour }}
         run: |
           python - <<'PY'
           import json
@@ -47,6 +54,7 @@ jobs:
           api_key = os.environ.get("RA_API_KEY")
           topic = os.environ.get("NTFY_TOPIC")
           resend_id = os.environ.get("RESEND_ACHIEVEMENT_ID", "").strip()
+          resend_last_hour = os.environ.get("RESEND_LAST_HOUR", "false").lower() == "true"
 
           state_path = Path("data/notified-achievements.json")
           games_path = Path("data/games.json")
@@ -257,9 +265,32 @@ jobs:
                       f"ntfy rejected the notification: HTTP {error.code}."
                   ) from error
 
+          # RESEND LAST HOUR MODE
+          # Does not change notification history.
+          if resend_last_hour:
+              if resend_id:
+                  raise RuntimeError(
+                      "Choose either a single achievement ID or the last-hour resend, not both."
+                  )
+
+              print(
+                  f"Resending every achievement returned for {USERNAME} "
+                  f"in the last {LOOKBACK_MINUTES} minutes..."
+              )
+
+              recent = get_recent()
+              print(f"Found {len(recent)} achievement(s) in the last hour.")
+
+              sent = 0
+              for item in reversed(recent):
+                  send_notification(item)
+                  sent += 1
+
+              print(f"Last-hour resend completed: {sent} notification(s) sent.")
+              print("Notification history was not changed.")
+
           # MANUAL RESEND MODE
-          # This path does not change notification history.
-          if resend_id:
+          elif resend_id:
               if not resend_id.isdigit():
                   raise RuntimeError(
                       "Enter a numeric RetroAchievements achievement ID."
@@ -421,10 +452,11 @@ jobs:
           PY
 
       - name: Save notification history
-        if: ${{ inputs.resend_achievement_id == '' }}
+        if: ${{ inputs.resend_achievement_id == '' && inputs.resend_last_hour != true }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/notified-achievements.json
           git diff --cached --quiet || git commit -m "Track phone achievement notifications"
           git push
+          
