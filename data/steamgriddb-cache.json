@@ -145,5 +145,19 @@
     "hero": "https://cdn2.steamgriddb.com/hero/030e65da2b1c944090548d36b244b28d.jpg",
     "logo": "https://cdn2.steamgriddb.com/logo/72c25197b6a491816d9a84b42d7205f0.png",
     "icon": "https://cdn2.steamgriddb.com/icon/cf5ff72ca35f112b361de3e312c088f4.png"
+  },
+  "Banjo-Kazooie: Grunty's Revenge": {
+    "gameId": 36880,
+    "grid": "https://cdn2.steamgriddb.com/grid/1dace4e7efa8893c3b3acd21b3fea13f.png",
+    "hero": "https://cdn2.steamgriddb.com/hero/e798a0d5dea21ef441815910d5943598.jpg",
+    "logo": "https://cdn2.steamgriddb.com/logo/19d9438c1c41a576fbf6738854a84a28.png",
+    "icon": "https://cdn2.steamgriddb.com/icon/81f89eda54f8e14777eddd0812aea85d.png"
+  },
+  "The Legend of Zelda: A Link to the Past & Four Swords": {
+    "gameId": 34718,
+    "grid": "https://cdn2.steamgriddb.com/grid/c7407167f6863de2f421f9d2f6db837e.png",
+    "hero": "https://cdn2.steamgriddb.com/hero/ecf4747dc3523d20b91b0fadec88d2d9.jpg",
+    "logo": "https://cdn2.steamgriddb.com/logo/4e0cb6fb5fb446d1c92ede2ed8780188.png",
+    "icon": "https://cdn2.steamgriddb.com/icon/a9365bd906e11324065c35be476beb0c.png"
   }
 }
