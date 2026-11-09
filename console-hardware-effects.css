@@ -1,213 +1,259 @@
 
 /* ==========================================
-   GOURME HUB — CONSOLE HARDWARE THEMES
-   Animated selection borders + authentic
-   Game Boy Advance / Game Boy Color styling
+   GOURME HUB
+   CONSOLE HARDWARE THEMES
+   GBA + GBC
+   ANIMATED SELECTION BORDERS
    ========================================== */
 
+/* GAME BOY ADVANCE */
+
 .game-card.console-gba {
-  --console-main: #6555a5;
-  --console-light: #a99ae9;
-  --console-dark: #211c43;
-  --console-glow: rgba(119, 94, 210, .42);
-  border: 2px solid rgba(101, 85, 165, .75);
+  --console-main: #51418f;
+  --console-light: #b6a4ff;
+  --console-dark: #211b42;
+  --console-glow: rgba(135, 105, 255, .48);
+
+  position: relative;
+  border: 2px solid #6655a5;
+
   background:
-    linear-gradient(145deg,
-      rgba(77, 65, 133, .28),
-      rgba(13, 13, 23, .96) 65%);
+    linear-gradient(
+      145deg,
+      rgba(82, 65, 145, .32),
+      rgba(13, 13, 23, .97) 75%
+    );
+
   box-shadow:
-    inset 0 2px 0 rgba(255,255,255,.07),
-    inset 4px 0 0 rgba(101,85,165,.65),
+    inset 0 2px 0 rgba(255,255,255,.08),
     0 7px 22px rgba(0,0,0,.3);
+
+  transition:
+    border-color .3s ease,
+    box-shadow .3s ease,
+    transform .3s ease;
 }
+
+/* GAME BOY COLOR */
 
 .game-card.console-gbc {
-  --console-main: #7665a5;
-  --console-light: #b5a4e8;
-  --console-dark: #302448;
-  --console-glow: rgba(143, 118, 190, .42);
-  border: 2px solid rgba(118, 101, 165, .75);
+  --console-main: #765a9c;
+  --console-light: #c3a8ed;
+  --console-dark: #30213f;
+  --console-glow: rgba(174, 126, 220, .48);
+
+  position: relative;
+  border: 2px solid #866ba9;
+
   background:
-    linear-gradient(145deg,
-      rgba(118, 101, 165, .22),
-      rgba(17, 20, 29, .96) 65%);
+    linear-gradient(
+      145deg,
+      rgba(112, 81, 151, .30),
+      rgba(17, 15, 28, .97) 75%
+    );
+
   box-shadow:
     inset 0 2px 0 rgba(255,255,255,.09),
-    inset 4px 0 0 rgba(118,101,165,.6),
     0 7px 22px rgba(0,0,0,.3);
-}
 
-/* Hardware-inspired cartridge labels */
-
-.console-gba .console-cartridge-label {
-  border-color: #8072c3;
-  border-left: 5px solid #b0a0ef;
-  background: linear-gradient(
-    135deg,
-    #40386f,
-    #211e42
-  );
-  box-shadow: inset 0 1px 3px rgba(255,255,255,.12);
-}
-
-.console-gbc .console-cartridge-label {
-  border-color: #9383c1;
-  border-left: 5px solid #b7a5ed;
-  background: linear-gradient(
-    135deg,
-    #544675,
-    #29213d
-  );
-  box-shadow: inset 0 1px 3px rgba(255,255,255,.12);
-}
-
-/* Console-matched game covers */
-
-.console-gba .game-cover,
-.console-gba .game-cover-placeholder {
-  border: 2px solid #8274bd;
-  box-shadow: 0 0 12px rgba(119,94,210,.25);
-}
-
-.console-gbc .game-cover,
-.console-gbc .game-cover-placeholder {
-  border: 2px solid #9383bd;
-  box-shadow: 0 0 12px rgba(143,118,190,.25);
-}
-
-/* Console-matched progress rings */
-
-.console-gba .game-progress-ring {
-  background: conic-gradient(
-    #b9a6ff 0%,
-    #6650b1 var(--game-progress,0%),
-    #29253b var(--game-progress,0%),
-    #29253b 100%
-  );
-  box-shadow: 0 0 13px rgba(119,94,210,.35);
-}
-
-.console-gbc .game-progress-ring {
-  background: conic-gradient(
-    #c2b2ed 0%,
-    #7864ad var(--game-progress,0%),
-    #30283f var(--game-progress,0%),
-    #30283f 100%
-  );
-  box-shadow: 0 0 13px rgba(143,118,190,.35);
-}
-
-/* Console-matched achievement accents */
-
-.console-gba .achievement-earned strong,
-.console-gba .achievement-points,
-.console-gba .game-ring-center strong {
-  color: #b9a6ff;
-}
-
-.console-gbc .achievement-earned strong,
-.console-gbc .achievement-points,
-.console-gbc .game-ring-center strong {
-  color: #c2b2ed;
+  transition:
+    border-color .3s ease,
+    box-shadow .3s ease,
+    transform .3s ease;
 }
 
 /* ==========================================
-   ANIMATED SELECTION BORDER
+   ANIMATED GLOWING SELECTION BORDER
    ========================================== */
-
-.game-card.console-gba,
-.game-card.console-gbc {
-  position: relative;
-  isolation: isolate;
-  transition:
-    transform .3s ease,
-    border-color .3s ease,
-    box-shadow .3s ease;
-}
 
 .game-card.console-gba::after,
 .game-card.console-gbc::after {
   content: "";
   position: absolute;
-  inset: -2px;
-  z-index: 3;
+  inset: -3px;
+  z-index: 5;
+
   border: 2px solid var(--console-light);
   border-radius: inherit;
+
   opacity: 0;
   pointer-events: none;
+
   box-shadow:
-    0 0 9px var(--console-glow),
-    0 0 20px var(--console-glow);
-  transition: opacity .25s ease;
+    0 0 8px var(--console-glow),
+    0 0 18px var(--console-glow);
+
+  transition: opacity .3s ease;
 }
 
-/* Desktop hover */
+/* OPEN / SELECTED GAME CARD */
 
-@media (hover: hover) and (pointer: fine) {
+.game-card.console-gba[open],
+.game-card.console-gbc[open] {
+  border-color: var(--console-light);
+
+  box-shadow:
+    0 0 10px var(--console-glow),
+    0 0 22px var(--console-glow),
+    0 10px 28px rgba(0,0,0,.4);
+}
+
+.game-card.console-gba[open]::after,
+.game-card.console-gbc[open]::after {
+  opacity: 1;
+  animation: consoleBorderPulse 2s ease-in-out infinite;
+}
+
+/* HOVER EFFECT */
+
+@media (hover: hover) {
   .game-card.console-gba:hover,
   .game-card.console-gbc:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
+
     border-color: var(--console-light);
+
     box-shadow:
-      0 0 13px var(--console-glow),
-      0 0 25px var(--console-glow),
-      0 12px 28px rgba(0,0,0,.4);
+      0 0 12px var(--console-glow),
+      0 0 24px var(--console-glow);
   }
 
   .game-card.console-gba:hover::after,
   .game-card.console-gbc:hover::after {
     opacity: 1;
-    animation: consoleBorderPulse 2s ease-in-out infinite;
   }
 }
 
-/* Tapped or keyboard-selected cards */
+/* KEYBOARD FOCUS */
 
 .game-card.console-gba:focus-within,
 .game-card.console-gbc:focus-within {
   border-color: var(--console-light);
+
   box-shadow:
-    0 0 13px var(--console-glow),
+    0 0 12px var(--console-glow),
     0 0 24px var(--console-glow);
 }
 
-.game-card.console-gba:focus-within::after,
-.game-card.console-gbc:focus-within::after {
-  opacity: 1;
-  animation: consoleBorderPulse 2s ease-in-out infinite;
-}
-
-/* Mobile touch feedback */
-
-@media (hover: none) {
-  .game-card.console-gba:active,
-  .game-card.console-gbc:active {
-    transform: scale(.985);
-    border-color: var(--console-light);
-    box-shadow: 0 0 20px var(--console-glow);
-  }
-
-  .game-card.console-gba:active::after,
-  .game-card.console-gbc:active::after {
-    opacity: 1;
-  }
-}
+/* ANIMATION */
 
 @keyframes consoleBorderPulse {
   0%, 100% {
     box-shadow:
       0 0 7px var(--console-glow),
-      0 0 15px var(--console-glow);
+      0 0 14px var(--console-glow);
   }
 
   50% {
     box-shadow:
-      0 0 13px var(--console-glow),
-      0 0 27px var(--console-glow);
+      0 0 14px var(--console-glow),
+      0 0 28px var(--console-glow);
   }
 }
 
-/* Respect reduced motion */
+/* ==========================================
+   GBA CARTRIDGE DETAILS
+   ========================================== */
+
+.console-gba .console-cartridge-label {
+  border-color: #8271c4;
+  border-left: 5px solid #b5a4ff;
+
+  background:
+    linear-gradient(
+      135deg,
+      #493b80,
+      #241e49
+    );
+
+  box-shadow:
+    inset 0 1px 3px rgba(255,255,255,.13);
+}
+
+/* ==========================================
+   GBC CARTRIDGE DETAILS
+   ========================================== */
+
+.console-gbc .console-cartridge-label {
+  border-color: #987cb9;
+  border-left: 5px solid #c3a8ed;
+
+  background:
+    linear-gradient(
+      135deg,
+      #614778,
+      #30213f
+    );
+
+  box-shadow:
+    inset 0 1px 3px rgba(255,255,255,.13);
+}
+
+/* ==========================================
+   GAME COVER BORDERS
+   ========================================== */
+
+.console-gba .game-cover,
+.console-gba .game-cover-placeholder {
+  border: 2px solid #8271c4;
+
+  box-shadow:
+    0 0 10px rgba(135,105,255,.25);
+}
+
+.console-gbc .game-cover,
+.console-gbc .game-cover-placeholder {
+  border: 2px solid #987cb9;
+
+  box-shadow:
+    0 0 10px rgba(174,126,220,.25);
+}
+
+/* ==========================================
+   PROGRESS RINGS
+   ========================================== */
+
+.console-gba .game-progress-ring {
+  box-shadow:
+    0 0 12px rgba(135,105,255,.35);
+}
+
+.console-gbc .game-progress-ring {
+  box-shadow:
+    0 0 12px rgba(174,126,220,.35);
+}
+
+/* ==========================================
+   ACHIEVEMENT ACCENTS
+   ========================================== */
+
+.console-gba .achievement-points {
+  color: #b6a4ff;
+}
+
+.console-gbc .achievement-points {
+  color: #c3a8ed;
+}
+
+/* ==========================================
+   MOBILE TOUCH FEEDBACK
+   ========================================== */
+
+@media (hover: none) {
+  .game-card.console-gba:active,
+  .game-card.console-gbc:active {
+    transform: scale(.985);
+
+    border-color: var(--console-light);
+
+    box-shadow:
+      0 0 16px var(--console-glow);
+  }
+}
+
+/* ==========================================
+   ACCESSIBILITY
+   ========================================== */
 
 @media (prefers-reduced-motion: reduce) {
   .game-card.console-gba,
