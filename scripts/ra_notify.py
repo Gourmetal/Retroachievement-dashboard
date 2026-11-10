@@ -109,7 +109,7 @@ def send(item):
         "Color": color,
         "X-Click": f"https://retroachievements.org/achievement/{achievement_id}"
     }
-
+"Title": "Retro Gaming Update",
     if art:
         headers["Attach"] = art
 
