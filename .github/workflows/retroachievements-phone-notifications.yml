@@ -1,5 +1,4 @@
 
-
 name: RetroAchievements Phone Notifications
 
 on:
@@ -28,10 +27,8 @@ concurrency:
 jobs:
   notify:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Install artwork color sampler
         run: python -m pip install --quiet Pillow
@@ -46,43 +43,358 @@ jobs:
           python - <<'PY'
           import json
           import os
+          import io
           import urllib.parse
           import urllib.request
           import urllib.error
-          import io
           from pathlib import Path
           from PIL import Image
 
-          USERNAME = "Gourmetal"
+          USER = "Gourmetal"
           LOOKBACK_MINUTES = 60
-          UNLOCK_PAGE_SIZE = 500
+          HISTORY = Path("data/notified-achievements.json")
+          GAMES = Path("data/games.json")
 
-          api_key = os.environ.get("RA_API_KEY")
-          topic = os.environ.get("NTFY_TOPIC")
-          resend_id = os.environ.get("RESEND_ACHIEVEMENT_ID", "").strip()
-          resend_last_hour = os.environ.get("RESEND_LAST_HOUR", "false").lower() == "true"
+          API_KEY = os.environ.get("RA_API_KEY")
+          TOPIC = os.environ.get("NTFY_TOPIC")
+          RESEND_ID = os.getenv("RESEND_ACHIEVEMENT_ID", "").strip()
+          RESEND_HOUR = os.getenv("RESEND_LAST_HOUR", "false").lower() == "true"
 
-          state_path = Path("data/notified-achievements.json")
-          games_path = Path("data/games.json")
+          if not API_KEY:
+              raise RuntimeError("RA_API_KEY secret is missing.")
+          if not TOPIC:
+              raise RuntimeError("NTFY_TOPIC secret is missing.")
 
-          if not api_key:
-              raise RuntimeError("GitHub secret RA_API_KEY is missing.")
+          # RETRO GAME THEMES
+          # Format: keywords: banner, message, color, color name
+          THEMES = {
+              # Banjo games: specific titles must come before general matches.
+              "banjo-kazooie: grunty's revenge": (
+                  "🪄 GRUNTY'S REVENGE!",
+                  "Another magical challenge defeated!",
+                  "#8A5BB5", "Grunty Purple"
+              ),
+              "banjo kazooie: grunty's revenge": (
+                  "🪄 GRUNTY'S REVENGE!",
+                  "Another magical challenge defeated!",
+                  "#8A5BB5", "Grunty Purple"
+              ),
+              "grunty's revenge": (
+                  "🪄 GRUNTY'S REVENGE!",
+                  "Another magical challenge defeated!",
+                  "#8A5BB5", "Grunty Purple"
+              ),
+              "banjo-pilot": (
+                  "✈️ BANJO PILOT TAKEOFF!",
+                  "Another airborne achievement! Kazooie is ready for takeoff.",
+                  "#4A9BCB", "Banjo Pilot Sky Blue"
+              ),
+              "banjo pilot": (
+                  "✈️ BANJO PILOT TAKEOFF!",
+                  "Another airborne achievement! Kazooie is ready for takeoff.",
+                  "#4A9BCB", "Banjo Pilot Sky Blue"
+              ),
+              "banjo-tooie": (
+                  "🎒 SPIRAL MOUNTAIN ADVENTURE!",
+                  "Banjo and Kazooie are back for another adventure!",
+                  "#D69A35", "Banjo-Kazooie Gold"
+              ),
+              "banjo tooie": (
+                  "🎒 SPIRAL MOUNTAIN ADVENTURE!",
+                  "Banjo and Kazooie are back for another adventure!",
+                  "#D69A35", "Banjo-Kazooie Gold"
+              ),
+              "banjo-kazooie": (
+                  "🎒 SPIRAL MOUNTAIN ADVENTURE!",
+                  "Banjo and Kazooie found another achievement!",
+                  "#D69A35", "Banjo-Kazooie Gold"
+              ),
+              "banjo kazooie": (
+                  "🎒 SPIRAL MOUNTAIN ADVENTURE!",
+                  "Banjo and Kazooie found another achievement!",
+                  "#D69A35", "Banjo-Kazooie Gold"
+              ),
 
-          if not topic:
-              raise RuntimeError("GitHub secret NTFY_TOPIC is missing.")
+              # Nintendo adventures
+              "zelda": (
+                  "🗡️ HYRULE ADVENTURE!",
+                  "Another legend is written in Hyrule.",
+                  "#C5A43B", "Hyrule Gold"
+              ),
+              "pokemon": (
+                  "⚡ POKÉDEX UPDATE!",
+                  "A new achievement has joined your collection!",
+                  "#F4C430", "Pokémon Yellow"
+              ),
+              "pokémon": (
+                  "⚡ POKÉDEX UPDATE!",
+                  "A new achievement has joined your collection!",
+                  "#F4C430", "Pokémon Yellow"
+              ),
+              "mario": (
+                  "🍄 MUSHROOM KINGDOM NEWS!",
+                  "It's-a achievement time!",
+                  "#D83B32", "Mario Red"
+              ),
+              "luigi": (
+                  "🍄 MUSHROOM KINGDOM NEWS!",
+                  "It's-a achievement time!",
+                  "#D83B32", "Mario Red"
+              ),
+              "yoshi": (
+                  "🍄 MUSHROOM KINGDOM NEWS!",
+                  "It's-a achievement time!",
+                  "#D83B32", "Mario Red"
+              ),
+              "wario": (
+                  "🍄 MUSHROOM KINGDOM NEWS!",
+                  "It's-a achievement time!",
+                  "#D83B32", "Mario Red"
+              ),
+              "metroid": (
+                  "🚀 GALACTIC MISSION COMPLETE!",
+                  "Mission progress confirmed, bounty hunter.",
+                  "#7B9B45", "Metroid Green"
+              ),
+              "samus": (
+                  "🚀 GALACTIC MISSION COMPLETE!",
+                  "Mission progress confirmed, bounty hunter.",
+                  "#7B9B45", "Metroid Green"
+              ),
+              "kirby": (
+                  "⭐ DREAM LAND CELEBRATION!",
+                  "A new accomplishment joins the stars!",
+                  "#D94B91", "Kirby Pink"
+              ),
+              "donkey kong": (
+                  "🍌 JUNGLE VICTORY!",
+                  "Another challenge conquered in the jungle.",
+                  "#A67C35", "Jungle Gold"
+              ),
+              "star fox": (
+                  "🛩️ CORNERIA MISSION COMPLETE!",
+                  "Do a barrel roll! Another mission accomplished.",
+                  "#4A9A65", "Star Fox Green"
+              ),
+              "f-zero": (
+                  "🏁 GRAND PRIX VICTORY!",
+                  "Another high-speed achievement secured!",
+                  "#36A6C9", "F-Zero Blue"
+              ),
+
+              # Sega adventures
+              "sonic": (
+                  "💨 SONIC SPEED UNLOCK!",
+                  "Gotta go fast! Another achievement secured.",
+                  "#147FC0", "Sonic Blue"
+              ),
+              "knuckles": (
+                  "💨 SONIC SPEED UNLOCK!",
+                  "Gotta go fast! Another achievement secured.",
+                  "#147FC0", "Sonic Blue"
+              ),
+              "tails": (
+                  "💨 SONIC SPEED UNLOCK!",
+                  "Gotta go fast! Another achievement secured.",
+                  "#147FC0", "Sonic Blue"
+              ),
+
+              # Action and RPG
+              "castlevania": (
+                  "🦇 CASTLE VICTORY!",
+                  "Another dark challenge has been conquered.",
+                  "#713B9B", "Castlevania Purple"
+              ),
+              "mega man": (
+                  "🤖 ROBOT MASTER DEFEATED!",
+                  "Another mission successfully completed.",
+                  "#287FC2", "Mega Man Blue"
+              ),
+              "megaman": (
+                  "🤖 ROBOT MASTER DEFEATED!",
+                  "Another mission successfully completed.",
+                  "#287FC2", "Mega Man Blue"
+              ),
+              "rockman": (
+                  "🤖 ROBOT MASTER DEFEATED!",
+                  "Another mission successfully completed.",
+                  "#287FC2", "Mega Man Blue"
+              ),
+              "final fantasy": (
+                  "⚔️ FINAL FANTASY VICTORY!",
+                  "Your legend grows stronger with every quest.",
+                  "#6A55A5", "Final Fantasy Violet"
+              ),
+              "dragon quest": (
+                  "🐉 DRAGON QUEST VICTORY!",
+                  "Another legendary adventure completed.",
+                  "#399A64", "Dragon Quest Green"
+              ),
+              "dragon warrior": (
+                  "🐉 DRAGON QUEST VICTORY!",
+                  "Another legendary adventure completed.",
+                  "#399A64", "Dragon Quest Green"
+              ),
+              "golden sun": (
+                  "☀️ GOLDEN SUN AWAKENED!",
+                  "Another power of the elements unlocked.",
+                  "#D9A52E", "Golden Sun Gold"
+              ),
+              "fire emblem": (
+                  "⚔️ HEROES OF LEGEND!",
+                  "Another battle won in the name of your kingdom.",
+                  "#4B6CA8", "Fire Emblem Blue"
+              ),
+              "earthbound": (
+                  "🪐 PSI POWER UNLOCKED!",
+                  "Another strange and wonderful adventure!",
+                  "#E56B9B", "EarthBound Pink"
+              ),
+              "mother 3": (
+                  "🪐 PSI POWER UNLOCKED!",
+                  "Another strange and wonderful adventure!",
+                  "#E56B9B", "EarthBound Pink"
+              ),
+              "harvest moon": (
+                  "🌱 FARM LIFE SUCCESS!",
+                  "Another peaceful day and achievement earned.",
+                  "#69A84C", "Harvest Green"
+              ),
+
+              # Fighting games
+              "street fighter": (
+                  "🥊 WORLD WARRIOR VICTORY!",
+                  "Another fighter rises to the challenge.",
+                  "#C83D35", "Fighting Red"
+              ),
+              "mortal kombat": (
+                  "🐉 FLAWLESS VICTORY!",
+                  "Another battle won in the tournament.",
+                  "#8D2525", "Mortal Kombat Crimson"
+              ),
+              "king of fighters": (
+                  "🥊 FIGHTER VICTORY!",
+                  "Another challenge cleared in the arena.",
+                  "#C83D35", "Fighting Red"
+              ),
+              "tekken": (
+                  "🥊 FIGHTER VICTORY!",
+                  "Another challenge cleared in the arena.",
+                  "#C83D35", "Fighting Red"
+              ),
+
+              # Classic arcade and platform games
+              "crash bandicoot": (
+                  "🌀 CRASH CARNIVAL!",
+                  "Wumpa-worthy work! Another challenge smashed.",
+                  "#E87524", "Crash Orange"
+              ),
+              "spyro": (
+                  "🐉 DRAGON REALM VICTORY!",
+                  "Another realm explored and challenge conquered.",
+                  "#8054B8", "Spyro Purple"
+              ),
+              "contra": (
+                  "💥 MISSION COMPLETE!",
+                  "Run, gun, and get it done!",
+                  "#C64B35", "Contra Red"
+              ),
+              "tetris": (
+                  "🧩 PERFECT FIT!",
+                  "Line after line, achievement after achievement.",
+                  "#38A6A6", "Puzzle Teal"
+              ),
+              "pac-man": (
+                  "👾 MAZE MASTER!",
+                  "Another maze conquered. Keep chasing those dots!",
+                  "#E8C52E", "Pac-Man Yellow"
+              ),
+              "pacman": (
+                  "👾 MAZE MASTER!",
+                  "Another maze conquered. Keep chasing those dots!",
+                  "#E8C52E", "Pac-Man Yellow"
+              ),
+              "galaga": (
+                  "🛸 ARCADE DEFENSE!",
+                  "Another high-score-worthy victory!",
+                  "#55B86A", "Arcade Green"
+              ),
+              "galaxian": (
+                  "🛸 ARCADE DEFENSE!",
+                  "Another high-score-worthy victory!",
+                  "#55B86A", "Arcade Green"
+              ),
+              "space invaders": (
+                  "🛸 ARCADE DEFENSE!",
+                  "Another high-score-worthy victory!",
+                  "#55B86A", "Arcade Green"
+              ),
+              "bomberman": (
+                  "💣 BOMBING SUCCESS!",
+                  "Another explosive achievement!",
+                  "#D95B42", "Bomberman Red"
+              ),
+              "gradius": (
+                  "🚀 SPACE MISSION COMPLETE!",
+                  "Another dangerous mission conquered.",
+                  "#478DBD", "Arcade Space Blue"
+              ),
+              "r-type": (
+                  "🚀 SPACE MISSION COMPLETE!",
+                  "Another dangerous mission conquered.",
+                  "#478DBD", "Arcade Space Blue"
+              ),
+              "parodius": (
+                  "🚀 SPACE MISSION COMPLETE!",
+                  "Another dangerous mission conquered.",
+                  "#478DBD", "Arcade Space Blue"
+              ),
+              "double dragon": (
+                  "🐉 DOUBLE DRAGON VICTORY!",
+                  "Another street fight won!",
+                  "#B94B3C", "Dragon Red"
+              ),
+              "teenage mutant ninja": (
+                  "🐢 TURTLE POWER!",
+                  "Cowabunga! Another achievement secured.",
+                  "#48A65B", "Turtle Green"
+              ),
+              "tmnt": (
+                  "🐢 TURTLE POWER!",
+                  "Cowabunga! Another achievement secured.",
+                  "#48A65B", "Turtle Green"
+              ),
+              "earthworm jim": (
+                  "🪱 GROOVY VICTORY!",
+                  "That's one groovy achievement!",
+                  "#8A9A43", "Earthworm Green"
+              ),
+              "excitebike": (
+                  "🏍️ MOTOCROSS VICTORY!",
+                  "Another race conquered!",
+                  "#D65D32", "Racing Orange"
+              ),
+              "prince of persia": (
+                  "⏳ ROYAL ADVENTURE!",
+                  "Another dangerous challenge overcome.",
+                  "#C49A55", "Persian Gold"
+              ),
+              "cool spot": (
+                  "🔴 COOL VICTORY!",
+                  "Another totally cool achievement!",
+                  "#D64D4D", "Spot Red"
+              ),
+          }
 
           def api_get(endpoint, params):
-              query = dict(params)
-              query["y"] = api_key
+              query = dict(params, y=API_KEY)
               url = (
                   "https://retroachievements.org/API/"
                   + endpoint + "?" + urllib.parse.urlencode(query)
               )
               request = urllib.request.Request(
-                  url,
-                  headers={"User-Agent": "GourmeHub/3.0"}
+                  url, headers={"User-Agent": "GourmeHub/3.0"}
               )
-
               try:
                   with urllib.request.urlopen(request, timeout=30) as response:
                       return json.loads(response.read().decode("utf-8"))
@@ -92,162 +404,63 @@ jobs:
                       f"{endpoint} returned HTTP {error.code}: {details}"
                   ) from error
 
-          # LOAD GAME ARTWORK FROM THE DASHBOARD LIBRARY
+          def get_recent():
+              data = api_get(
+                  "API_GetUserRecentAchievements.php",
+                  {"u": USER, "m": LOOKBACK_MINUTES}
+              )
+              if not isinstance(data, list):
+                  raise RuntimeError("Unexpected recent achievements response.")
+              return data
+
+          # Load game artwork from the dashboard library.
           game_art = {}
-
-          if games_path.exists():
+          if GAMES.exists():
               try:
-                  library = json.loads(games_path.read_text())
-
-                  for game in library.get("games", []):
-                      game_id = game.get("gameId")
-                      artwork = game.get("boxArt")
-
-                      if game_id and artwork:
-                          if artwork.startswith("https://"):
-                              game_art[str(game_id)] = artwork
-                          elif artwork.startswith("/"):
-                              game_art[str(game_id)] = (
-                                  "https://retroachievements.org" + artwork
-                              )
+                  for game in json.loads(GAMES.read_text()).get("games", []):
+                      game_id, art = game.get("gameId"), game.get("boxArt")
+                      if game_id and art:
+                          if art.startswith("/"):
+                              art = "https://retroachievements.org" + art
+                          if art.startswith("https://"):
+                              game_art[str(game_id)] = art
               except (json.JSONDecodeError, AttributeError, TypeError):
                   print("Could not read local artwork library.")
 
-          artwork_lookup_cache = {}
+          artwork_cache = {}
 
-          def get_game_artwork(game_id):
+          def get_artwork(game_id):
               game_id = str(game_id)
-
-              if game_id in artwork_lookup_cache:
-                  return artwork_lookup_cache[game_id]
-
+              if game_id in artwork_cache:
+                  return artwork_cache[game_id]
               try:
                   data = api_get("API_GetGame.php", {"i": game_id})
-                  image = (
+                  art = (
                       data.get("ImageBoxArt")
                       or data.get("ImageIcon")
                       or data.get("GameIcon")
                   )
-
-                  if image and image.startswith("/"):
-                      image = "https://retroachievements.org" + image
-
-                  if image and not image.startswith("https://"):
-                      image = None
-
-                  artwork_lookup_cache[game_id] = image
-                  return image
-
+                  if art and art.startswith("/"):
+                      art = "https://retroachievements.org" + art
+                  if art and not art.startswith("https://"):
+                      art = None
               except Exception as error:
                   print(f"Artwork lookup failed: {error}")
-                  artwork_lookup_cache[game_id] = None
-                  return None
+                  art = None
+              artwork_cache[game_id] = art
+              return art
 
-          def get_recent():
-              data = api_get(
-                  "API_GetUserRecentAchievements.php",
-                  {"u": USERNAME, "m": LOOKBACK_MINUTES}
-              )
-
-              if not isinstance(data, list):
-                  raise RuntimeError(
-                      "Unexpected response from recent achievements API."
-                  )
-
-              return data
-
-          # GAME-SPECIFIC NOTIFICATION THEMES
           def get_game_style(game):
-              name = str(game or "").lower()
-
-              themes = [
-                  {
-                      "match": ["zelda", "minish cap", "ocarina of time",
-                                "majora's mask", "link's awakening",
-                                "a link to the past", "wind waker",
-                                "twilight princess", "skyward sword"],
-                      "banner": "🗡️ HYRULE ADVENTURE!",
-                      "flavor": "Another legend is written in Hyrule.",
-                      "color": "#C5A43B",
-                      "color_name": "Hyrule Gold"
-                  },
-                  {
-                      "match": ["pokemon", "pokémon"],
-                      "banner": "⚡ POKÉDEX UPDATE!",
-                      "flavor": "A new achievement has joined your collection!",
-                      "color": "#F4C430",
-                      "color_name": "Pokémon Yellow"
-                  },
-                  {
-                      "match": ["mario", "super mario", "luigi"],
-                      "banner": "🍄 MUSHROOM KINGDOM NEWS!",
-                      "flavor": "It's-a achievement time!",
-                      "color": "#D83B32",
-                      "color_name": "Mario Red"
-                  },
-                  {
-                      "match": ["sonic", "knuckles", "tails"],
-                      "banner": "💨 SONIC SPEED UNLOCK!",
-                      "flavor": "Gotta go fast! Another achievement secured.",
-                      "color": "#147FC0",
-                      "color_name": "Sonic Blue"
-                  },
-                  {
-                      "match": ["metroid", "samus"],
-                      "banner": "🚀 GALACTIC MISSION COMPLETE!",
-                      "flavor": "Mission progress confirmed, bounty hunter.",
-                      "color": "#7B9B45",
-                      "color_name": "Metroid Green"
-                  },
-                  {
-                      "match": ["castlevania"],
-                      "banner": "🦇 CASTLE VICTORY!",
-                      "flavor": "Another dark challenge has been conquered.",
-                      "color": "#713B9B",
-                      "color_name": "Castlevania Purple"
-                  },
-                  {
-                      "match": ["mega man", "megaman", "rockman"],
-                      "banner": "🤖 ROBOT MASTER DEFEATED!",
-                      "flavor": "Another mission successfully completed.",
-                      "color": "#287FC2",
-                      "color_name": "Mega Man Blue"
-                  },
-                  {
-                      "match": ["kirby"],
-                      "banner": "⭐ DREAM LAND CELEBRATION!",
-                      "flavor": "A new accomplishment joins the stars!",
-                      "color": "#D94B91",
-                      "color_name": "Kirby Pink"
-                  },
-                  {
-                      "match": ["donkey kong"],
-                      "banner": "🍌 JUNGLE VICTORY!",
-                      "flavor": "Another challenge conquered in the jungle.",
-                      "color": "#A67C35",
-                      "color_name": "Jungle Gold"
-                  },
-                  {
-                      "match": ["final fantasy"],
-                      "banner": "⚔️ FINAL FANTASY VICTORY!",
-                      "flavor": "Your legend grows stronger with every quest.",
-                      "color": "#6A55A5",
-                      "color_name": "Final Fantasy Violet"
-                  },
-                  {
-                      "match": ["street fighter", "mortal kombat",
-                                "tekken", "king of fighters"],
-                      "banner": "🥊 FIGHTER VICTORY!",
-                      "flavor": "Flawless effort! Another challenge cleared.",
-                      "color": "#C83D35",
-                      "color_name": "Fighting Red"
-                  }
-              ]
-
-              for theme in themes:
-                  if any(keyword in name for keyword in theme["match"]):
-                      return theme
-
+              name = str(game or "").casefold()
+              for keyword, style in THEMES.items():
+                  if keyword in name:
+                      banner, flavor, color, color_name = style
+                      return {
+                          "banner": banner,
+                          "flavor": flavor,
+                          "color": color,
+                          "color_name": color_name
+                      }
               return {
                   "banner": "🎮 RETRO GAMING UPDATE!",
                   "flavor": "Another achievement added to your collection.",
@@ -255,54 +468,37 @@ jobs:
                   "color_name": "Artwork colors"
               }
 
-          # SAMPLE A DOMINANT COLOR FROM THE GAME ARTWORK
-          def get_artwork_color(image_url):
-              if not image_url:
+          def get_artwork_color(url):
+              if not url:
                   return None
-
               try:
                   request = urllib.request.Request(
-                      image_url,
-                      headers={"User-Agent": "GourmeHub/3.0"}
+                      url, headers={"User-Agent": "GourmeHub/3.0"}
                   )
-
                   with urllib.request.urlopen(request, timeout=15) as response:
                       raw = response.read(8 * 1024 * 1024)
-
                   image = Image.open(io.BytesIO(raw)).convert("RGB")
                   image.thumbnail((96, 96))
-
                   quantized = image.quantize(
-                      colors=8,
-                      method=Image.Quantize.MEDIANCUT
+                      colors=8, method=Image.Quantize.MEDIANCUT
                   )
-
                   palette = quantized.getpalette()
                   counts = quantized.getcolors(96 * 96) or []
-
                   if not counts or not palette:
                       return None
-
-                  index = max(counts, key=lambda item: item[0])[1]
-                  offset = index * 3
-                  red, green, blue = palette[offset:offset + 3]
-
-                  return "#{:02X}{:02X}{:02X}".format(
-                      red, green, blue
-                  )
-
+                  index = max(counts, key=lambda item: item[0])[1] * 3
+                  red, green, blue = palette[index:index + 3]
+                  return f"#{red:02X}{green:02X}{blue:02X}"
               except Exception as error:
                   print(f"Artwork color sampling failed: {error}")
                   return None
 
-          def get_color_square(hex_color):
-              if not hex_color or len(hex_color) != 7:
+          def color_square(color):
+              if not color or len(color) != 7:
                   return "⬜"
-
               red, green, blue = (
-                  int(hex_color[i:i + 2], 16) for i in (1, 3, 5)
+                  int(color[i:i + 2], 16) for i in (1, 3, 5)
               )
-
               if red > green * 1.25 and red > blue * 1.25:
                   return "🟥"
               if green > red * 1.2 and green > blue * 1.2:
@@ -313,213 +509,16 @@ jobs:
                   return "🟨"
               if red > 130 and blue > 130 and green < 150:
                   return "🟪"
-
               return "⬜"
 
-          def get_rarity_text(achievement):
+          def rarity_text(item):
               for field in ("Rarity", "RarityPercent", "RarityPercentage"):
-                  value = achievement.get(field)
-
+                  value = item.get(field)
                   if value is not None:
                       try:
                           return f"💎 Rarity: {float(value):g}%"
-                      except (ValueError, TypeError):
-                          pass
-
-              ratio = achievement.get("TrueRatio")
-
-              if ratio is not None:
-                  try:
-                      return f"✨ True Ratio: {float(ratio):g}"
-                  except (ValueError, TypeError):
-                      pass
-
-              return None
-
-          def send_notification(achievement):
-              title = achievement.get("Title") or "Achievement unlocked"
-              game = achievement.get("GameTitle") or "Unknown game"
-              description = (
-                  achievement.get("Description")
-                  or achievement.get("AchievementDescription")
-                  or "No description was provided by RetroAchievements."
-              )
-
-              points = achievement.get("Points", 0)
-              achievement_id = achievement.get("AchievementID")
-              game_id = achievement.get("GameID")
-
-              try:
-                  points_number = int(points or 0)
-              except (ValueError, TypeError):
-                  points_number = 0
-
-              hardcore = int(achievement.get("HardcoreMode") or 0) == 1
-              mode = "HARDCORE" if hardcore else "SOFTCORE"
-
-              achievement_url = None
-              game_url = None
-
-              if achievement_id:
-                  achievement_url = (
-                      "https://retroachievements.org/achievement/"
-                      + str(achievement_id)
-                  )
-
-              if game_id:
-                  game_url = (
-                      "https://retroachievements.org/game/"
-                      + str(game_id)
-                  )
-
-              # CHOOSE FRANCHISE COLORS OR SAMPLE THE DASHBOARD ARTWORK
-              game_style = get_game_style(game)
-
-              artwork = game_art.get(str(game_id)) if game_id else None
-
-              if not artwork and game_id:
-                  artwork = get_game_artwork(game_id)
-
-              accent_color = game_style.get("color")
-              color_source = game_style.get(
-                  "color_name", "Artwork colors"
-              )
-
-              if not accent_color:
-                  accent_color = get_artwork_color(artwork)
-
-                  if accent_color:
-                      color_source = "Game artwork"
-
-              if not accent_color:
-                  accent_color = "#667788"
-                  color_source = "Retro fallback"
-
-              tags = ["trophy", "video_game"]
-              priority = "default"
-              special_label = "🏆 ACHIEVEMENT UNLOCKED!"
-
-              rarity_text = get_rarity_text(achievement)
-
-              if points_number >= 50:
-                  special_label = "🌟 BIG ACHIEVEMENT UNLOCKED!"
-                  tags.append("star")
-                  priority = "high"
-              elif points_number >= 25:
-                  special_label = "🏆 MAJOR ACHIEVEMENT UNLOCKED!"
-                  tags.append("tada")
-                  priority = "high"
-
-              try:
-                  true_ratio = float(achievement.get("TrueRatio") or 0)
-
-                  if true_ratio >= 10:
-                      special_label = "💎 CHALLENGING ACHIEVEMENT UNLOCKED!"
-                      tags.append("gem")
-                      priority = "high"
-
-              except (ValueError, TypeError):
-                  pass
-
-              if hardcore:
-                  tags.append("fire")
-              else:
-                  tags.append("video_game")
-
-              notification_title = f"Achievement unlocked: {game}"
-
-              lines = [
-                  game_style["banner"],
-                  game_style["flavor"],
-                  "",
-                  special_label,
-                  "",
-                  f"🎮 {game}",
-                  "",
-                  f"🏅 {title}",
-                  "",
-                  "📜 DESCRIPTION",
-                  description,
-                  "",
-                  f"⭐ POINTS: {points_number}",
-                  f"🎯 MODE: {mode}",
-                  f"👤 PLAYER: {USERNAME}",
-                  "",
-                  f"{get_color_square(accent_color)} COLOR THEME: {color_source} {accent_color}"
-              ]
-
-              if rarity_text:
-                  lines.extend(["", rarity_text])
-
-              if achievement_url:
-                  lines.extend([
-                      "",
-                      "🔗 VIEW ACHIEVEMENT",
-                      achievement_url
-                  ])
-
-              if game_url:
-                  lines.extend([
-                      "",
-                      "🕹️ VIEW GAME",
-                      game_url
-                  ])
-
-              message = "\n".join(lines)
-
-              headers = {
-                  "Content-Type": "text/plain; charset=utf-8",
-                  "Title": notification_title,
-                  "Priority": priority,
-                  "Tags": ",".join(tags)
-              }
-
-              if artwork:
-                  headers["Icon"] = artwork
-                  headers["Attach"] = artwork
-                  print(f"Using game artwork for {game}.")
-
-              if achievement_url:
-                  headers["Click"] = achievement_url
-
-              encoded_topic = urllib.parse.quote(topic, safe="")
-              url = f"https://ntfy.sh/{encoded_topic}"
-
-              request = urllib.request.Request(
-                  url,
-                  data=message.encode("utf-8"),
-                  headers=headers,
-                  method="POST"
-              )
-
-              try:
-                  with urllib.request.urlopen(request, timeout=30) as response:
-                      result = json.loads(
-                          response.read().decode("utf-8")
-                      )
-
-                      print(
-                          f"NTFY ACCEPTED: {title} — {game} "
-                          f"(HTTP {response.status})"
-                      )
-                      print(
-                          f"Notification theme: {game_style['banner']}"
-                      )
-                      print(
-                          f"Notification color: {accent_color} ({color_source})"
-                      )
-
-                      return result
-
-              except urllib.error.HTTPError as error:
-                  details = error.read().decode(
-                      "utf-8", errors="replace"
-                  )
-
-                  print(f"ntfy response: {details}")
-
-                  raise RuntimeError(
-                      f"ntfy rejected notification: HTTP {error.code}."
+                      
+                       f"ntfy rejected notification: HTTP {error.code}."
                   ) from error
 
           # RESEND LAST HOUR MODE
@@ -557,7 +556,6 @@ jobs:
               if not achievement_info.get("ID") or not game_info.get("ID"):
                   raise RuntimeError("Could not find that achievement ID.")
 
-              
               unlocks = achievement_data.get("Unlocks", [])
               if not isinstance(unlocks, list):
                   raise RuntimeError("Unexpected unlock history response.")
@@ -639,3 +637,4 @@ jobs:
           git add data/notified-achievements.json
           git diff --cached --quiet || git commit -m "Track phone achievement notifications"
           git push
+          
