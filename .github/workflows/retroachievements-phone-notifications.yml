@@ -748,17 +748,17 @@ jobs:
 
               recent = get_recent()
 
-              print(
-                  f"RetroAchievements returned {len(recent)} "
-                  "recent unlocks."
+          except urllib.error.HTTPError as error:
+              details = error.read().decode(
+                  "utf-8", errors="replace"
               )
+              raise RuntimeError(
+                  f"ntfy rejected notification: HTTP "
+                  f"{error.code}: {details}"
+              ) from error
 
-              new_items = [
-                  item for item in recent
-                  if item.get("AchievementID")
-                  and str(item["AchievementID"]) not in seen
-              ]
-
+          # MANUAL RESEND: LAST HOUR
+          if RESEND_HOUR:
               print(
                   f"New achievements to notify: {len(new_items)}"
               )
@@ -787,11 +787,10 @@ jobs:
                   f"{len(seen)} IDs."
               )
 
-              print(
+                            print(
                   f"Successfully sent {len(sent_ids)} notification(s)."
               )
-                     PY
-
+          PY
       - name: Save notification history
         if: ${{ inputs.resend_achievement_id == '' && inputs.resend_last_hour != true }}
         run: |
