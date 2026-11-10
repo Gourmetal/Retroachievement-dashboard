@@ -1,16 +1,15 @@
-
 name: RetroAchievements Phone Notifications
 
 on:
   workflow_dispatch:
     inputs:
       resend_achievement_id:
-        description: "Achievement ID to resend (leave blank for normal checking)"
+        description: "Achievement ID to resend"
         required: false
         type: string
         default: ""
       resend_last_hour:
-        description: "Resend every achievement earned in the last 60 minutes"
+        description: "Resend achievements from the last hour"
         required: false
         type: boolean
         default: false
@@ -41,12 +40,12 @@ jobs:
           RESEND_LAST_HOUR: ${{ inputs.resend_last_hour }}
         run: |
           python - <<'PY'
+          import io
           import json
           import os
-          import io
+          import urllib.error
           import urllib.parse
           import urllib.request
-          import urllib.error
           from pathlib import Path
           from PIL import Image
 
@@ -55,10 +54,12 @@ jobs:
           HISTORY = Path("data/notified-achievements.json")
           GAMES = Path("data/games.json")
 
-          API_KEY = os.environ.get("RA_API_KEY")
-          TOPIC = os.environ.get("NTFY_TOPIC")
+          API_KEY = os.environ.get("RA_API_KEY", "").strip()
+          TOPIC = os.environ.get("NTFY_TOPIC", "").strip()
           RESEND_ID = os.getenv("RESEND_ACHIEVEMENT_ID", "").strip()
-          RESEND_HOUR = os.getenv("RESEND_LAST_HOUR", "false").lower() == "true"
+          RESEND_HOUR = (
+              os.getenv("RESEND_LAST_HOUR", "false").lower() == "true"
+          )
 
           if not API_KEY:
               raise RuntimeError("RA_API_KEY secret is missing.")
@@ -66,15 +67,11 @@ jobs:
               raise RuntimeError("NTFY_TOPIC secret is missing.")
 
           # RETRO GAME THEMES
-          # Format: keywords: banner, message, color, color name
+          # Specific game titles are listed before general franchise names.
+          # Format: keyword: banner, message, color, color name
+
           THEMES = {
-              # Banjo games: specific titles must come before general matches.
               "banjo-kazooie: grunty's revenge": (
-                  "🪄 GRUNTY'S REVENGE!",
-                  "Another magical challenge defeated!",
-                  "#8A5BB5", "Grunty Purple"
-              ),
-              "banjo kazooie: grunty's revenge": (
                   "🪄 GRUNTY'S REVENGE!",
                   "Another magical challenge defeated!",
                   "#8A5BB5", "Grunty Purple"
@@ -86,22 +83,22 @@ jobs:
               ),
               "banjo-pilot": (
                   "✈️ BANJO PILOT TAKEOFF!",
-                  "Another airborne achievement! Kazooie is ready for takeoff.",
+                  "Kazooie is ready for takeoff!",
                   "#4A9BCB", "Banjo Pilot Sky Blue"
               ),
               "banjo pilot": (
                   "✈️ BANJO PILOT TAKEOFF!",
-                  "Another airborne achievement! Kazooie is ready for takeoff.",
+                  "Kazooie is ready for takeoff!",
                   "#4A9BCB", "Banjo Pilot Sky Blue"
               ),
               "banjo-tooie": (
                   "🎒 SPIRAL MOUNTAIN ADVENTURE!",
-                  "Banjo and Kazooie are back for another adventure!",
+                  "Banjo and Kazooie are back!",
                   "#D69A35", "Banjo-Kazooie Gold"
               ),
               "banjo tooie": (
                   "🎒 SPIRAL MOUNTAIN ADVENTURE!",
-                  "Banjo and Kazooie are back for another adventure!",
+                  "Banjo and Kazooie are back!",
                   "#D69A35", "Banjo-Kazooie Gold"
               ),
               "banjo-kazooie": (
@@ -114,8 +111,6 @@ jobs:
                   "Banjo and Kazooie found another achievement!",
                   "#D69A35", "Banjo-Kazooie Gold"
               ),
-
-              # Nintendo adventures
               "zelda": (
                   "🗡️ HYRULE ADVENTURE!",
                   "Another legend is written in Hyrule.",
@@ -123,12 +118,12 @@ jobs:
               ),
               "pokemon": (
                   "⚡ POKÉDEX UPDATE!",
-                  "A new achievement has joined your collection!",
+                  "A new achievement joined your collection!",
                   "#F4C430", "Pokémon Yellow"
               ),
               "pokémon": (
                   "⚡ POKÉDEX UPDATE!",
-                  "A new achievement has joined your collection!",
+                  "A new achievement joined your collection!",
                   "#F4C430", "Pokémon Yellow"
               ),
               "mario": (
@@ -143,13 +138,13 @@ jobs:
               ),
               "yoshi": (
                   "🍄 MUSHROOM KINGDOM NEWS!",
-                  "It's-a achievement time!",
-                  "#D83B32", "Mario Red"
+                  "Another Yoshi adventure conquered!",
+                  "#55A85A", "Yoshi Green"
               ),
               "wario": (
-                  "🍄 MUSHROOM KINGDOM NEWS!",
-                  "It's-a achievement time!",
-                  "#D83B32", "Mario Red"
+                  "🟡 WARIO TIME!",
+                  "Another treasure-worthy achievement!",
+                  "#D5B52C", "Wario Yellow"
               ),
               "metroid": (
                   "🚀 GALACTIC MISSION COMPLETE!",
@@ -163,7 +158,7 @@ jobs:
               ),
               "kirby": (
                   "⭐ DREAM LAND CELEBRATION!",
-                  "A new accomplishment joins the stars!",
+                  "Another accomplishment joins the stars!",
                   "#D94B91", "Kirby Pink"
               ),
               "donkey kong": (
@@ -171,18 +166,6 @@ jobs:
                   "Another challenge conquered in the jungle.",
                   "#A67C35", "Jungle Gold"
               ),
-              "star fox": (
-                  "🛩️ CORNERIA MISSION COMPLETE!",
-                  "Do a barrel roll! Another mission accomplished.",
-                  "#4A9A65", "Star Fox Green"
-              ),
-              "f-zero": (
-                  "🏁 GRAND PRIX VICTORY!",
-                  "Another high-speed achievement secured!",
-                  "#36A6C9", "F-Zero Blue"
-              ),
-
-              # Sega adventures
               "sonic": (
                   "💨 SONIC SPEED UNLOCK!",
                   "Gotta go fast! Another achievement secured.",
@@ -190,19 +173,27 @@ jobs:
               ),
               "knuckles": (
                   "💨 SONIC SPEED UNLOCK!",
-                  "Gotta go fast! Another achievement secured.",
+                  "Another challenge conquered!",
                   "#147FC0", "Sonic Blue"
               ),
               "tails": (
                   "💨 SONIC SPEED UNLOCK!",
-                  "Gotta go fast! Another achievement secured.",
+                  "Another challenge conquered!",
                   "#147FC0", "Sonic Blue"
               ),
-
-              # Action and RPG
+              "star fox": (
+                  "🛩️ CORNERIA MISSION COMPLETE!",
+                  "Do a barrel roll! Mission accomplished.",
+                  "#4A9A65", "Star Fox Green"
+              ),
+              "f-zero": (
+                  "🏁 GRAND PRIX VICTORY!",
+                  "Another high-speed achievement secured!",
+                  "#36A6C9", "F-Zero Blue"
+              ),
               "castlevania": (
                   "🦇 CASTLE VICTORY!",
-                  "Another dark challenge has been conquered.",
+                  "Another dark challenge conquered.",
                   "#713B9B", "Castlevania Purple"
               ),
               "mega man": (
@@ -222,7 +213,7 @@ jobs:
               ),
               "final fantasy": (
                   "⚔️ FINAL FANTASY VICTORY!",
-                  "Your legend grows stronger with every quest.",
+                  "Your legend grows with every quest.",
                   "#6A55A5", "Final Fantasy Violet"
               ),
               "dragon quest": (
@@ -237,12 +228,12 @@ jobs:
               ),
               "golden sun": (
                   "☀️ GOLDEN SUN AWAKENED!",
-                  "Another power of the elements unlocked.",
+                  "Another elemental power unlocked.",
                   "#D9A52E", "Golden Sun Gold"
               ),
               "fire emblem": (
                   "⚔️ HEROES OF LEGEND!",
-                  "Another battle won in the name of your kingdom.",
+                  "Another battle won for your kingdom.",
                   "#4B6CA8", "Fire Emblem Blue"
               ),
               "earthbound": (
@@ -260,8 +251,6 @@ jobs:
                   "Another peaceful day and achievement earned.",
                   "#69A84C", "Harvest Green"
               ),
-
-              # Fighting games
               "street fighter": (
                   "🥊 WORLD WARRIOR VICTORY!",
                   "Another fighter rises to the challenge.",
@@ -274,24 +263,22 @@ jobs:
               ),
               "king of fighters": (
                   "🥊 FIGHTER VICTORY!",
-                  "Another challenge cleared in the arena.",
+                  "Another arena challenge cleared.",
                   "#C83D35", "Fighting Red"
               ),
               "tekken": (
                   "🥊 FIGHTER VICTORY!",
-                  "Another challenge cleared in the arena.",
+                  "Another arena challenge cleared.",
                   "#C83D35", "Fighting Red"
               ),
-
-              # Classic arcade and platform games
               "crash bandicoot": (
                   "🌀 CRASH CARNIVAL!",
-                  "Wumpa-worthy work! Another challenge smashed.",
+                  "Wumpa-worthy work! Challenge smashed.",
                   "#E87524", "Crash Orange"
               ),
               "spyro": (
                   "🐉 DRAGON REALM VICTORY!",
-                  "Another realm explored and challenge conquered.",
+                  "Another realm explored and conquered.",
                   "#8054B8", "Spyro Purple"
               ),
               "contra": (
@@ -306,20 +293,15 @@ jobs:
               ),
               "pac-man": (
                   "👾 MAZE MASTER!",
-                  "Another maze conquered. Keep chasing those dots!",
+                  "Another maze conquered!",
                   "#E8C52E", "Pac-Man Yellow"
               ),
               "pacman": (
                   "👾 MAZE MASTER!",
-                  "Another maze conquered. Keep chasing those dots!",
+                  "Another maze conquered!",
                   "#E8C52E", "Pac-Man Yellow"
               ),
               "galaga": (
-                  "🛸 ARCADE DEFENSE!",
-                  "Another high-score-worthy victory!",
-                  "#55B86A", "Arcade Green"
-              ),
-              "galaxian": (
                   "🛸 ARCADE DEFENSE!",
                   "Another high-score-worthy victory!",
                   "#55B86A", "Arcade Green"
@@ -340,11 +322,6 @@ jobs:
                   "#478DBD", "Arcade Space Blue"
               ),
               "r-type": (
-                  "🚀 SPACE MISSION COMPLETE!",
-                  "Another dangerous mission conquered.",
-                  "#478DBD", "Arcade Space Blue"
-              ),
-              "parodius": (
                   "🚀 SPACE MISSION COMPLETE!",
                   "Another dangerous mission conquered.",
                   "#478DBD", "Arcade Space Blue"
@@ -384,8 +361,7 @@ jobs:
                   "Another totally cool achievement!",
                   "#D64D4D", "Spot Red"
               ),
-          }
-
+          }          
           def api_get(endpoint, params):
               query = dict(params, y=API_KEY)
               url = (
@@ -410,20 +386,28 @@ jobs:
                   {"u": USER, "m": LOOKBACK_MINUTES}
               )
               if not isinstance(data, list):
-                  raise RuntimeError("Unexpected recent achievements response.")
+                  raise RuntimeError(
+                      "Unexpected recent achievements response."
+                  )
               return data
 
           # Load game artwork from the dashboard library.
           game_art = {}
+
           if GAMES.exists():
               try:
-                  for game in json.loads(GAMES.read_text()).get("games", []):
-                      game_id, art = game.get("gameId"), game.get("boxArt")
+                  library = json.loads(GAMES.read_text())
+                  for game in library.get("games", []):
+                      game_id = game.get("gameId")
+                      art = game.get("boxArt")
+
                       if game_id and art:
                           if art.startswith("/"):
                               art = "https://retroachievements.org" + art
+
                           if art.startswith("https://"):
                               game_art[str(game_id)] = art
+
               except (json.JSONDecodeError, AttributeError, TypeError):
                   print("Could not read local artwork library.")
 
@@ -431,8 +415,13 @@ jobs:
 
           def get_artwork(game_id):
               game_id = str(game_id)
+
+              if game_id in game_art:
+                  return game_art[game_id]
+
               if game_id in artwork_cache:
                   return artwork_cache[game_id]
+
               try:
                   data = api_get("API_GetGame.php", {"i": game_id})
                   art = (
@@ -440,18 +429,23 @@ jobs:
                       or data.get("ImageIcon")
                       or data.get("GameIcon")
                   )
+
                   if art and art.startswith("/"):
                       art = "https://retroachievements.org" + art
+
                   if art and not art.startswith("https://"):
                       art = None
+
               except Exception as error:
                   print(f"Artwork lookup failed: {error}")
                   art = None
+
               artwork_cache[game_id] = art
               return art
 
           def get_game_style(game):
               name = str(game or "").casefold()
+
               for keyword, style in THEMES.items():
                   if keyword in name:
                       banner, flavor, color, color_name = style
@@ -461,34 +455,45 @@ jobs:
                           "color": color,
                           "color_name": color_name
                       }
+
               return {
                   "banner": "🎮 RETRO GAMING UPDATE!",
                   "flavor": "Another achievement added to your collection.",
                   "color": None,
-                  "color_name": "Artwork colors"
+                  "color_name": "Game artwork"
               }
 
           def get_artwork_color(url):
               if not url:
                   return None
+
               try:
                   request = urllib.request.Request(
                       url, headers={"User-Agent": "GourmeHub/3.0"}
                   )
+
                   with urllib.request.urlopen(request, timeout=15) as response:
                       raw = response.read(8 * 1024 * 1024)
+
                   image = Image.open(io.BytesIO(raw)).convert("RGB")
                   image.thumbnail((96, 96))
+
                   quantized = image.quantize(
-                      colors=8, method=Image.Quantize.MEDIANCUT
+                      colors=8,
+                      method=Image.Quantize.MEDIANCUT
                   )
+
                   palette = quantized.getpalette()
                   counts = quantized.getcolors(96 * 96) or []
+
                   if not counts or not palette:
                       return None
+
                   index = max(counts, key=lambda item: item[0])[1] * 3
                   red, green, blue = palette[index:index + 3]
+
                   return f"#{red:02X}{green:02X}{blue:02X}"
+
               except Exception as error:
                   print(f"Artwork color sampling failed: {error}")
                   return None
@@ -496,9 +501,11 @@ jobs:
           def color_square(color):
               if not color or len(color) != 7:
                   return "⬜"
+
               red, green, blue = (
                   int(color[i:i + 2], 16) for i in (1, 3, 5)
               )
+
               if red > green * 1.25 and red > blue * 1.25:
                   return "🟥"
               if green > red * 1.2 and green > blue * 1.2:
@@ -509,27 +516,140 @@ jobs:
                   return "🟨"
               if red > 130 and blue > 130 and green < 150:
                   return "🟪"
+
               return "⬜"
 
           def rarity_text(item):
-              for field in ("Rarity", "RarityPercent", "RarityPercentage"):
+              for field in (
+                  "Rarity",
+                  "RarityPercent",
+                  "RarityPercentage"
+              ):
                   value = item.get(field)
+
                   if value is not None:
                       try:
                           return f"💎 Rarity: {float(value):g}%"
-                      
-                       f"ntfy rejected notification: HTTP {error.code}."
-                  ) from error
+                      except (ValueError, TypeError):
+                          pass
 
-          # RESEND LAST HOUR MODE
-          if resend_last_hour:
-              if resend_id:
+              return ""
+
+          def send_notification(item):
+              achievement_id = item.get("AchievementID")
+              title = item.get("Title") or "Achievement unlocked!"
+              description = item.get("Description") or ""
+              points = item.get("Points", 0)
+              game_id = item.get("GameID")
+              game_title = item.get("GameTitle") or "Retro game"
+
+              style = get_game_style(game_title)
+              artwork = get_artwork(game_id)
+
+              color = style["color"]
+              source = style["color_name"] if color else "Game artwork"
+
+              if not color:
+                  color = get_artwork_color(artwork)
+
+              if not color:
+                  color = "#667788"
+                  source = "Retro fallback"
+
+              rarity = rarity_text(item)
+
+              try:
+                  points = int(points)
+              except (ValueError, TypeError):
+                  points = 0
+
+              try:
+                  hardcore = int(item.get("HardcoreMode") or 0) == 1
+              except (ValueError, TypeError):
+                  hardcore = False
+
+              mode = "🔥 Hardcore" if hardcore else "🎮 Softcore"
+
+              message_lines = [
+                  style["flavor"],
+                  "",
+                  f"🏆 {title}",
+                  description,
+                  "",
+                  f"🎮 {game_title}",
+                  f"⭐ {points} points",
+                  mode
+              ]
+
+              if rarity:
+                  message_lines.extend(["", rarity])
+
+              message_lines.extend([
+                  "",
+                  f"{color_square(color)} Theme: {source}",
+                  f"Achievement ID: {achievement_id}"
+              ])
+
+              message = "\n".join(
+                  line for line in message_lines if line is not None
+              )
+
+              headers = {
+                  "Title": style["banner"],
+                  "Priority": "default",
+                  "Tags": "video_game,trophy",
+                  "Content-Type": "text/plain; charset=utf-8",
+                  "X-Title": style["banner"],
+                  "X-Priority": "3",
+                  "X-Tags": "video_game,trophy",
+                  "X-Click": (
+                      "https://retroachievements.org/"
+                      f"achievement/{achievement_id}"
+                  )
+              }
+
+              if artwork:
+                  headers["Attach"] = artwork
+
+              headers["Color"] = color
+
+              request = urllib.request.Request(
+                  f"https://ntfy.sh/{TOPIC}",
+                  data=message.encode("utf-8"),
+                  headers=headers,
+                  method="POST"
+              )
+
+              try:
+                  with urllib.request.urlopen(
+                      request, timeout=30
+                  ) as response:
+                      print(
+                          f"Notification sent for achievement "
+                          f"{achievement_id}: HTTP {response.status}"
+                      )
+
+              except urllib.error.HTTPError as error:
+                  details = error.read().decode(
+                      "utf-8", errors="replace"
+                  )
                   raise RuntimeError(
-                      "Choose either a single achievement ID or the last-hour resend, not both."
+                      f"ntfy rejected notification: HTTP "
+                      f"{error.code}: {details}"
+                  ) from error
+                            # MANUAL RESEND: LAST HOUR
+          if RESEND_HOUR:
+              if RESEND_ID:
+                  raise RuntimeError(
+                      "Choose either a single achievement ID "
+                      "or the last-hour resend, not both."
                   )
 
               recent = get_recent()
-              print(f"Found {len(recent)} achievement(s) in the last hour.")
+              print(
+                  f"Found {len(recent)} achievement(s) "
+                  "in the last hour."
+              )
 
               sent = 0
 
@@ -537,74 +657,101 @@ jobs:
                   send_notification(item)
                   sent += 1
 
-              print(f"Last-hour resend completed: {sent} notification(s).")
+              print(
+                  f"Last-hour resend completed: {sent} notification(s)."
+              )
               print("Notification history was not changed.")
 
-          # MANUAL RESEND MODE
-          elif resend_id:
-              if not resend_id.isdigit():
-                  raise RuntimeError("Enter a numeric achievement ID.")
+          # MANUAL RESEND: SINGLE ACHIEVEMENT
+          elif RESEND_ID:
+              if not RESEND_ID.isdigit():
+                  raise RuntimeError(
+                      "Enter a numeric achievement ID."
+                  )
 
-              achievement_data = api_get(
+              data = api_get(
                   "API_GetAchievementUnlocks.php",
-                  {"a": resend_id, "c": 1, "o": 0}
+                  {"a": RESEND_ID, "c": 100, "o": 0}
               )
 
-              achievement_info = achievement_data.get("Achievement", {})
-              game_info = achievement_data.get("Game", {})
+              achievement = data.get("Achievement", {})
+              game = data.get("Game", {})
+              unlocks = data.get("Unlocks", [])
 
-              if not achievement_info.get("ID") or not game_info.get("ID"):
-                  raise RuntimeError("Could not find that achievement ID.")
+              if not achievement.get("ID") or not game.get("ID"):
+                  raise RuntimeError(
+                      "Could not find that achievement ID."
+                  )
 
-              unlocks = achievement_data.get("Unlocks", [])
               if not isinstance(unlocks, list):
-                  raise RuntimeError("Unexpected unlock history response.")
+                  raise RuntimeError(
+                      "Unexpected achievement unlock response."
+                  )
 
               player_unlocks = [
-                  item for item in unlocks
-                  if str(item.get("User", "")).lower() == USERNAME.lower()
+                  unlock for unlock in unlocks
+                  if str(unlock.get("User", "")).casefold()
+                  == USER.casefold()
               ]
 
               if not player_unlocks:
                   raise RuntimeError(
-                      f"No unlock by {USERNAME} was found for achievement {resend_id}."
+                      f"No unlock by {USER} was found for "
+                      f"achievement {RESEND_ID}."
                   )
 
               unlock = player_unlocks[0]
+
               item = {
-                  "AchievementID": achievement_info.get("ID"),
-                  "Title": achievement_info.get("Title"),
-                  "Description": achievement_info.get("Description"),
-                  "Points": achievement_info.get("Points", 0),
-                  "TrueRatio": achievement_info.get("TrueRatio"),
-                  "GameID": game_info.get("ID"),
-                  "GameTitle": game_info.get("Title"),
+                  "AchievementID": achievement.get("ID"),
+                  "Title": achievement.get("Title"),
+                  "Description": achievement.get("Description"),
+                  "Points": achievement.get("Points", 0),
+                  "TrueRatio": achievement.get("TrueRatio"),
+                  "GameID": game.get("ID"),
+                  "GameTitle": game.get("Title"),
                   "HardcoreMode": unlock.get("HardcoreMode", 0)
               }
 
               send_notification(item)
-              print(f"Manual resend completed for achievement {resend_id}.")
 
-          # NORMAL AUTOMATIC CHECKING MODE
+              print(
+                  f"Manual resend completed for achievement {RESEND_ID}."
+              )
+
+          # NORMAL AUTOMATIC CHECKING
           else:
-              if state_path.exists():
+              if HISTORY.exists():
                   try:
-                      stored = json.loads(state_path.read_text())
+                      stored = json.loads(HISTORY.read_text())
 
                       if not isinstance(stored, list):
-                          raise ValueError("History must be a JSON list.")
+                          raise ValueError(
+                              "History must be a JSON list."
+                          )
 
-                      seen = set(str(value) for value in stored)
+                      seen = {
+                          str(value) for value in stored
+                      }
 
-                  except (json.JSONDecodeError, ValueError, TypeError) as error:
+                  except (
+                      json.JSONDecodeError,
+                      ValueError,
+                      TypeError
+                  ) as error:
                       raise RuntimeError(
                           "Notification history is invalid."
                       ) from error
+
               else:
                   seen = set()
 
               recent = get_recent()
-              print(f"RetroAchievements returned {len(recent)} recent unlocks.")
+
+              print(
+                  f"RetroAchievements returned {len(recent)} "
+                  "recent unlocks."
+              )
 
               new_items = [
                   item for item in recent
@@ -612,22 +759,38 @@ jobs:
                   and str(item["AchievementID"]) not in seen
               ]
 
-              print(f"New achievements to notify: {len(new_items)}")
+              print(
+                  f"New achievements to notify: {len(new_items)}"
+              )
+
               sent_ids = []
 
               for item in reversed(new_items):
                   send_notification(item)
-                  sent_ids.append(str(item["AchievementID"]))
+                  sent_ids.append(
+                      str(item["AchievementID"])
+                  )
 
               seen.update(sent_ids)
-              state_path.parent.mkdir(parents=True, exist_ok=True)
-              state_path.write_text(
+
+              HISTORY.parent.mkdir(
+                  parents=True,
+                  exist_ok=True
+              )
+
+              HISTORY.write_text(
                   json.dumps(sorted(seen), indent=2) + "\n"
               )
 
-              print(f"Notification history now contains {len(seen)} IDs.")
-              print(f"Successfully sent {len(sent_ids)} notification(s).")
-          PY
+              print(
+                  f"Notification history now contains "
+                  f"{len(seen)} IDs."
+              )
+
+              print(
+                  f"Successfully sent {len(sent_ids)} notification(s)."
+              )
+                        PY
 
       - name: Save notification history
         if: ${{ inputs.resend_achievement_id == '' && inputs.resend_last_hour != true }}
@@ -637,4 +800,3 @@ jobs:
           git add data/notified-achievements.json
           git diff --cached --quiet || git commit -m "Track phone achievement notifications"
           git push
-          
