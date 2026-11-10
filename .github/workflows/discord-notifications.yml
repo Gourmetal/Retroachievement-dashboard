@@ -557,12 +557,46 @@ jobs:
               if not achievement_info.get("ID") or not game_info.get("ID"):
                   raise RuntimeError("Could not find that achievement ID.")
 
-              earned = None
-              offset = 0
+              
+              unlocks = achievement_data.get("Unlocks", [])
+              if not isinstance(unlocks, list):
+                  raise RuntimeError("Unexpected unlock history response.")
 
-                                        raise ValueError("History must be a JSON list.")
+              player_unlocks = [
+                  item for item in unlocks
+                  if str(item.get("User", "")).lower() == USERNAME.lower()
+              ]
 
-                      seen = set(str(item) for item in stored)
+              if not player_unlocks:
+                  raise RuntimeError(
+                      f"No unlock by {USERNAME} was found for achievement {resend_id}."
+                  )
+
+              unlock = player_unlocks[0]
+              item = {
+                  "AchievementID": achievement_info.get("ID"),
+                  "Title": achievement_info.get("Title"),
+                  "Description": achievement_info.get("Description"),
+                  "Points": achievement_info.get("Points", 0),
+                  "TrueRatio": achievement_info.get("TrueRatio"),
+                  "GameID": game_info.get("ID"),
+                  "GameTitle": game_info.get("Title"),
+                  "HardcoreMode": unlock.get("HardcoreMode", 0)
+              }
+
+              send_notification(item)
+              print(f"Manual resend completed for achievement {resend_id}.")
+
+          # NORMAL AUTOMATIC CHECKING MODE
+          else:
+              if state_path.exists():
+                  try:
+                      stored = json.loads(state_path.read_text())
+
+                      if not isinstance(stored, list):
+                          raise ValueError("History must be a JSON list.")
+
+                      seen = set(str(value) for value in stored)
 
                   except (json.JSONDecodeError, ValueError, TypeError) as error:
                       raise RuntimeError(
@@ -572,7 +606,6 @@ jobs:
                   seen = set()
 
               recent = get_recent()
-
               print(f"RetroAchievements returned {len(recent)} recent unlocks.")
 
               new_items = [
@@ -582,7 +615,6 @@ jobs:
               ]
 
               print(f"New achievements to notify: {len(new_items)}")
-
               sent_ids = []
 
               for item in reversed(new_items):
@@ -590,14 +622,14 @@ jobs:
                   sent_ids.append(str(item["AchievementID"]))
 
               seen.update(sent_ids)
-
+              state_path.parent.mkdir(parents=True, exist_ok=True)
               state_path.write_text(
                   json.dumps(sorted(seen), indent=2) + "\n"
               )
 
               print(f"Notification history now contains {len(seen)} IDs.")
               print(f"Successfully sent {len(sent_ids)} notification(s).")
-          PY
+
 
       - name: Save notification history
         if: ${{ inputs.resend_achievement_id == '' && inputs.resend_last_hour != true }}
