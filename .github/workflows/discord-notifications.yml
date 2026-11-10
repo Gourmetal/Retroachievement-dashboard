@@ -1,3 +1,4 @@
+YAML
 
 name: RetroAchievements Phone Notifications
 
@@ -91,7 +92,7 @@ jobs:
                       f"{endpoint} returned HTTP {error.code}: {details}"
                   ) from error
 
-          # Load game artwork from the dashboard library.
+          # LOAD GAME ARTWORK FROM THE DASHBOARD LIBRARY
           game_art = {}
 
           if games_path.exists():
@@ -371,7 +372,7 @@ jobs:
                       + str(game_id)
                   )
 
-              # Choose franchise colors or sample the dashboard artwork.
+              # CHOOSE FRANCHISE COLORS OR SAMPLE THE DASHBOARD ARTWORK
               game_style = get_game_style(game)
 
               artwork = game_art.get(str(game_id)) if game_id else None
@@ -559,6 +560,50 @@ jobs:
               earned = None
               offset = 0
 
-              while True:
-                  unlock_data = api_get(
-                      "API_GetAchievementU
+                                        raise ValueError("History must be a JSON list.")
+
+                      seen = set(str(item) for item in stored)
+
+                  except (json.JSONDecodeError, ValueError, TypeError) as error:
+                      raise RuntimeError(
+                          "Notification history is invalid."
+                      ) from error
+              else:
+                  seen = set()
+
+              recent = get_recent()
+
+              print(f"RetroAchievements returned {len(recent)} recent unlocks.")
+
+              new_items = [
+                  item for item in recent
+                  if item.get("AchievementID")
+                  and str(item["AchievementID"]) not in seen
+              ]
+
+              print(f"New achievements to notify: {len(new_items)}")
+
+              sent_ids = []
+
+              for item in reversed(new_items):
+                  send_notification(item)
+                  sent_ids.append(str(item["AchievementID"]))
+
+              seen.update(sent_ids)
+
+              state_path.write_text(
+                  json.dumps(sorted(seen), indent=2) + "\n"
+              )
+
+              print(f"Notification history now contains {len(seen)} IDs.")
+              print(f"Successfully sent {len(sent_ids)} notification(s).")
+          PY
+
+      - name: Save notification history
+        if: ${{ inputs.resend_achievement_id == '' && inputs.resend_last_hour != true }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/notified-achievements.json
+          git diff --cached --quiet || git commit -m "Track phone achievement notifications"
+          git push
