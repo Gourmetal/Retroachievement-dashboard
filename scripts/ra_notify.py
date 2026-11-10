@@ -1,11 +1,9 @@
 
 import os
-import io
 import json
 import urllib.request
 import urllib.parse
 from pathlib import Path
-from PIL import Image
 
 USER = "Gourmetal"
 API_KEY = os.environ["RA_API_KEY"]
@@ -17,28 +15,28 @@ HISTORY = Path("data/notified-achievements.json")
 GAMES = Path("data/games.json")
 
 THEMES = {
-    "banjo": ("🎒 BANJO ADVENTURE!", "#D69A35"),
-    "zelda": ("🗡️ HYRULE ADVENTURE!", "#C5A43B"),
-    "pokemon": ("⚡ POKÉDEX UPDATE!", "#F4C430"),
-    "pokémon": ("⚡ POKÉDEX UPDATE!", "#F4C430"),
-    "mario": ("🍄 MUSHROOM KINGDOM!", "#D83B32"),
-    "luigi": ("🍄 MUSHROOM KINGDOM!", "#D83B32"),
-    "yoshi": ("🍄 YOSHI ADVENTURE!", "#55A85A"),
-    "wario": ("🟡 WARIO TIME!", "#D5B52C"),
-    "metroid": ("🚀 GALACTIC MISSION!", "#7B9B45"),
-    "samus": ("🚀 GALACTIC MISSION!", "#7B9B45"),
-    "kirby": ("⭐ DREAM LAND!", "#D94B91"),
-    "sonic": ("💨 GOTTA GO FAST!", "#147FC0"),
-    "mega man": ("🤖 ROBOT MASTER DEFEATED!", "#287FC2"),
-    "megaman": ("🤖 ROBOT MASTER DEFEATED!", "#287FC2"),
-    "golden sun": ("☀️ GOLDEN SUN!", "#D9A52E"),
-    "castlevania": ("🦇 CASTLE VICTORY!", "#713B9B"),
-    "donkey kong": ("🍌 JUNGLE VICTORY!", "#A67C35"),
-    "final fantasy": ("⚔️ FINAL FANTASY!", "#6A55A5"),
-    "earthbound": ("🪐 PSI POWER!", "#E56B9B"),
-    "tetris": ("🧩 PERFECT FIT!", "#38A6A6"),
-    "crash bandicoot": ("🌀 CRASH CARNIVAL!", "#E87524"),
-    "spyro": ("🐉 DRAGON VICTORY!", "#8054B8"),
+    "banjo": "🎒 BANJO ADVENTURE!",
+    "zelda": "🗡️ HYRULE ADVENTURE!",
+    "pokemon": "⚡ POKÉDEX UPDATE!",
+    "pokémon": "⚡ POKÉDEX UPDATE!",
+    "mario": "🍄 MUSHROOM KINGDOM!",
+    "luigi": "🍄 MUSHROOM KINGDOM!",
+    "yoshi": "🍄 YOSHI ADVENTURE!",
+    "wario": "🟡 WARIO TIME!",
+    "metroid": "🚀 GALACTIC MISSION!",
+    "samus": "🚀 GALACTIC MISSION!",
+    "kirby": "⭐ DREAM LAND!",
+    "sonic": "💨 GOTTA GO FAST!",
+    "mega man": "🤖 ROBOT MASTER DEFEATED!",
+    "megaman": "🤖 ROBOT MASTER DEFEATED!",
+    "golden sun": "☀️ GOLDEN SUN!",
+    "castlevania": "🦇 CASTLE VICTORY!",
+    "donkey kong": "🍌 JUNGLE VICTORY!",
+    "final fantasy": "⚔️ FINAL FANTASY!",
+    "earthbound": "🪐 PSI POWER!",
+    "tetris": "🧩 PERFECT FIT!",
+    "crash bandicoot": "🌀 CRASH CARNIVAL!",
+    "spyro": "🐉 DRAGON VICTORY!",
 }
 
 
@@ -50,10 +48,12 @@ def api(endpoint, params):
         + "?"
         + urllib.parse.urlencode(params)
     )
+
     request = urllib.request.Request(
         url,
         headers={"User-Agent": "RetroNotifications"}
     )
+
     with urllib.request.urlopen(request, timeout=30) as response:
         return json.loads(response.read().decode())
 
@@ -70,22 +70,23 @@ def artwork(game_id):
         library = json.loads(GAMES.read_text()) if GAMES.exists() else {}
 
         for game in library.get("games", []):
-            if str(game.get("gameId")) == str(game_id) and game.get("boxArt"):
-                art = game["boxArt"]
-                return (
-                    "https://retroachievements.org" + art
-                    if art.startswith("/")
-                    else art
-                )
+            if str(game.get("gameId")) == str(game_id):
+                art = game.get("boxArt")
+
+                if art:
+                    return (
+                        "https://retroachievements.org" + art
+                        if art.startswith("/")
+                        else art
+                    )
 
         data = api("API_GetGame.php", {"i": game_id})
         art = data.get("ImageBoxArt") or data.get("ImageIcon")
 
-        return (
-            "https://retroachievements.org" + art
-            if art and art.startswith("/")
-            else art
-        )
+        if art and art.startswith("/"):
+            return "https://retroachievements.org" + art
+
+        return art
 
     except Exception as error:
         print("Artwork error:", error)
@@ -105,55 +106,31 @@ def send(item):
         else "🎮 Softcore"
     )
 
-    banner, color = ("🎮 RETRO GAMING UPDATE!", None)
+    banner = "🎮 RETRO GAMING UPDATE!"
 
-    for keyword, style in THEMES.items():
+    for keyword, themed_banner in THEMES.items():
         if keyword in game.casefold():
-            banner, color = style
+            banner = themed_banner
             break
 
     art = artwork(item.get("GameID"))
 
-    if not color and art:
-        try:
-            request = urllib.request.Request(
-                art,
-                headers={"User-Agent": "RetroNotifications"}
-            )
-
-            with urllib.request.urlopen(request, timeout=15) as response:
-                image = Image.open(
-                    io.BytesIO(response.read())
-                ).convert("RGB")
-
-            image.thumbnail((64, 64))
-
-            color = "#{:02X}{:02X}{:02X}".format(
-                *image.resize((1, 1)).getpixel((0, 0))
-            )
-
-        except Exception as error:
-            print("Color sampling error:", error)
-
-    color = color or "#667788"
-
     message = (
-        f"{title}\n{description}\n\n"
+        f"{banner}\n\n"
+        f"🏆 {title}\n"
+        f"{description}\n\n"
         f"🎮 {game}\n"
         f"⭐ {points} points\n"
-        f"{mode}\n"
-        f"🎨 Theme: {color}\n"
-        f"Achievement ID: {achievement_id}"
+        f"{mode}\n\n"
+        f"🔗 View achievement:\n"
+        f"https://retroachievements.org/achievement/{achievement_id}"
     )
 
     headers = {
         "Title": "Retro Gaming Update",
         "Priority": "default",
         "Tags": "video_game,trophy",
-        "Color": color,
-        "X-Click": (
-            f"https://retroachievements.org/achievement/{achievement_id}"
-        )
+        "Click": f"https://retroachievements.org/achievement/{achievement_id}"
     }
 
     if art:
@@ -161,7 +138,7 @@ def send(item):
 
     request = urllib.request.Request(
         f"https://ntfy.sh/{TOPIC}",
-        data=message.encode(),
+        data=message.encode("utf-8"),
         headers=headers,
         method="POST"
     )
@@ -242,4 +219,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-        
+    
