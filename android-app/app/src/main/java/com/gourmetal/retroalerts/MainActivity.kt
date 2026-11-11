@@ -508,8 +508,7 @@ fun RetroAlertsApp() {
             status = "NOTIFICATIONS DISABLED"
         }
     }
-)
-
+                    }
                     Text(
                         if (notifications) "BACKGROUND CHECKS ARE ON" else "BACKGROUND CHECKS ARE OFF",
                         color = theme.muted,
