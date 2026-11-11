@@ -126,7 +126,7 @@ private object KeyVault {
     }
 }
 
-private suspend fun getAchievements(apiKey: String): List<Achievement> =
+
 private suspend fun getAchievements(apiKey: String): List<Achievement> =
     withContext(Dispatchers.IO) {
         val encoded = URLEncoder.encode(apiKey, "UTF-8")
