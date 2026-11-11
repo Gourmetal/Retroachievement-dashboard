@@ -33,11 +33,24 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-private val Purple = Color(0xFF5B4B9A)
-private val DarkPurple = Color(0xFF34285F)
-private val Green = Color(0xFFD9F0C0)
-private val Ink = Color(0xFF20351F)
-private val Gold = Color(0xFFFFD98A)
+data class AppTheme(
+    val name: String,
+    val background: Color,
+    val panel: Color,
+    val card: Color,
+    val accent: Color,
+    val text: Color,
+    val muted: Color
+)
+
+private val themes = listOf(
+    AppTheme("Classic Orange", Color(0xFF08090F), Color(0xFF171923), Color(0xFF222531), Color(0xFFFF941F), Color.White, Color(0xFFB8BBC8)),
+    AppTheme("Midnight", Color(0xFF080E1B), Color(0xFF14213A), Color(0xFF1D2D4A), Color(0xFF75A9FF), Color.White, Color(0xFFB5C4DC)),
+    AppTheme("Retro Neon", Color(0xFF160D24), Color(0xFF28163C), Color(0xFF38204F), Color(0xFFD38AFF), Color.White, Color(0xFFD0B9E5)),
+    AppTheme("Game Boy", Color(0xFF17251A), Color(0xFF344C32), Color(0xFF486744), Color(0xFFD9F0C0), Color(0xFFF0F8E9), Color(0xFFC2D7B5)),
+    AppTheme("GBA Purple", Color(0xFF17142A), Color(0xFF34285F), Color(0xFF493B78), Color(0xFFB8A9E8), Color.White, Color(0xFFD8CFF4)),
+    AppTheme("Emerald", Color(0xFF091A15), Color(0xFF15372B), Color(0xFF20503C), Color(0xFF55E0A0), Color.White, Color(0xFFB2DCC8))
+)
 
 data class Achievement(
     val game: String,
@@ -111,7 +124,7 @@ private suspend fun getAchievements(apiKey: String): List<Achievement> =
         val key = URLEncoder.encode(apiKey, "UTF-8")
         val url = URL(
             "https://retroachievements.org/API/API_GetUserRecentAchievements.php" +
-               "?u=Gourmetal&m=43200&y=$key"
+                "?u=Gourmetal&m=43200&y=$key"
         )
         val connection = url.openConnection() as HttpURLConnection
 
@@ -125,7 +138,6 @@ private suspend fun getAchievements(apiKey: String): List<Achievement> =
             }
 
             val json = JSONArray(connection.inputStream.bufferedReader().use { it.readText() })
-
             (0 until json.length()).map { i ->
                 val item = json.getJSONObject(i)
                 Achievement(
@@ -145,12 +157,19 @@ private suspend fun getAchievements(apiKey: String): List<Achievement> =
 fun RetroAlertsApp() {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
+    val prefs = remember { context.getSharedPreferences("retro_alerts", 0) }
+
     var tab by remember { mutableStateOf(false) }
     var apiKey by remember { mutableStateOf("") }
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
     var status by remember { mutableStateOf("READY, PLAYER?") }
     var loading by remember { mutableStateOf(false) }
+    var selectedTheme by remember {
+        mutableIntStateOf(prefs.getInt("selected_theme", 0).coerceIn(0, themes.lastIndex))
+    }
+
+    val theme = themes[selectedTheme]
 
     fun refresh() {
         val savedKey = KeyVault.load(context)
@@ -179,55 +198,51 @@ fun RetroAlertsApp() {
 
     Box(
         Modifier.fillMaxSize()
-            .background(Color(0xFF17142A))
+            .background(theme.background)
             .padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
             Modifier.fillMaxWidth()
-                .background(
-                    Brush.verticalGradient(listOf(Color(0xFF8172B8), Purple, DarkPurple)),
-                    RoundedCornerShape(28.dp)
-                )
-                .border(3.dp, Color(0xFFB8A9E8), RoundedCornerShape(28.dp))
+                .background(theme.panel, RoundedCornerShape(24.dp))
+                .border(2.dp, theme.accent.copy(alpha = 0.65f), RoundedCornerShape(24.dp))
                 .padding(14.dp)
         ) {
             Text(
                 "GOURMETAL",
-                color = Color.White,
-                fontSize = 15.sp,
+                color = theme.accent,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 3.sp
             )
-            Text("RETRO ALERTS", color = Gold, fontSize = 11.sp)
+            Text("RETRO ALERTS", color = theme.muted, fontSize = 11.sp)
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(14.dp))
 
             Column(
                 Modifier.fillMaxWidth()
-                    .background(Green, RoundedCornerShape(12.dp))
-                    .border(4.dp, Color(0xFF29223F), RoundedCornerShape(12.dp))
-                    .padding(12.dp)
+                    .background(theme.card, RoundedCornerShape(16.dp))
+                    .padding(14.dp)
             ) {
-                Text("● PLAYER 1 / ACHIEVEMENT LOG", color = Ink, fontSize = 10.sp)
+                Text("PLAYER 1 / ACHIEVEMENT LOG", color = theme.accent, fontSize = 10.sp)
                 Text(
-                    if (tab) "ACCOUNT SETTINGS" else "READY, PLAYER?",
-                    color = Ink,
-                    fontSize = 20.sp,
+                    if (tab) "SETTINGS" else "READY, PLAYER?",
+                    color = theme.text,
+                    fontSize = 21.sp,
                     fontWeight = FontWeight.Black
                 )
-                Text(status, color = Ink, fontSize = 10.sp)
+                Text(status, color = theme.muted, fontSize = 11.sp)
 
-                Spacer(Modifier.height(10.dp))
+                Spacer(Modifier.height(12.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Stat("UNLOCKS", achievements.size.toString(), Modifier.weight(1f))
-                    Stat("POINTS", achievements.sumOf { it.points }.toString(), Modifier.weight(1f))
-                    Stat("STATUS", if (connected) "LINKED" else "OFFLINE", Modifier.weight(1f))
+                    Stat("UNLOCKS", achievements.size.toString(), Modifier.weight(1f), theme)
+                    Stat("POINTS", achievements.sumOf { it.points }.toString(), Modifier.weight(1f), theme)
+                    Stat("STATUS", if (connected) "LINKED" else "OFFLINE", Modifier.weight(1f), theme)
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(14.dp))
 
             Row(
                 Modifier.fillMaxWidth(),
@@ -235,13 +250,13 @@ fun RetroAlertsApp() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    if (tab) "ACCOUNT SETTINGS" else "RECENT UNLOCKS",
-                    color = Color.White,
-                    fontWeight = FontWeight.Black
+                    if (tab) "PERSONALIZE YOUR APP" else "RECENT UNLOCKS",
+                    color = theme.text,
+                    fontWeight = FontWeight.Bold
                 )
                 if (!tab) {
                     IconButton(onClick = { refresh() }, enabled = !loading) {
-                        Icon(Icons.Default.Refresh, "Refresh", tint = Color.White)
+                        Icon(Icons.Default.Refresh, "Refresh", tint = theme.accent)
                     }
                 }
             }
@@ -249,8 +264,9 @@ fun RetroAlertsApp() {
             if (loading) {
                 LinearProgressIndicator(
                     Modifier.fillMaxWidth(),
-                    color = Gold
+                    color = theme.accent
                 )
+                Spacer(Modifier.height(8.dp))
             }
 
             if (!tab) {
@@ -258,7 +274,7 @@ fun RetroAlertsApp() {
                     Column(
                         Modifier.fillMaxWidth()
                             .heightIn(min = 160.dp)
-                            .background(DarkPurple, RoundedCornerShape(12.dp))
+                            .background(theme.card, RoundedCornerShape(14.dp))
                             .padding(18.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
@@ -266,36 +282,90 @@ fun RetroAlertsApp() {
                         Text("🎮", fontSize = 32.sp)
                         Text(
                             "NO ACHIEVEMENTS TO DISPLAY",
-                            color = Color.White,
+                            color = theme.text,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             "Connect your account in Settings.",
-                            color = Color.LightGray,
+                            color = theme.muted,
                             fontSize = 11.sp
                         )
                     }
                 } else {
                     LazyColumn(
-                        Modifier.heightIn(max = 320.dp),
+                        Modifier.heightIn(max = 300.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(achievements) { AchievementCard(it) }
+                        items(achievements) { AchievementCard(it, theme) }
                     }
                 }
             } else {
                 Column(
                     Modifier.fillMaxWidth()
-                        .background(DarkPurple, RoundedCornerShape(12.dp))
-                        .padding(14.dp),
+                        .heightIn(max = 520.dp)
+                        .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Text("RETROACHIEVEMENTS API KEY", color = Color.White)
+                    Text("APPEARANCE", color = theme.accent, fontWeight = FontWeight.Black)
+
                     Text(
-                        "Your key is encrypted and stored on this phone.",
-                        color = Color.LightGray,
+                        "Choose a theme for Gourmetal Retro Alerts.",
+                        color = theme.muted,
+                        fontSize = 12.sp
+                    )
+
+                    themes.forEachIndexed { index, option ->
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .background(
+                                    if (selectedTheme == index) theme.card else theme.background,
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .border(
+                                    if (selectedTheme == index) 2.dp else 1.dp,
+                                    if (selectedTheme == index) theme.accent else theme.muted.copy(alpha = 0.3f),
+                                    RoundedCornerShape(12.dp)
+                                )
+                                .clickable {
+                                    selectedTheme = index
+                                    prefs.edit().putInt("selected_theme", index).apply()
+                                }
+                                .padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                Modifier.size(42.dp)
+                                    .background(option.background, RoundedCornerShape(9.dp))
+                                    .border(2.dp, option.accent, RoundedCornerShape(9.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("G", color = option.accent, fontWeight = FontWeight.Black, fontSize = 20.sp)
+                            }
+
+                            Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                                Text(option.name, color = theme.text, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "Tap to apply theme",
+                                    color = theme.muted,
+                                    fontSize = 10.sp
+                                )
+                            }
+
+                            if (selectedTheme == index) {
+                                Icon(Icons.Default.CheckCircle, "Selected", tint = theme.accent)
+                            }
+                        }
+                    }
+
+                    HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
+
+                    Text("RETROACHIEVEMENTS ACCOUNT", color = theme.accent, fontWeight = FontWeight.Black)
+                    Text(
+                        "Your API key is encrypted and stored on this phone.",
+                        color = theme.muted,
                         fontSize = 11.sp
                     )
+
                     OutlinedTextField(
                         value = apiKey,
                         onValueChange = { apiKey = it },
@@ -304,6 +374,7 @@ fun RetroAlertsApp() {
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation()
                     )
+
                     Button(
                         onClick = {
                             if (apiKey.isNotBlank()) {
@@ -313,17 +384,15 @@ fun RetroAlertsApp() {
                                     connected = true
                                     tab = false
                                     refresh()
-                                } catch (e: Exception) {
+                                } catch (_: Exception) {
                                     status = "COULD NOT SAVE KEY"
                                 }
                             } else status = "ENTER YOUR API KEY"
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFC94C70)
-                        )
+                        colors = ButtonDefaults.buttonColors(containerColor = theme.accent)
                     ) {
-                        Text("SAVE KEY & CONNECT")
+                        Text("SAVE KEY & CONNECT", color = theme.background)
                     }
 
                     if (connected) {
@@ -336,7 +405,7 @@ fun RetroAlertsApp() {
                             },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("REMOVE SAVED API KEY")
+                            Text("REMOVE SAVED API KEY", color = theme.text)
                         }
                     }
                 }
@@ -349,24 +418,28 @@ fun RetroAlertsApp() {
                     onClick = { tab = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (!tab) Color(0xFFC94C70) else DarkPurple
+                        containerColor = if (!tab) theme.accent else theme.card
                     )
-                ) { Text("HOME") }
+                ) {
+                    Text("HOME", color = if (!tab) theme.background else theme.text)
+                }
 
                 Button(
                     onClick = { tab = true },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (tab) Color(0xFFC94C70) else DarkPurple
+                        containerColor = if (tab) theme.accent else theme.card
                     )
-                ) { Text("SETTINGS") }
+                ) {
+                    Text("SETTINGS", color = if (tab) theme.background else theme.text)
+                }
             }
 
             Spacer(Modifier.height(8.dp))
             Text(
-                "GBA EDITION • VERSION 0.3.0",
+                "GBA EDITION • VERSION 0.4.0",
                 Modifier.align(Alignment.CenterHorizontally),
-                color = Color(0xFFD8CFF4),
+                color = theme.muted,
                 fontSize = 9.sp,
                 letterSpacing = 1.sp
             )
@@ -375,44 +448,40 @@ fun RetroAlertsApp() {
 }
 
 @Composable
-private fun Stat(label: String, value: String, modifier: Modifier) {
+private fun Stat(label: String, value: String, modifier: Modifier, theme: AppTheme) {
     Column(
-        modifier.background(Color(0xFFBBD7A5), RoundedCornerShape(7.dp))
+        modifier.background(theme.background, RoundedCornerShape(9.dp))
             .padding(8.dp)
     ) {
-        Text(label, color = Ink, fontSize = 9.sp)
-        Text(value, color = Ink, fontWeight = FontWeight.Black, fontSize = 13.sp)
+        Text(label, color = theme.muted, fontSize = 9.sp)
+        Text(value, color = theme.text, fontWeight = FontWeight.Black, fontSize = 13.sp)
     }
 }
 
 @Composable
-private fun AchievementCard(item: Achievement) {
+private fun AchievementCard(item: Achievement, theme: AppTheme) {
     Column(
         Modifier.fillMaxWidth()
-            .background(Color(0xFF2C244D), RoundedCornerShape(10.dp))
-            .border(1.dp, Purple, RoundedCornerShape(10.dp))
+            .background(theme.card, RoundedCornerShape(12.dp))
+            .border(1.dp, theme.accent.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
             .padding(12.dp)
     ) {
-        Text(item.game, color = Gold, fontSize = 10.sp)
-        Text(
-            item.title,
-            color = Color.White,
-            fontWeight = FontWeight.Bold
-        )
-        Spacer(Modifier.height(4.dp))
+        Text(item.game, color = theme.accent, fontSize = 11.sp)
+        Text(item.title, color = theme.text, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(6.dp))
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 if (item.hardcore) "HARDCORE" else "SOFTCORE",
-                color = if (item.hardcore) Gold else Color(0xFFB9E7A5),
+                color = if (item.hardcore) theme.accent else theme.muted,
                 fontSize = 10.sp
             )
-            Text("${item.points} POINTS", color = Color.White, fontSize = 10.sp)
+            Text("${item.points} POINTS", color = theme.text, fontSize = 10.sp)
         }
         if (item.date.isNotBlank()) {
-            Text(item.date, color = Color.LightGray, fontSize = 9.sp)
+            Text(item.date, color = theme.muted, fontSize = 9.sp)
         }
     }
 }
