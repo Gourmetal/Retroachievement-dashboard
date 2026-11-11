@@ -1,13 +1,25 @@
 
 package com.gourmetal.retroalerts
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,19 +31,26 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.*
+import androidx.work.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 import java.security.KeyStore
+import java.util.concurrent.TimeUnit
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+
+private const val PREFS = "retro_alerts"
+private const val CHANNEL = "achievement_alerts"
+private const val WORK = "achievement_checker"
 
 data class AppTheme(
     val name: String,
@@ -53,6 +72,7 @@ private val themes = listOf(
 )
 
 data class Achievement(
+    val id: String,
     val game: String,
     val title: String,
     val points: Int,
@@ -60,25 +80,14 @@ data class Achievement(
     val date: String
 )
 
-class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent { RetroAlertsApp() }
-    }
-}
-
 private object KeyVault {
     private const val ALIAS = "retro_alerts_key"
-    private const val PREFS = "retro_alerts"
-    private const val VALUE = "api_key"
 
     private fun key(): SecretKey {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         (store.getKey(ALIAS, null) as? SecretKey)?.let { return it }
 
-        return KeyGenerator.getInstance(
-            KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore"
-        ).apply {
+        return KeyGenerator.getInstance("AES", "AndroidKeyStore").apply {
             init(
                 KeyGenParameterSpec.Builder(
                     ALIAS,
@@ -94,19 +103,20 @@ private object KeyVault {
     fun save(context: Context, value: String) {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, key())
-        val data = cipher.iv + cipher.doFinal(value.toByteArray())
+        val encrypted = cipher.iv + cipher.doFinal(value.toByteArray())
         context.getSharedPreferences(PREFS, 0).edit()
-            .putString(VALUE, Base64.encodeToString(data, Base64.NO_WRAP))
+            .putString("api_key", Base64.encodeToString(encrypted, Base64.NO_WRAP))
             .apply()
     }
 
     fun load(context: Context): String? = try {
         val saved = context.getSharedPreferences(PREFS, 0)
-            .getString(VALUE, null) ?: return null
+            .getString("api_key", null) ?: return null
         val data = Base64.decode(saved, Base64.NO_WRAP)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(
-            Cipher.DECRYPT_MODE, key(),
+            Cipher.DECRYPT_MODE,
+            key(),
             GCMParameterSpec(128, data.copyOfRange(0, 12))
         )
         String(cipher.doFinal(data.copyOfRange(12, data.size)))
@@ -115,16 +125,16 @@ private object KeyVault {
     }
 
     fun remove(context: Context) {
-        context.getSharedPreferences(PREFS, 0).edit().remove(VALUE).apply()
+        context.getSharedPreferences(PREFS, 0).edit().remove("api_key").apply()
     }
 }
 
 private suspend fun getAchievements(apiKey: String): List<Achievement> =
     withContext(Dispatchers.IO) {
-        val key = URLEncoder.encode(apiKey, "UTF-8")
+        val encoded = URLEncoder.encode(apiKey, "UTF-8")
         val url = URL(
             "https://retroachievements.org/API/API_GetUserRecentAchievements.php" +
-                "?u=Gourmetal&m=43200&y=$key"
+                "?u=Gourmetal&m=43200&y=$encoded"
         )
         val connection = url.openConnection() as HttpURLConnection
 
@@ -141,6 +151,7 @@ private suspend fun getAchievements(apiKey: String): List<Achievement> =
             (0 until json.length()).map { i ->
                 val item = json.getJSONObject(i)
                 Achievement(
+                    item.optString("AchievementID"),
                     item.optString("GameTitle", "Unknown game"),
                     item.optString("Title", "Achievement"),
                     item.optInt("Points"),
@@ -153,28 +164,147 @@ private suspend fun getAchievements(apiKey: String): List<Achievement> =
         }
     }
 
+private fun createChannel(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val manager = context.getSystemService(NotificationManager::class.java)
+        val channel = NotificationChannel(
+            CHANNEL,
+            "Achievement alerts",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "New RetroAchievements unlocks"
+            enableVibration(true)
+        }
+        manager.createNotificationChannel(channel)
+    }
+}
+
+private fun scheduleChecks(context: Context) {
+    val request = PeriodicWorkRequestBuilder<AchievementWorker>(
+        15, TimeUnit.MINUTES
+    ).build()
+
+    WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+        WORK,
+        ExistingPeriodicWorkPolicy.KEEP,
+        request
+    )
+}
+
+private fun cancelChecks(context: Context) {
+    WorkManager.getInstance(context).cancelUniqueWork(WORK)
+}
+
+private fun notifyAchievement(context: Context, item: Achievement) {
+    if (Build.VERSION.SDK_INT >= 33 &&
+        ContextCompat.checkSelfPermission(
+            context, Manifest.permission.POST_NOTIFICATIONS
+        ) != PackageManager.PERMISSION_GRANTED
+    ) return
+
+    createChannel(context)
+
+    val intent = Intent(context, MainActivity::class.java)
+    val pending = PendingIntent.getActivity(
+        context, item.id.hashCode(), intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val notification = NotificationCompat.Builder(context, CHANNEL)
+        .setSmallIcon(android.R.drawable.star_on)
+        .setContentTitle("Achievement unlocked!")
+        .setContentText("${item.title} • ${item.game}")
+        .setStyle(
+            NotificationCompat.BigTextStyle()
+                .bigText("${item.title}\n${item.game}\n${item.points} points")
+        )
+        .setContentIntent(pending)
+        .setAutoCancel(true)
+        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .build()
+
+    NotificationManagerCompat.from(context).notify(item.id.hashCode(), notification)
+}
+
+class AchievementWorker(
+    context: Context,
+    params: WorkerParameters
+) : CoroutineWorker(context, params) {
+
+    override suspend fun doWork(): Result {
+        val key = KeyVault.load(applicationContext) ?: return Result.success()
+
+        return try {
+            val achievements = getAchievements(key)
+            val prefs = applicationContext.getSharedPreferences(PREFS, 0)
+            val currentIds = achievements.map { it.id }.filter { it.isNotBlank() }.toSet()
+            val previousIds = prefs.getStringSet("known_unlocks", null)
+
+            if (previousIds == null) {
+                prefs.edit().putStringSet("known_unlocks", currentIds).apply()
+            } else {
+                achievements.filter {
+                    it.id.isNotBlank() && it.id !in previousIds
+                }.forEach {
+                    notifyAchievement(applicationContext, it)
+                }
+                prefs.edit().putStringSet("known_unlocks", currentIds).apply()
+            }
+
+            prefs.edit().putString("last_check", System.currentTimeMillis().toString()).apply()
+            Result.success()
+        } catch (_: Exception) {
+            Result.retry()
+        }
+    }
+}
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        createChannel(this)
+        setContent { RetroAlertsApp() }
+    }
+}
+
 @Composable
 fun RetroAlertsApp() {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
-    val prefs = remember { context.getSharedPreferences("retro_alerts", 0) }
+    val prefs = remember { context.getSharedPreferences(PREFS, 0) }
 
-    var tab by remember { mutableStateOf(false) }
+    var settings by remember { mutableStateOf(false) }
     var apiKey by remember { mutableStateOf("") }
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
     var status by remember { mutableStateOf("READY, PLAYER?") }
     var loading by remember { mutableStateOf(false) }
+    var notifications by remember { mutableStateOf(prefs.getBoolean("notifications", false)) }
     var selectedTheme by remember {
         mutableIntStateOf(prefs.getInt("selected_theme", 0).coerceIn(0, themes.lastIndex))
     }
 
     val theme = themes[selectedTheme]
 
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            notifications = true
+            prefs.edit().putBoolean("notifications", true).apply()
+            scheduleChecks(context)
+            status = "NOTIFICATIONS ENABLED"
+        } else {
+            notifications = false
+            prefs.edit().putBoolean("notifications", false).apply()
+            status = "NOTIFICATION PERMISSION DENIED"
+        }
+    }
+
     fun refresh() {
-        val savedKey = KeyVault.load(context)
-        if (savedKey.isNullOrBlank()) {
-            tab = true
+        val key = KeyVault.load(context)
+        if (key.isNullOrBlank()) {
+            settings = true
             status = "ADD YOUR API KEY IN SETTINGS"
             return
         }
@@ -183,7 +313,7 @@ fun RetroAlertsApp() {
             loading = true
             status = "CONNECTING..."
             try {
-                achievements = getAchievements(savedKey)
+                achievements = getAchievements(key)
                 status = "${achievements.size} UNLOCKS LOADED"
             } catch (e: Exception) {
                 status = "ERROR: ${e.message ?: "CONNECTION FAILED"}"
@@ -197,9 +327,7 @@ fun RetroAlertsApp() {
     }
 
     Box(
-        Modifier.fillMaxSize()
-            .background(theme.background)
-            .padding(12.dp),
+        Modifier.fillMaxSize().background(theme.background).padding(12.dp),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -208,14 +336,28 @@ fun RetroAlertsApp() {
                 .border(2.dp, theme.accent.copy(alpha = 0.65f), RoundedCornerShape(24.dp))
                 .padding(14.dp)
         ) {
-            Text(
-                "GOURMETAL",
-                color = theme.accent,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Black,
-                letterSpacing = 3.sp
-            )
-            Text("RETRO ALERTS", color = theme.muted, fontSize = 11.sp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.gourmetal_avatar),
+                    contentDescription = "Gourmetal avatar",
+                    modifier = Modifier.size(64.dp)
+                        .border(2.dp, theme.accent, RoundedCornerShape(14.dp))
+                )
+                Column {
+                    Text(
+                        "GOURMETAL",
+                        color = theme.accent,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 3.sp
+                    )
+                    Text("RETRO ALERTS", color = theme.muted, fontSize = 11.sp)
+                    Text("PLAYER 1 • ACHIEVEMENT LOG", color = theme.accent, fontSize = 9.sp)
+                }
+            }
 
             Spacer(Modifier.height(14.dp))
 
@@ -224,15 +366,13 @@ fun RetroAlertsApp() {
                     .background(theme.card, RoundedCornerShape(16.dp))
                     .padding(14.dp)
             ) {
-                Text("PLAYER 1 / ACHIEVEMENT LOG", color = theme.accent, fontSize = 10.sp)
                 Text(
-                    if (tab) "SETTINGS" else "READY, PLAYER?",
+                    if (settings) "SETTINGS" else "READY, PLAYER?",
                     color = theme.text,
                     fontSize = 21.sp,
                     fontWeight = FontWeight.Black
                 )
                 Text(status, color = theme.muted, fontSize = 11.sp)
-
                 Spacer(Modifier.height(12.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -250,11 +390,11 @@ fun RetroAlertsApp() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    if (tab) "PERSONALIZE YOUR APP" else "RECENT UNLOCKS",
+                    if (settings) "PERSONALIZE YOUR APP" else "RECENT UNLOCKS",
                     color = theme.text,
                     fontWeight = FontWeight.Bold
                 )
-                if (!tab) {
+                if (!settings) {
                     IconButton(onClick = { refresh() }, enabled = !loading) {
                         Icon(Icons.Default.Refresh, "Refresh", tint = theme.accent)
                     }
@@ -262,34 +402,22 @@ fun RetroAlertsApp() {
             }
 
             if (loading) {
-                LinearProgressIndicator(
-                    Modifier.fillMaxWidth(),
-                    color = theme.accent
-                )
+                LinearProgressIndicator(Modifier.fillMaxWidth(), color = theme.accent)
                 Spacer(Modifier.height(8.dp))
             }
 
-            if (!tab) {
+            if (!settings) {
                 if (achievements.isEmpty()) {
                     Column(
-                        Modifier.fillMaxWidth()
-                            .heightIn(min = 160.dp)
+                        Modifier.fillMaxWidth().heightIn(min = 150.dp)
                             .background(theme.card, RoundedCornerShape(14.dp))
                             .padding(18.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text("🎮", fontSize = 32.sp)
-                        Text(
-                            "NO ACHIEVEMENTS TO DISPLAY",
-                            color = theme.text,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            "Connect your account in Settings.",
-                            color = theme.muted,
-                            fontSize = 11.sp
-                        )
+                        Text("NO ACHIEVEMENTS TO DISPLAY", color = theme.text, fontWeight = FontWeight.Bold)
+                        Text("Connect your account in Settings.", color = theme.muted, fontSize = 11.sp)
                     }
                 } else {
                     LazyColumn(
@@ -301,19 +429,11 @@ fun RetroAlertsApp() {
                 }
             } else {
                 Column(
-                    Modifier.fillMaxWidth()
-                        .heightIn(max = 520.dp)
+                    Modifier.fillMaxWidth().heightIn(max = 470.dp)
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text("APPEARANCE", color = theme.accent, fontWeight = FontWeight.Black)
-
-                    Text(
-                        "Choose a theme for Gourmetal Retro Alerts.",
-                        color = theme.muted,
-                        fontSize = 12.sp
-                    )
-
                     themes.forEachIndexed { index, option ->
                         Row(
                             Modifier.fillMaxWidth()
@@ -322,7 +442,7 @@ fun RetroAlertsApp() {
                                     RoundedCornerShape(12.dp)
                                 )
                                 .border(
-                                    if (selectedTheme == index) 2.dp else 1.dp,
+                                    1.dp,
                                     if (selectedTheme == index) theme.accent else theme.muted.copy(alpha = 0.3f),
                                     RoundedCornerShape(12.dp)
                                 )
@@ -334,28 +454,62 @@ fun RetroAlertsApp() {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
-                                Modifier.size(42.dp)
-                                    .background(option.background, RoundedCornerShape(9.dp))
-                                    .border(2.dp, option.accent, RoundedCornerShape(9.dp)),
+                                Modifier.size(38.dp).background(option.background, RoundedCornerShape(8.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("G", color = option.accent, fontWeight = FontWeight.Black, fontSize = 20.sp)
+                                Text("G", color = option.accent, fontWeight = FontWeight.Black)
                             }
-
-                            Column(Modifier.weight(1f).padding(start = 12.dp)) {
-                                Text(option.name, color = theme.text, fontWeight = FontWeight.Bold)
-                                Text(
-                                    "Tap to apply theme",
-                                    color = theme.muted,
-                                    fontSize = 10.sp
-                                )
-                            }
-
+                            Text(
+                                option.name,
+                                Modifier.weight(1f).padding(start = 12.dp),
+                                color = theme.text,
+                                fontWeight = FontWeight.Bold
+                            )
                             if (selectedTheme == index) {
                                 Icon(Icons.Default.CheckCircle, "Selected", tint = theme.accent)
                             }
                         }
                     }
+
+                    HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
+
+                    Text("NOTIFICATIONS", color = theme.accent, fontWeight = FontWeight.Black)
+                    Text(
+                        "Check for new unlocks in the background about every 15 minutes.",
+                        color = theme.muted,
+                        fontSize = 11.sp
+                    )
+
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Achievement alerts", Modifier.weight(1f), color = theme.text)
+                        Switch(
+                            checked = notifications,
+                            onCheckedChange = { enabled ->
+                                if (enabled) {
+                                    if (Build.VERSION.SDK_INT >= 33 &&
+                                        ContextCompat.checkSelfPermission(
+                                            context, Manifest.permission.POST_NOTIFICATIONS
+                                        ) != PackageManager.PERMISSION_GRANTED
+                                    ) {
+                                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    } else {
+                                        notifications = true
+                                        prefs.edit().putBoolean("notifications", false).apply()
+                                    cancelChecks(context)
+                                    status = "NOTIFICATIONS DISABLED"
+                                }
+                            }
+                        )
+                    }
+
+                    Text(
+                        if (notifications) "BACKGROUND CHECKS ARE ON" else "BACKGROUND CHECKS ARE OFF",
+                        color = theme.muted,
+                        fontSize = 10.sp
+                    )
 
                     HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
 
@@ -382,7 +536,7 @@ fun RetroAlertsApp() {
                                     KeyVault.save(context, apiKey.trim())
                                     apiKey = ""
                                     connected = true
-                                    tab = false
+                                    settings = false
                                     refresh()
                                 } catch (_: Exception) {
                                     status = "COULD NOT SAVE KEY"
@@ -401,6 +555,9 @@ fun RetroAlertsApp() {
                                 KeyVault.remove(context)
                                 connected = false
                                 achievements = emptyList()
+                                notifications = false
+                                prefs.edit().putBoolean("notifications", false).remove("known_unlocks").apply()
+                                cancelChecks(context)
                                 status = "API KEY REMOVED"
                             },
                             modifier = Modifier.fillMaxWidth()
@@ -415,29 +572,28 @@ fun RetroAlertsApp() {
 
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Button(
-                    onClick = { tab = false },
+                    onClick = { settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (!tab) theme.accent else theme.card
+                        containerColor = if (!settings) theme.accent else theme.card
                     )
                 ) {
-                    Text("HOME", color = if (!tab) theme.background else theme.text)
+                    Text("HOME", color = if (!settings) theme.background else theme.text)
                 }
-
                 Button(
-                    onClick = { tab = true },
+                    onClick = { settings = true },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (tab) theme.accent else theme.card
+                        containerColor = if (settings) theme.accent else theme.card
                     )
                 ) {
-                    Text("SETTINGS", color = if (tab) theme.background else theme.text)
+                    Text("SETTINGS", color = if (settings) theme.background else theme.text)
                 }
             }
 
             Spacer(Modifier.height(8.dp))
             Text(
-                "GBA EDITION • VERSION 0.4.0",
+                "GBA EDITION • VERSION 0.5.0",
                 Modifier.align(Alignment.CenterHorizontally),
                 color = theme.muted,
                 fontSize = 9.sp,
@@ -449,10 +605,7 @@ fun RetroAlertsApp() {
 
 @Composable
 private fun Stat(label: String, value: String, modifier: Modifier, theme: AppTheme) {
-    Column(
-        modifier.background(theme.background, RoundedCornerShape(9.dp))
-            .padding(8.dp)
-    ) {
+    Column(modifier.background(theme.background, RoundedCornerShape(9.dp)).padding(8.dp)) {
         Text(label, color = theme.muted, fontSize = 9.sp)
         Text(value, color = theme.text, fontWeight = FontWeight.Black, fontSize = 13.sp)
     }
@@ -469,10 +622,7 @@ private fun AchievementCard(item: Achievement, theme: AppTheme) {
         Text(item.game, color = theme.accent, fontSize = 11.sp)
         Text(item.title, color = theme.text, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(6.dp))
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
                 if (item.hardcore) "HARDCORE" else "SOFTCORE",
                 color = if (item.hardcore) theme.accent else theme.muted,
