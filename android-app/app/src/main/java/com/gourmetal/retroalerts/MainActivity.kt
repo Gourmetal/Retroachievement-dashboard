@@ -47,7 +47,10 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.asImageBitmap
+import kotlinx.coroutines.withContext
 private const val PREFS = "retro_alerts"
 private const val CHANNEL = "achievement_alerts"
 private const val WORK = "achievement_checker"
