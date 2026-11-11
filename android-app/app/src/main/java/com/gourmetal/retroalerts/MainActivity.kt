@@ -111,7 +111,7 @@ private suspend fun getAchievements(apiKey: String): List<Achievement> =
         val key = URLEncoder.encode(apiKey, "UTF-8")
         val url = URL(
             "https://retroachievements.org/API/API_GetUserRecentAchievements.php" +
-                "?u=Gourmetal&m=20&y=$key"
+               "?u=Gourmetal&m=43200&y=$key"
         )
         val connection = url.openConnection() as HttpURLConnection
 
