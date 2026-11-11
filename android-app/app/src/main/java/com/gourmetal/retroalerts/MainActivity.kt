@@ -55,14 +55,15 @@ private const val PREFS = "retro_alerts"
 private const val CHANNEL = "achievement_alerts"
 private const val WORK = "achievement_checker"
 
-data class AppTheme(
-    val name: String,
-    val background: Color,
-    val panel: Color,
-    val card: Color,
-    val accent: Color,
-    val text: Color,
-    val muted: Color
+data class Achievement(
+    val id: String,
+    val game: String,
+    val title: String,
+    val points: Int,
+    val hardcore: Boolean,
+    val date: String,
+    val description: String,
+    val badgeName: String
 )
 
 private val themes = listOf(
@@ -154,14 +155,15 @@ private suspend fun getAchievements(apiKey: String): List<Achievement> =
             (0 until json.length()).map { i ->
                 val item = json.getJSONObject(i)
                 Achievement(
-                    item.optString("AchievementID"),
-                    item.optString("GameTitle", "Unknown game"),
-                    item.optString("Title", "Achievement"),
-                    item.optInt("Points"),
-                    item.optInt("HardcoreMode") == 1,
-                    item.optString("Date", "")
-                )
-            }
+    item.optString("AchievementID"),
+    item.optString("GameTitle", "Unknown game"),
+    item.optString("Title", "Achievement"),
+    item.optInt("Points"),
+    item.optInt("HardcoreMode") == 1,
+    item.optString("Date", ""),
+    item.optString("Description", "No description available."),
+    item.optString("BadgeName", "")
+)
         } finally {
             connection.disconnect()
         }
