@@ -171,9 +171,9 @@ fun RetroAlertsApp() {
                 Spacer(Modifier.height(12.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StatBox("UNLOCKS", "003")
-                    StatBox("POINTS", "030")
-                    StatBox("STATUS", "READY")
+                    StatBox("UNLOCKS", "003", Modifier.weight(1f))
+                    StatBox("POINTS", "030", Modifier.weight(1f))
+                    StatBox("STATUS", "READY", Modifier.weight(1f))
                 }
             }
 
@@ -280,10 +280,13 @@ fun RetroAlertsApp() {
 }
 
 @Composable
-private fun StatBox(label: String, value: String) {
+private fun StatBox(
+    label: String,
+    value: String,
+    modifier: Modifier
+) {
     Column(
-        modifier = Modifier
-            .weight(1f)
+        modifier = modifier
             .background(
                 Color(0xFFBBD7A5),
                 RoundedCornerShape(7.dp)
