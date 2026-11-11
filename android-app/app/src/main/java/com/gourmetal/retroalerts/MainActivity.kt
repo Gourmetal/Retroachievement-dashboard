@@ -486,24 +486,29 @@ fun RetroAlertsApp() {
                     ) {
                         Text("Achievement alerts", Modifier.weight(1f), color = theme.text)
                         Switch(
-                            checked = notifications,
-                            onCheckedChange = { enabled ->
-                                if (enabled) {
-                                    if (Build.VERSION.SDK_INT >= 33 &&
-                                        ContextCompat.checkSelfPermission(
-                                            context, Manifest.permission.POST_NOTIFICATIONS
-                                        ) != PackageManager.PERMISSION_GRANTED
-                                    ) {
-                                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                    } else {
-                                        notifications = true
-                                        prefs.edit().putBoolean("notifications", false).apply()
-                                    cancelChecks(context)
-                                    status = "NOTIFICATIONS DISABLED"
-                                }
-                            }
-                        )
-                    }
+    checked = notifications,
+    onCheckedChange = { enabled ->
+        if (enabled) {
+            if (Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(
+                    context, Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                notifications = true
+                prefs.edit().putBoolean("notifications", true).apply()
+                scheduleChecks(context)
+                status = "NOTIFICATIONS ENABLED"
+            }
+        } else {
+            notifications = false
+            prefs.edit().putBoolean("notifications", false).apply()
+            cancelChecks(context)
+            status = "NOTIFICATIONS DISABLED"
+        }
+    }
+)
 
                     Text(
                         if (notifications) "BACKGROUND CHECKS ARE ON" else "BACKGROUND CHECKS ARE OFF",
