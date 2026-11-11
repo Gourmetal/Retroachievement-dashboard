@@ -75,14 +75,7 @@ private val themes = listOf(
     AppTheme("Emerald", Color(0xFF091A15), Color(0xFF15372B), Color(0xFF20503C), Color(0xFF55E0A0), Color.White, Color(0xFFB2DCC8))
 )
 
-data class Achievement(
-    val id: String,
-    val game: String,
-    val title: String,
-    val points: Int,
-    val hardcore: Boolean,
-    val date: String
-)
+
 
 private object KeyVault {
     private const val ALIAS = "retro_alerts_key"
@@ -134,6 +127,7 @@ private object KeyVault {
 }
 
 private suspend fun getAchievements(apiKey: String): List<Achievement> =
+private suspend fun getAchievements(apiKey: String): List<Achievement> =
     withContext(Dispatchers.IO) {
         val encoded = URLEncoder.encode(apiKey, "UTF-8")
         val url = URL(
@@ -152,18 +146,20 @@ private suspend fun getAchievements(apiKey: String): List<Achievement> =
             }
 
             val json = JSONArray(connection.inputStream.bufferedReader().use { it.readText() })
+
             (0 until json.length()).map { i ->
                 val item = json.getJSONObject(i)
                 Achievement(
-    item.optString("AchievementID"),
-    item.optString("GameTitle", "Unknown game"),
-    item.optString("Title", "Achievement"),
-    item.optInt("Points"),
-    item.optInt("HardcoreMode") == 1,
-    item.optString("Date", ""),
-    item.optString("Description", "No description available."),
-    item.optString("BadgeName", "")
-)
+                    item.optString("AchievementID"),
+                    item.optString("GameTitle", "Unknown game"),
+                    item.optString("Title", "Achievement"),
+                    item.optInt("Points"),
+                    item.optInt("HardcoreMode") == 1,
+                    item.optString("Date", ""),
+                    item.optString("Description", "No description available."),
+                    item.optString("BadgeName", "")
+                )
+            }
         } finally {
             connection.disconnect()
         }
