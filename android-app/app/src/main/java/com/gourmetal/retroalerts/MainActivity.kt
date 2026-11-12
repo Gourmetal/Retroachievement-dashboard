@@ -450,6 +450,75 @@ private fun BootSplash(onFinished: () -> Unit) {
 }
 
 @Composable
+private fun ThemeBackdrop(theme: AppTheme) {
+    val motion = rememberInfiniteTransition(label = "theme_background")
+    val drift by motion.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 14000, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "background_drift"
+    )
+    val pulse by motion.animateFloat(
+        initialValue = 0.10f,
+        targetValue = 0.24f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "background_pulse"
+    )
+    Canvas(Modifier.fillMaxSize()) {
+        val w = size.width
+        val h = size.height
+        val accent = theme.accent.copy(alpha = pulse)
+        val isGameBoy = theme.name == "Game Boy"
+        val isNeon = theme.name == "Retro Neon"
+        val spacing = if (isGameBoy) 34f else 46f
+        for (x in 0..(w / spacing).toInt()) {
+            for (y in 0..(h / spacing).toInt()) {
+                val offset = if ((x + y) % 2 == 0) drift * spacing else -drift * spacing
+                val px = x * spacing + offset
+                val py = y * spacing
+                if (isGameBoy) {
+                    drawRect(
+                        color = accent.copy(alpha = pulse * 0.45f),
+                        topLeft = androidx.compose.ui.geometry.Offset(px, py),
+                        size = androidx.compose.ui.geometry.Size(3f, 3f)
+                    )
+                } else if (isNeon) {
+                    drawCircle(accent, radius = 2.5f + pulse * 7f,
+                        center = androidx.compose.ui.geometry.Offset(px, py))
+                } else {
+                    drawCircle(accent.copy(alpha = pulse * 0.55f), radius = 1.8f,
+                        center = androidx.compose.ui.geometry.Offset(px, py))
+                }
+            }
+        }
+        val bandY = (h * drift)
+        drawLine(
+            color = theme.accent.copy(alpha = 0.035f),
+            start = androidx.compose.ui.geometry.Offset(0f, bandY),
+            end = androidx.compose.ui.geometry.Offset(w, bandY),
+            strokeWidth = if (isGameBoy) 18f else 30f
+        )
+        if (!isGameBoy) {
+            for (line in 0..(h / 7f).toInt()) {
+                val y = line * 7f
+                drawLine(
+                    color = theme.accent.copy(alpha = 0.025f),
+                    start = androidx.compose.ui.geometry.Offset(0f, y),
+                    end = androidx.compose.ui.geometry.Offset(w, y),
+                    strokeWidth = 1f
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun RetroAlertsApp() {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
@@ -523,6 +592,7 @@ fun RetroAlertsApp() {
         Modifier.fillMaxSize().background(theme.background),
         contentAlignment = Alignment.TopStart
     ) {
+        ThemeBackdrop(theme)
         Column(
             Modifier.fillMaxSize()
                 .safeDrawingPadding()
