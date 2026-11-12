@@ -5,7 +5,23 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+import java.util.Base64
+
+val generateLauncherIcon by tasks.registering {
+    val iconFile = layout.projectDirectory.file("../launcher-icon.base64")
+    val outputDir = layout.buildDirectory.dir("generated/launcher-res")
+    inputs.file(iconFile)
+    outputs.dir(outputDir)
+    doLast {
+        val png = Base64.getDecoder().decode(iconFile.asFile.readText().trim())
+        val target = outputDir.get().file("drawable-nodpi/gourmetal_icon.png").asFile
+        target.parentFile.mkdirs()
+        target.writeBytes(png)
+    }
+}
+
 android {
+    sourceSets.getByName("main").res.srcDir(layout.buildDirectory.dir("generated/launcher-res"))
     namespace = "com.gourmetal.retroalerts"
     compileSdk = 35
 
@@ -30,6 +46,8 @@ android {
         compose = true
     }
 }
+
+tasks.named("preBuild").configure { dependsOn(generateLauncherIcon) }
 
 dependencies {
     implementation(platform("androidx.compose:compose-bom:2024.12.01"))
