@@ -205,9 +205,9 @@ private fun createChannel(context: Context) {
     }
 }
 
-private fun scheduleChecks(context: Context) {
+private fun scheduleChecks(context: Context, intervalMinutes: Int = 15) {
     val request = PeriodicWorkRequestBuilder<AchievementWorker>(
-        15, TimeUnit.MINUTES
+        intervalMinutes.coerceAtLeast(15).toLong(), TimeUnit.MINUTES
     ).build()
 
     WorkManager.getInstance(context).enqueueUniquePeriodicWork(
@@ -459,6 +459,14 @@ fun RetroAlertsApp() {
     var dashboard by remember { mutableStateOf(false) }
     var messagesScreen by remember { mutableStateOf(false) }
     var messages by remember { mutableStateOf(loadMessages(context)) }
+    var messageSearch by remember { mutableStateOf("") }
+    var messageFilter by remember { mutableStateOf("ALL") }
+    var selectedGame by remember { mutableStateOf<String?>(null) }
+    var backupText by remember { mutableStateOf("") }
+    var checkMinutes by remember { mutableIntStateOf(prefs.getInt("check_minutes", 15)) }
+    var quietEnabled by remember { mutableStateOf(prefs.getBoolean("quiet_enabled", false)) }
+    var quietStart by remember { mutableStateOf(prefs.getString("quiet_start", "22:00") ?: "22:00") }
+    var quietEnd by remember { mutableStateOf(prefs.getString("quiet_end", "08:00") ?: "08:00") }
     var apiKey by remember { mutableStateOf("") }
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
