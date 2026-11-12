@@ -447,10 +447,14 @@ fun RetroAlertsApp() {
                     LazyColumn(
                         Modifier.heightIn(max = 300.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(achievements) { AchievementCard(it, theme) }
-                    }
-                }
+                    ) {items(achievements) { item ->
+    AchievementCard(item, theme) {
+        scope.launch {
+            notifyAchievement(context, item)
+            status = "NOTIFICATION RESENT"
+        }
+    }
+}}
             } else {
                 Column(
                     Modifier.fillMaxWidth().heightIn(max = 470.dp)
