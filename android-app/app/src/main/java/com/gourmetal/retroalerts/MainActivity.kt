@@ -958,7 +958,7 @@ private fun AchievementCard(
             onClick = onResend,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("RESEND ALERT")
+            Text("RESEND ALERT", color = Color.White)
         }
     }
 } 
