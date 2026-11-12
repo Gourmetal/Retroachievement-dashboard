@@ -65,7 +65,15 @@ data class Achievement(
     val description: String,
     val badgeName: String
 )
-
+data class AppTheme(
+    val name: String,
+    val background: Color,
+    val panel: Color,
+    val card: Color,
+    val accent: Color,
+    val text: Color,
+    val muted: Color
+)
 private val themes = listOf(
     AppTheme("Classic Orange", Color(0xFF08090F), Color(0xFF171923), Color(0xFF222531), Color(0xFFFF941F), Color.White, Color(0xFFB8BBC8)),
     AppTheme("Midnight", Color(0xFF080E1B), Color(0xFF14213A), Color(0xFF1D2D4A), Color(0xFF75A9FF), Color.White, Color(0xFFB5C4DC)),
