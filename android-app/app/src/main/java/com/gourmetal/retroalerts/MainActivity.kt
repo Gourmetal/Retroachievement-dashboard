@@ -525,6 +525,7 @@ fun RetroAlertsApp() {
     ) {
         Column(
             Modifier.fillMaxSize()
+                .safeDrawingPadding()
                 .background(theme.panel)
                 .border(2.dp, theme.accent.copy(alpha = 0.65f))
                 .padding(12.dp)
