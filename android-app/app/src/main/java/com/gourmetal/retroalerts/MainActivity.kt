@@ -13,6 +13,8 @@ import android.os.Bundle
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -35,6 +37,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.*
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.work.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
@@ -304,6 +307,7 @@ fun RetroAlertsApp() {
     val prefs = remember { context.getSharedPreferences(PREFS, 0) }
 
     var settings by remember { mutableStateOf(false) }
+    var dashboard by remember { mutableStateOf(false) }
     var apiKey by remember { mutableStateOf("") }
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
@@ -397,7 +401,7 @@ fun RetroAlertsApp() {
                     .padding(14.dp)
             ) {
                 Text(
-                    if (settings) "SETTINGS" else "READY, PLAYER?",
+                    when { dashboard -> "DASHBOARD"; settings -> "SETTINGS"; else -> "READY, PLAYER?" },
                     color = theme.text,
                     fontSize = 21.sp,
                     fontWeight = FontWeight.Black
@@ -420,11 +424,11 @@ fun RetroAlertsApp() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    if (settings) "PERSONALIZE YOUR APP" else "RECENT UNLOCKS",
+                    when { dashboard -> "RETROACHIEVEMENTS DASHBOARD"; settings -> "PERSONALIZE YOUR APP"; else -> "RECENT UNLOCKS" },
                     color = theme.text,
                     fontWeight = FontWeight.Bold
                 )
-                if (!settings) {
+                if (!settings && !dashboard) {
                     IconButton(onClick = { refresh() }, enabled = !loading) {
                         Icon(Icons.Default.Refresh, "Refresh", tint = theme.accent)
                     }
@@ -436,7 +440,19 @@ fun RetroAlertsApp() {
                 Spacer(Modifier.height(8.dp))
             }
 
-            if (!settings) {
+            if (dashboard) {
+                AndroidView(
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 300.dp, max = 470.dp),
+                    factory = { viewContext ->
+                        WebView(viewContext).apply {
+                            webViewClient = WebViewClient()
+                            this.settings.javaScriptEnabled = true
+                            this.settings.domStorageEnabled = true
+                            loadUrl("https://gourmetal.github.io/Retroachievement-dashboard/")
+                        }
+                    }
+                )
+            } else if (!settings) {
                 if (achievements.isEmpty()) {
                     Column(
                         Modifier.fillMaxWidth().heightIn(min = 150.dp)
@@ -611,18 +627,27 @@ fun RetroAlertsApp() {
 
             Spacer(Modifier.height(12.dp))
 
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 Button(
-                    onClick = { settings = false },
+                    onClick = { dashboard = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (!settings) theme.accent else theme.card
+                        containerColor = if (!settings && !dashboard) theme.accent else theme.card
                     )
                 ) {
-                    Text("HOME", color = if (!settings) theme.background else theme.text)
+                    Text("HOME", color = if (!settings && !dashboard) theme.background else theme.text)
                 }
                 Button(
-                    onClick = { settings = true },
+                    onClick = { dashboard = true; settings = false },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (dashboard) theme.accent else theme.card
+                    )
+                ) {
+                    Text("DASHBOARD", color = if (dashboard) theme.background else theme.text)
+                }
+                Button(
+                    onClick = { settings = true; dashboard = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (settings) theme.accent else theme.card
@@ -634,7 +659,7 @@ fun RetroAlertsApp() {
 
             Spacer(Modifier.height(8.dp))
             Text(
-                "GBA EDITION • VERSION 0.5.0",
+                "GBA EDITION • VERSION 0.6.0",
                 Modifier.align(Alignment.CenterHorizontally),
                 color = theme.muted,
                 fontSize = 9.sp,
