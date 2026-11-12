@@ -289,9 +289,7 @@ private suspend fun notifyAchievement(context: Context, item: Achievement) {
         append(item.game)
         append(" • ${item.points} points • $mode")
         if (rarityLabel.isNotEmpty()) append(rarityLabel)
-        append("\
-\
-")
+        append("\\n\\n")
         append(item.description)
     }
     val accent = franchiseColor(item.game)
