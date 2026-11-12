@@ -15,6 +15,7 @@ import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebChromeClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -462,6 +463,10 @@ fun RetroAlertsApp() {
                             }
                             this.settings.javaScriptEnabled = true
                             this.settings.domStorageEnabled = true
+                            this.settings.mediaPlaybackRequiresUserGesture = false
+                            this.settings.allowFileAccess = false
+                            this.settings.loadsImagesAutomatically = true
+                            this.webChromeClient = WebChromeClient()
                             loadUrl("https://gourmetal.github.io/Retroachievement-dashboard/")
                         }
                     }
