@@ -308,8 +308,7 @@ private suspend fun notifyAchievement(context: Context, item: Achievement) {
                     .bigLargeIcon(badgeBitmap)
                     .setSummaryText(details)
             } else {
-                NotificationCompat.BigTextStyle().bigText("$titleLine\
-$details")
+                NotificationCompat.BigTextStyle().bigText("$titleLine\\n$details")
             }
         )
         .setContentIntent(pending)
