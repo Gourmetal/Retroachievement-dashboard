@@ -455,7 +455,7 @@ fun RetroAlertsApp() {
     val prefs = remember { context.getSharedPreferences(PREFS, 0) }
 
     var settings by remember { mutableStateOf(false) }
-    var dashboard by remember { mutableStateOf(false) }
+    var dashboard by remember { mutableStateOf(false) }\n    var messagesScreen by remember { mutableStateOf(false) }\n    var messages by remember { mutableStateOf(loadMessages(context)) }
     var apiKey by remember { mutableStateOf("") }
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
@@ -549,7 +549,7 @@ fun RetroAlertsApp() {
                     .padding(14.dp)
             ) {
                 Text(
-                    when { dashboard -> "DASHBOARD"; settings -> "SETTINGS"; else -> "READY, PLAYER?" },
+                    when { dashboard -> "DASHBOARD"; messagesScreen -> "MESSAGES"; settings -> "SETTINGS"; else -> "READY, PLAYER?" },
                     color = theme.text,
                     fontSize = 21.sp,
                     fontWeight = FontWeight.Black
@@ -572,11 +572,11 @@ fun RetroAlertsApp() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    when { dashboard -> "RETROACHIEVEMENTS DASHBOARD"; settings -> "PERSONALIZE YOUR APP"; else -> "RECENT UNLOCKS" },
+                    when { dashboard -> "RETROACHIEVEMENTS DASHBOARD"; messagesScreen -> "ALERT INBOX"; settings -> "PERSONALIZE YOUR APP"; else -> "RECENT UNLOCKS" },
                     color = theme.text,
                     fontWeight = FontWeight.Bold
                 )
-                if (!settings && !dashboard) {
+                if (!settings && !dashboard && !messagesScreen) {
                     IconButton(onClick = { refresh() }, enabled = !loading) {
                         Icon(Icons.Default.Refresh, "Refresh", tint = theme.accent)
                     }
@@ -588,7 +588,7 @@ fun RetroAlertsApp() {
                 Spacer(Modifier.height(8.dp))
             }
 
-            if (dashboard) {
+            if (messagesScreen) {\n                messages = loadMessages(context)\n                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {\n                    Text("${messages.size} SAVED ALERTS", color = theme.muted, fontSize = 10.sp)\n                    TextButton(onClick = { prefs.edit().putString("messages", "[]").apply(); messages = emptyList() }) { Text("CLEAR ALL", color = theme.accent) }\n                }\n                if (messages.isEmpty()) {\n                    Text("NO MESSAGES YET", color = theme.text, modifier = Modifier.padding(24.dp))\n                    Text("New achievement notifications will appear here.", color = theme.muted, fontSize = 11.sp)\n                } else {\n                    LazyColumn(Modifier.heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {\n                        items(messages, key = { it.id }) { item -> AchievementCard(item, theme) { scope.launch { notifyAchievement(context, item); status = "ALERT RESENT" } } }\n                    }\n                }\n            } else if (dashboard) {
                 AndroidView(
                     modifier = Modifier.fillMaxWidth().heightIn(min = 300.dp, max = 470.dp),
                     factory = { viewContext ->
@@ -794,7 +794,7 @@ fun RetroAlertsApp() {
 
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 Button(
-                    onClick = { dashboard = false; settings = false },
+                    onClick = { dashboard = false; messagesScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (!settings && !dashboard) theme.accent else theme.card
@@ -803,7 +803,7 @@ fun RetroAlertsApp() {
                     Text("HOME", color = if (!settings && !dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
-                    onClick = { dashboard = true; settings = false },
+                    onClick = { dashboard = true; messagesScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (dashboard) theme.accent else theme.card
@@ -812,7 +812,7 @@ fun RetroAlertsApp() {
                     Text("DASHBOARD", color = if (dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
-                    onClick = { settings = true; dashboard = false },
+                    onClick = { settings = true; dashboard = false; messagesScreen = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (settings) theme.accent else theme.card
@@ -933,4 +933,44 @@ private fun AchievementCard(
             Text("RESEND ALERT")
         }
     }
+} 
+private fun saveMessage(context: Context, item: Achievement) {
+    val prefs = context.getSharedPreferences(PREFS, 0)
+    val messages = JSONArray(prefs.getString("messages", "[]") ?: "[]")
+    val entry = org.json.JSONObject().apply {
+        put("id", item.id)
+        put("game", item.game)
+        put("title", item.title)
+        put("points", item.points)
+        put("hardcore", item.hardcore)
+        put("date", item.date)
+        put("description", item.description)
+        put("badgeName", item.badgeName)
+        put("gameIcon", item.gameIcon)
+        put("trueRatio", item.trueRatio)
+        put("savedAt", System.currentTimeMillis())
+    }
+    val updated = JSONArray().put(entry)
+    for (i in 0 until minOf(messages.length(), 99)) {
+        val old = messages.optJSONObject(i) ?: continue
+        if (old.optString("id") != item.id) updated.put(old)
+    }
+    prefs.edit().putString("messages", updated.toString()).apply()
 }
+
+private fun loadMessages(context: Context): List<Achievement> {
+    val messages = JSONArray(
+        context.getSharedPreferences(PREFS, 0).getString("messages", "[]") ?: "[]"
+    )
+    return (0 until messages.length()).mapNotNull { i ->
+        val item = messages.optJSONObject(i) ?: return@mapNotNull null
+        Achievement(
+            item.optString("id"), item.optString("game"), item.optString("title"),
+            item.optInt("points"), item.optBoolean("hardcore"), item.optString("date"),
+            item.optString("description"), item.optString("badgeName"),
+            gameIcon = item.optString("gameIcon"),
+            trueRatio = item.optDouble("trueRatio")
+        )
+    }
+}
+
