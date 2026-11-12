@@ -534,7 +534,7 @@ private fun ThemeBackdrop(theme: AppTheme) {
                     strokeWidth = 1.5f
                 )
                 "leaves" -> {
-                    rotate(degrees = (drift * 360f + i * 19f) % 360f, pivot = point) {
+                    rotate(degrees = (drift * 360f + i * 19f) % 360f, pivotX = baseX, pivotY = baseY) {
                         drawOval(
                             color = theme.accent.copy(alpha = 0.22f),
                             topLeft = androidx.compose.ui.geometry.Offset(baseX - 3f, baseY - 5f),
