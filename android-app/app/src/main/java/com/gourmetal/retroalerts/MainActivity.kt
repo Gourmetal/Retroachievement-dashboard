@@ -605,12 +605,49 @@ fun RetroAlertsApp() {
                     Text("${messages.size} SAVED ALERTS", color = theme.muted, fontSize = 10.sp)
                     TextButton(onClick = { prefs.edit().putString("messages", "[]").apply(); messages = emptyList() }) { Text("CLEAR ALL", color = theme.accent) }
                 }
-                if (messages.isEmpty()) {
-                    Text("NO MESSAGES YET", color = theme.text, modifier = Modifier.padding(24.dp))
-                    Text("New achievement notifications will appear here.", color = theme.muted, fontSize = 11.sp)
+                val meta = loadMessageMeta(context)
+                val filtered = messages.filter { item ->
+                    val m = meta[item.id] ?: MessageMeta()
+                    val textMatch = messageSearch.isBlank() || item.title.contains(messageSearch, true) || item.game.contains(messageSearch, true) || item.description.contains(messageSearch, true)
+                    val filterMatch = when (messageFilter) {
+                        "UNREAD" -> !m.read
+                        "READ" -> m.read
+                        "FAVORITES" -> m.favorite
+                        "HARDCORE" -> item.hardcore
+                        "SOFTCORE" -> !item.hardcore
+                        else -> true
+                    }
+                    textMatch && filterMatch && (selectedGame == null || selectedGame == item.game)
+                }
+                OutlinedTextField(value = messageSearch, onValueChange = { messageSearch = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("Search messages") })
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    listOf("ALL", "UNREAD", "READ", "FAVORITES", "HARDCORE", "SOFTCORE").forEach { filter ->
+                        FilterChip(selected = messageFilter == filter, onClick = { messageFilter = filter }, label = { Text(filter) })
+                    }
+                }
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                    FilterChip(selected = selectedGame == null, onClick = { selectedGame = null }, label = { Text("ALL GAMES") })
+                    messages.map { it.game }.distinct().sorted().forEach { game ->
+                        FilterChip(selected = selectedGame == game, onClick = { selectedGame = if (selectedGame == game) null else game }, label = { Text(game) })
+                    }
+                }
+                Text(filtered.size.toString() + " MATCHING ALERTS • " + messages.sumOf { it.points } + " TOTAL POINTS", color = theme.accent, fontSize = 10.sp)
+                if (filtered.isEmpty()) {
+                    Text("NO MATCHING MESSAGES", color = theme.text, modifier = Modifier.padding(24.dp))
                 } else {
                     LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(messages, key = { it.id }) { item -> AchievementCard(item, theme) { scope.launch { notifyAchievement(context, item); status = "ALERT RESENT" } } }
+                        items(filtered, key = { it.id }) { item ->
+                            val m = meta[item.id] ?: MessageMeta()
+                            Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(12.dp)).padding(8.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(if (m.read) "READ" else "UNREAD", color = theme.accent, modifier = Modifier.weight(1f), fontSize = 10.sp)
+                                    TextButton(onClick = { setMessageMeta(context, item.id, favorite = !m.favorite); messages = loadMessages(context) }) { Text(if (m.favorite) "★ FAVORITE" else "☆ FAVORITE", color = theme.accent) }
+                                    TextButton(onClick = { setMessageMeta(context, item.id, read = !m.read); messages = loadMessages(context) }) { Text(if (m.read) "UNREAD" else "MARK READ", color = theme.accent) }
+                                }
+                                AchievementCard(item, theme) { scope.launch { saveMessage(context, item); notifyAchievement(context, item); status = "ALERT RESENT" } }
+                                TextButton(onClick = { removeMessage(context, item.id); messages = loadMessages(context) }) { Text("DELETE", color = theme.muted) }
+                            }
+                        }
                     }
                 }
             } else if (dashboard) {
