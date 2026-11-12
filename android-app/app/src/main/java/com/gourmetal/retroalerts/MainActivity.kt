@@ -448,13 +448,14 @@ fun RetroAlertsApp() {
                         Modifier.heightIn(max = 300.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {items(achievements) { item ->
-    AchievementCard(item, theme) {
+        AchievementCard(item, theme) {
         scope.launch {
             notifyAchievement(context, item)
             status = "NOTIFICATION RESENT"
         }
     }
 }}
+                }
             } else {
                 Column(
                     Modifier.fillMaxWidth().heightIn(max = 470.dp)
