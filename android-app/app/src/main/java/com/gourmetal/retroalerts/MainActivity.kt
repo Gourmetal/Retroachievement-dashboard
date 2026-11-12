@@ -1007,6 +1007,38 @@ private fun AchievementCard(
         }
     }
 } 
+private data class MessageMeta(val read: Boolean = false, val favorite: Boolean = false)
+
+private fun loadMessageMeta(context: Context): Map<String, MessageMeta> {
+    val json = org.json.JSONObject(context.getSharedPreferences(PREFS, 0).getString("message_meta", "{}") ?: "{}")
+    return json.keys().asSequence().associateWith { id ->
+        val value = json.optJSONObject(id) ?: org.json.JSONObject()
+        MessageMeta(value.optBoolean("read"), value.optBoolean("favorite"))
+    }
+}
+
+private fun setMessageMeta(context: Context, id: String, read: Boolean? = null, favorite: Boolean? = null) {
+    val prefs = context.getSharedPreferences(PREFS, 0)
+    val json = org.json.JSONObject(prefs.getString("message_meta", "{}") ?: "{}")
+    val value = json.optJSONObject(id) ?: org.json.JSONObject()
+    if (read != null) value.put("read", read)
+    if (favorite != null) value.put("favorite", favorite)
+    json.put(id, value)
+    prefs.edit().putString("message_meta", json.toString()).apply()
+}
+
+private fun removeMessage(context: Context, id: String) {
+    val prefs = context.getSharedPreferences(PREFS, 0)
+    val old = JSONArray(prefs.getString("messages", "[]") ?: "[]")
+    val next = JSONArray()
+    for (i in 0 until old.length()) {
+        val item = old.optJSONObject(i) ?: continue
+        if (item.optString("id") != id) next.put(item)
+    }
+    val meta = org.json.JSONObject(prefs.getString("message_meta", "{}") ?: "{}").apply { remove(id) }
+    prefs.edit().putString("messages", next.toString()).putString("message_meta", meta.toString()).apply()
+}
+
 private fun saveMessage(context: Context, item: Achievement) {
     val prefs = context.getSharedPreferences(PREFS, 0)
     val messages = JSONArray(prefs.getString("messages", "[]") ?: "[]")
