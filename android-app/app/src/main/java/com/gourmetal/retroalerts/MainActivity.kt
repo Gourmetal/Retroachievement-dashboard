@@ -10,6 +10,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
+import android.graphics.Canvas
+import android.graphics.Movie
+import android.graphics.Paint
+import android.view.View
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
@@ -298,8 +303,88 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         createChannel(this)
-        setContent { RetroAlertsApp() }
+        setContent {
+            var splashFinished by remember { mutableStateOf(false) }
+            if (splashFinished) {
+                RetroAlertsApp()
+            } else {
+                BootSplash { splashFinished = true }
+            }
+        }
     }
+}
+
+private class BootGifView(
+    context: Context,
+    private val onFinished: () -> Unit
+) : View(context) {
+    private val movie: Movie? = try {
+        context.assets.open("boot-animation.gif").use { Movie.decodeStream(it) }
+    } catch (_: Exception) {
+        null
+    }
+    private val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val startedAt = SystemClock.uptimeMillis()
+    private val playbackSpeed = 1.5f
+    private val gifDuration = (movie?.duration() ?: 0).takeIf { it > 0 } ?: 3000
+    private var finished = false
+
+    init {
+        setBackgroundColor(android.graphics.Color.BLACK)
+        if (movie == null) post { finishSplash() }
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        canvas.drawColor(android.graphics.Color.BLACK)
+        val gif = movie ?: return
+        val elapsed = SystemClock.uptimeMillis() - startedAt
+        val gifTime = (elapsed * playbackSpeed).toInt()
+
+        if (gifTime >= gifDuration) {
+            gif.setTime(gifDuration - 1)
+            drawMovie(canvas, gif)
+            finishSplash()
+            return
+        }
+
+        gif.setTime(gifTime)
+        drawMovie(canvas, gif)
+        postInvalidateDelayed(16)
+    }
+
+    private fun drawMovie(canvas: Canvas, gif: Movie) {
+        val sourceWidth = gif.width().coerceAtLeast(1)
+        val sourceHeight = gif.height().coerceAtLeast(1)
+        val scale = minOf(
+            width.toFloat() / sourceWidth,
+            height.toFloat() / sourceHeight
+        ).coerceAtLeast(0f)
+        val drawWidth = sourceWidth * scale
+        val drawHeight = sourceHeight * scale
+        val left = (width - drawWidth) / 2f
+        val top = (height - drawHeight) / 2f
+        canvas.save()
+        canvas.translate(left, top)
+        canvas.scale(scale, scale)
+        gif.draw(canvas, 0f, 0f, paint)
+        canvas.restore()
+    }
+
+    private fun finishSplash() {
+        if (!finished) {
+            finished = true
+            post { onFinished() }
+        }
+    }
+}
+
+@Composable
+private fun BootSplash(onFinished: () -> Unit) {
+    AndroidView(
+        modifier = Modifier.fillMaxSize().background(Color.Black),
+        factory = { context -> BootGifView(context, onFinished) }
+    )
 }
 
 @Composable
