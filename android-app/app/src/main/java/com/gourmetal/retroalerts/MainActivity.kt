@@ -754,11 +754,30 @@ fun RetroAlertsApp() {
                     HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
 
                     Text("NOTIFICATIONS", color = theme.accent, fontWeight = FontWeight.Black)
-                    Text(
-                        "Check for new unlocks in the background about every 15 minutes.",
-                        color = theme.muted,
-                        fontSize = 11.sp
-                    )
+                    Text("Background check frequency", color = theme.muted, fontSize = 11.sp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(15, 30, 60).forEach { mins ->
+                            FilterChip(selected = checkMinutes == mins, onClick = { checkMinutes = mins; prefs.edit().putInt("check_minutes", mins).apply(); if (notifications) scheduleChecks(context, mins) }, label = { Text("$mins min") })
+                        }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Quiet hours", Modifier.weight(1f), color = theme.text)
+                        Switch(checked = quietEnabled, onCheckedChange = { quietEnabled = it; prefs.edit().putBoolean("quiet_enabled", it).apply() })
+                    }
+                    if (quietEnabled) {
+                        OutlinedTextField(value = quietStart, onValueChange = { quietStart = it; prefs.edit().putString("quiet_start", it).apply() }, label = { Text("Quiet start (HH:mm)") }, singleLine = true)
+                        OutlinedTextField(value = quietEnd, onValueChange = { quietEnd = it; prefs.edit().putString("quiet_end", it).apply() }, label = { Text("Quiet end (HH:mm)") }, singleLine = true)
+                    }
+                    OutlinedButton(onClick = {
+                        val payload = prefs.getString("messages", "[]") ?: "[]"
+                        val send = Intent(Intent.ACTION_SEND).apply { type = "application/json"; putExtra(Intent.EXTRA_SUBJECT, "Retro Alerts Backup"); putExtra(Intent.EXTRA_TEXT, payload) }
+                        context.startActivity(Intent.createChooser(send, "Export backup"))
+                    }, modifier = Modifier.fillMaxWidth()) { Text("EXPORT MESSAGE BACKUP", color = theme.text) }
+                    OutlinedTextField(value = backupText, onValueChange = { backupText = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Paste backup JSON to restore") }, minLines = 2)
+                    OutlinedButton(onClick = {
+                        try { val parsed = JSONArray(backupText); prefs.edit().putString("messages", parsed.toString()).apply(); messages = loadMessages(context); backupText = ""; status = "BACKUP RESTORED" }
+                        catch (_: Exception) { status = "INVALID BACKUP" }
+                    }, modifier = Modifier.fillMaxWidth(), enabled = backupText.isNotBlank()) { Text("RESTORE BACKUP", color = theme.text) }
 
                                         Row(
                         Modifier.fillMaxWidth(),
