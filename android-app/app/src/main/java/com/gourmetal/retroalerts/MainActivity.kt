@@ -819,6 +819,15 @@ fun RetroAlertsApp() {
                     Text("HOME", color = if (!settings && !dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
+                    onClick = { messagesScreen = true; dashboard = false; settings = false },
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (messagesScreen) theme.accent else theme.card
+                    )
+                ) {
+                    Text("MESSAGES", color = if (messagesScreen) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
+                }
+                Button(
                     onClick = { dashboard = true; messagesScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
