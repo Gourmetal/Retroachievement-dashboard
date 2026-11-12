@@ -289,7 +289,9 @@ private suspend fun notifyAchievement(context: Context, item: Achievement) {
         append(item.game)
         append(" • ${item.points} points • $mode")
         if (rarityLabel.isNotEmpty()) append(rarityLabel)
-        append("\\n\\n")
+        append("\
+\
+")
         append(item.description)
     }
     val accent = franchiseColor(item.game)
@@ -308,7 +310,8 @@ private suspend fun notifyAchievement(context: Context, item: Achievement) {
                     .bigLargeIcon(badgeBitmap)
                     .setSummaryText(details)
             } else {
-                NotificationCompat.BigTextStyle().bigText("$titleLine\\n$details")
+                NotificationCompat.BigTextStyle().bigText("$titleLine\
+$details")
             }
         )
         .setContentIntent(pending)
@@ -455,7 +458,9 @@ fun RetroAlertsApp() {
     val prefs = remember { context.getSharedPreferences(PREFS, 0) }
 
     var settings by remember { mutableStateOf(false) }
-    var dashboard by remember { mutableStateOf(false) }\n    var messagesScreen by remember { mutableStateOf(false) }\n    var messages by remember { mutableStateOf(loadMessages(context)) }
+    var dashboard by remember { mutableStateOf(false) }
+    var messagesScreen by remember { mutableStateOf(false) }
+    var messages by remember { mutableStateOf(loadMessages(context)) }
     var apiKey by remember { mutableStateOf("") }
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
@@ -588,7 +593,21 @@ fun RetroAlertsApp() {
                 Spacer(Modifier.height(8.dp))
             }
 
-            if (messagesScreen) {\n                messages = loadMessages(context)\n                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {\n                    Text("${messages.size} SAVED ALERTS", color = theme.muted, fontSize = 10.sp)\n                    TextButton(onClick = { prefs.edit().putString("messages", "[]").apply(); messages = emptyList() }) { Text("CLEAR ALL", color = theme.accent) }\n                }\n                if (messages.isEmpty()) {\n                    Text("NO MESSAGES YET", color = theme.text, modifier = Modifier.padding(24.dp))\n                    Text("New achievement notifications will appear here.", color = theme.muted, fontSize = 11.sp)\n                } else {\n                    LazyColumn(Modifier.heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {\n                        items(messages, key = { it.id }) { item -> AchievementCard(item, theme) { scope.launch { notifyAchievement(context, item); status = "ALERT RESENT" } } }\n                    }\n                }\n            } else if (dashboard) {
+            if (messagesScreen) {
+                messages = loadMessages(context)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text("${messages.size} SAVED ALERTS", color = theme.muted, fontSize = 10.sp)
+                    TextButton(onClick = { prefs.edit().putString("messages", "[]").apply(); messages = emptyList() }) { Text("CLEAR ALL", color = theme.accent) }
+                }
+                if (messages.isEmpty()) {
+                    Text("NO MESSAGES YET", color = theme.text, modifier = Modifier.padding(24.dp))
+                    Text("New achievement notifications will appear here.", color = theme.muted, fontSize = 11.sp)
+                } else {
+                    LazyColumn(Modifier.heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(messages, key = { it.id }) { item -> AchievementCard(item, theme) { scope.launch { notifyAchievement(context, item); status = "ALERT RESENT" } } }
+                    }
+                }
+            } else if (dashboard) {
                 AndroidView(
                     modifier = Modifier.fillMaxWidth().heightIn(min = 300.dp, max = 470.dp),
                     factory = { viewContext ->
