@@ -645,12 +645,98 @@ private fun Stat(label: String, value: String, modifier: Modifier, theme: AppThe
     }
 }
 
+private suspend fun loadBadgeBitmap(badgeName: String): Bitmap? =
+    withContext(Dispatchers.IO) {
+        if (badgeName.isBlank()) return@withContext null
+
+        try {
+            val url = URL(
+                "https://media.retroachievements.org/Badge/$badgeName.png"
+            )
+            val connection = url.openConnection()
+            connection.connectTimeout = 10000
+            connection.readTimeout = 10000
+
+            connection.getInputStream().use {
+                BitmapFactory.decodeStream(it)
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
 @Composable
 private fun AchievementCard(
     item: Achievement,
     theme: AppTheme,
     onResend: () -> Unit
 ) {
+    var badge by remember(item.badgeName) {
+        mutableStateOf<Bitmap?>(null)
+    }
+
+    LaunchedEffect(item.badgeName) {
+        badge = loadBadgeBitmap(item.badgeName)
+    }
+
+    Column(
+        Modifier.fillMaxWidth()
+            .background(theme.card, RoundedCornerShape(12.dp))
+            .border(1.dp, theme.accent.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+            .padding(12.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (badge != null) {
+                Image(
+                    bitmap = badge!!.asImageBitmap(),
+                    contentDescription = "Achievement badge",
+                    modifier = Modifier.size(64.dp)
+                )
+                Spacer(Modifier.width(12.dp))
+            }
+
+            Column(Modifier.weight(1f)) {
+                Text(item.game, color = theme.accent, fontSize = 11.sp)
+                Text(item.title, color = theme.text, fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Text(
+            item.description,
+            color = theme.muted,
+            fontSize = 11.sp
+        )
+
+        Spacer(Modifier.height(6.dp))
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                if (item.hardcore) "HARDCORE" else "SOFTCORE",
+                color = if (item.hardcore) theme.accent else theme.muted,
+                fontSize = 10.sp
+            )
+            Text("${item.points} POINTS", color = theme.text, fontSize = 10.sp)
+        }
+
+        if (item.date.isNotBlank()) {
+            Text(item.date, color = theme.muted, fontSize = 9.sp)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = onResend,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("RESEND ALERT")
+        }
+    }
+}
     Column(
         Modifier.fillMaxWidth()
             .background(theme.card, RoundedCornerShape(12.dp))
