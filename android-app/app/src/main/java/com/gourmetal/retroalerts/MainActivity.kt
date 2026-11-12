@@ -646,7 +646,11 @@ private fun Stat(label: String, value: String, modifier: Modifier, theme: AppThe
 }
 
 @Composable
-private fun AchievementCard(item: Achievement, theme: AppTheme) {
+private fun AchievementCard(
+    item: Achievement,
+    theme: AppTheme,
+    onResend: () -> Unit
+) {
     Column(
         Modifier.fillMaxWidth()
             .background(theme.card, RoundedCornerShape(12.dp))
@@ -655,8 +659,21 @@ private fun AchievementCard(item: Achievement, theme: AppTheme) {
     ) {
         Text(item.game, color = theme.accent, fontSize = 11.sp)
         Text(item.title, color = theme.text, fontWeight = FontWeight.Bold)
+
         Spacer(Modifier.height(6.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+
+        Text(
+            item.description,
+            color = theme.muted,
+            fontSize = 11.sp
+        )
+
+        Spacer(Modifier.height(6.dp))
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
             Text(
                 if (item.hardcore) "HARDCORE" else "SOFTCORE",
                 color = if (item.hardcore) theme.accent else theme.muted,
@@ -664,8 +681,18 @@ private fun AchievementCard(item: Achievement, theme: AppTheme) {
             )
             Text("${item.points} POINTS", color = theme.text, fontSize = 10.sp)
         }
+
         if (item.date.isNotBlank()) {
             Text(item.date, color = theme.muted, fontSize = 9.sp)
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = onResend,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("RESEND ALERT")
         }
     }
 }
