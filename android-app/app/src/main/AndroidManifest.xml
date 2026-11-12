@@ -9,6 +9,8 @@
     <application
         android:allowBackup="false"
         android:label="Gourmetal Retro Alerts"
+        android:icon="@drawable/gourmetal_icon"
+        android:roundIcon="@drawable/gourmetal_icon"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:supportsRtl="true">
 
