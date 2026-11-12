@@ -159,5 +159,12 @@
     "hero": "https://cdn2.steamgriddb.com/hero/ecf4747dc3523d20b91b0fadec88d2d9.jpg",
     "logo": "https://cdn2.steamgriddb.com/logo/4e0cb6fb5fb446d1c92ede2ed8780188.png",
     "icon": "https://cdn2.steamgriddb.com/icon/a9365bd906e11324065c35be476beb0c.png"
+  },
+  "Donkey Kong Country": {
+    "gameId": 36958,
+    "grid": "https://cdn2.steamgriddb.com/grid/befa1d1faf9bc95c1a29d30ea9a751a2.png",
+    "hero": "https://cdn2.steamgriddb.com/hero/537442dc2f31b1311163fef609949f9c.jpg",
+    "logo": "https://cdn2.steamgriddb.com/logo/0b7a9d54deeb611edc4540d286e9a042.png",
+    "icon": "https://cdn2.steamgriddb.com/icon/a1e833cec29c1bc16a71da454848a9db.ico"
   }
 }
