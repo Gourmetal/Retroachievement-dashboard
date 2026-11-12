@@ -516,6 +516,38 @@ private fun ThemeBackdrop(theme: AppTheme) {
                 )
             }
         }
+        // Theme-specific pixel weather: falling leaves, rain, and drifting stars.
+        val weather = when (theme.name) {
+            "Classic Orange", "Emerald", "Game Boy" -> "leaves"
+            "Midnight", "GBA Purple" -> "stars"
+            else -> "rain"
+        }
+        for (i in 0..22) {
+            val baseX = ((i * 83f + drift * (if (weather == "rain") 95f else 42f)) % (w + 30f))
+            val baseY = ((i * 67f + drift * 230f) % (h + 30f))
+            val point = androidx.compose.ui.geometry.Offset(baseX, baseY)
+            when (weather) {
+                "rain" -> drawLine(
+                    color = theme.accent.copy(alpha = 0.20f),
+                    start = point,
+                    end = androidx.compose.ui.geometry.Offset(baseX - 5f, baseY + 15f),
+                    strokeWidth = 1.5f
+                )
+                "leaves" -> {
+                    rotate(degrees = (drift * 360f + i * 19f) % 360f, pivot = point) {
+                        drawOval(
+                            color = theme.accent.copy(alpha = 0.22f),
+                            topLeft = androidx.compose.ui.geometry.Offset(baseX - 3f, baseY - 5f),
+                            size = androidx.compose.ui.geometry.Size(6f, 10f)
+                        )
+                    }
+                }
+                else -> {
+                    val twinkle = if ((i % 3) == 0) 3.2f else 1.8f
+                    drawCircle(theme.accent.copy(alpha = 0.18f + pulse * 0.3f), twinkle, point)
+                }
+            }
+        }
     }
 }
 
@@ -532,6 +564,7 @@ fun RetroAlertsApp() {
     var messageSearch by remember { mutableStateOf("") }
     var messageFilter by remember { mutableStateOf("ALL") }
     var selectedGame by remember { mutableStateOf<String?>(null) }
+    var stickerAlbum by remember { mutableStateOf(false) }
     var backupText by remember { mutableStateOf("") }
     var checkMinutes by remember { mutableIntStateOf(prefs.getInt("check_minutes", 15)) }
     var quietEnabled by remember { mutableStateOf(prefs.getBoolean("quiet_enabled", false)) }
@@ -697,6 +730,13 @@ fun RetroAlertsApp() {
                         FilterChip(selected = messageFilter == filter, onClick = { messageFilter = filter }, label = { Text(filter) })
                     }
                 }
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    FilterChip(
+                        selected = stickerAlbum,
+                        onClick = { stickerAlbum = !stickerAlbum },
+                        label = { Text(if (stickerAlbum) "📋 LIST VIEW" else "🏅 STICKER ALBUM") }
+                    )
+                }
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     FilterChip(selected = selectedGame == null, onClick = { selectedGame = null }, label = { Text("ALL GAMES") })
                     messages.map { it.game }.distinct().sorted().forEach { game ->
@@ -706,6 +746,30 @@ fun RetroAlertsApp() {
                 Text(filtered.size.toString() + " MATCHING ALERTS • " + messages.sumOf { it.points } + " TOTAL POINTS", color = theme.accent, fontSize = 10.sp)
                 if (filtered.isEmpty()) {
                     Text("NO MATCHING MESSAGES", color = theme.text, modifier = Modifier.padding(24.dp))
+                } else if (stickerAlbum) {
+                    LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                        items(filtered.chunked(3)) { rowItems ->
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                rowItems.forEach { item ->
+                                    Column(
+                                        Modifier.weight(1f).aspectRatio(0.78f)
+                                            .background(theme.card, RoundedCornerShape(13.dp))
+                                            .border(1.dp, theme.accent.copy(alpha = 0.65f), RoundedCornerShape(13.dp))
+                                            .padding(8.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(if (item.hardcore) "🏆" else "🎮", fontSize = 27.sp)
+                                        Text(item.title, color = theme.text, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 3)
+                                        Spacer(Modifier.height(4.dp))
+                                        Text(item.game, color = theme.accent, fontSize = 8.sp, maxLines = 2)
+                                        Text("${item.points} PTS", color = theme.muted, fontSize = 8.sp)
+                                    }
+                                }
+                                repeat(3 - rowItems.size) { Spacer(Modifier.weight(1f)) }
+                            }
+                        }
+                    }
                 } else {
                     LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(filtered, key = { it.id }) { item ->
