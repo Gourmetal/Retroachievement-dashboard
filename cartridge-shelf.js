@@ -162,10 +162,23 @@ document.addEventListener("DOMContentLoaded", () => {
    */
 
   async function getArchiveFiles(identifier) {
-    const response = await fetch(
-      "https://archive.org/metadata/" + encodeURIComponent(identifier),
-      { cache: "no-store" }
-    );
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    let response;
+
+    try {
+      response = await fetch(
+        "https://archive.org/metadata/" + encodeURIComponent(identifier),
+        { cache: "no-store", signal: controller.signal }
+      );
+    } catch (error) {
+      if (error.name === "AbortError") {
+        throw new Error("Internet Archive took too long to respond.");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
 
     if (!response.ok) {
       throw new Error("Could not load Archive.org item: " + identifier);
@@ -434,9 +447,12 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
+  let activeVideoGame = null;
+
   async function openVideo(game) {
     if (!game) return;
 
+    activeVideoGame = game;
     const heading = createHeading(game);
 
     modalContent.innerHTML = heading + `
@@ -589,9 +605,15 @@ document.addEventListener("DOMContentLoaded", () => {
           <h3>Video lookup unavailable</h3>
 
           <p>
-            Internet Archive couldn't be reached right now.
-            Please try again later.
+            ${escapeHTML(error.message || "Internet Archive couldn't be reached.")}
+            Check your connection and try again.
           </p>
+
+          <button type="button"
+            class="gh-video-watch-button"
+            data-gh-video-retry>
+            Try Again
+          </button>
 
         </div>
 
@@ -601,6 +623,14 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     }
   }
+
+  modalContent.addEventListener("click", event => {
+    if (event.target.closest("[data-gh-video-retry]") && activeVideoGame) {
+      gbasnapsFilesPromise = null;
+      gbcSnapsFilesCache.promise = null;
+      openVideo(activeVideoGame);
+    }
+  });
 
   closeButton.addEventListener("click", closeVideo);
 
