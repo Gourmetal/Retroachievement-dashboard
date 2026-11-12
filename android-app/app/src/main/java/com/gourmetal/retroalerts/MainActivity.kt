@@ -33,6 +33,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -445,7 +446,20 @@ fun RetroAlertsApp() {
                     modifier = Modifier.fillMaxWidth().heightIn(min = 300.dp, max = 470.dp),
                     factory = { viewContext ->
                         WebView(viewContext).apply {
-                            webViewClient = WebViewClient()
+                            setBackgroundColor(theme.background.toArgb())
+                            webViewClient = object : WebViewClient() {
+                                override fun onPageFinished(view: WebView, url: String) {
+                                    val pageColor = String.format(
+                                        "#%06X",
+                                        0xFFFFFF and theme.background.toArgb()
+                                    )
+                                    view.evaluateJavascript(
+                                        "document.documentElement.style.backgroundColor='$pageColor';" +
+                                            "document.body.style.backgroundColor='$pageColor';",
+                                        null
+                                    )
+                                }
+                            }
                             this.settings.javaScriptEnabled = true
                             this.settings.domStorageEnabled = true
                             loadUrl("https://gourmetal.github.io/Retroachievement-dashboard/")
@@ -635,7 +649,7 @@ fun RetroAlertsApp() {
                         containerColor = if (!settings && !dashboard) theme.accent else theme.card
                     )
                 ) {
-                    Text("HOME", color = if (!settings && !dashboard) theme.background else theme.text)
+                    Text("HOME", color = if (!settings && !dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
                     onClick = { dashboard = true; settings = false },
@@ -644,7 +658,7 @@ fun RetroAlertsApp() {
                         containerColor = if (dashboard) theme.accent else theme.card
                     )
                 ) {
-                    Text("DASHBOARD", color = if (dashboard) theme.background else theme.text)
+                    Text("DASHBOARD", color = if (dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
                     onClick = { settings = true; dashboard = false },
@@ -653,7 +667,7 @@ fun RetroAlertsApp() {
                         containerColor = if (settings) theme.accent else theme.card
                     )
                 ) {
-                    Text("SETTINGS", color = if (settings) theme.background else theme.text)
+                    Text("SETTINGS", color = if (settings) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
             }
 
