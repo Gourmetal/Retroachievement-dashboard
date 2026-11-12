@@ -197,6 +197,7 @@ private fun cancelChecks(context: Context) {
 }
 
 private fun notifyAchievement(context: Context, item: Achievement) {
+private suspend fun notifyAchievement(context: Context, item: Achievement) {
     if (Build.VERSION.SDK_INT >= 33 &&
         ContextCompat.checkSelfPermission(
             context, Manifest.permission.POST_NOTIFICATIONS
@@ -205,26 +206,48 @@ private fun notifyAchievement(context: Context, item: Achievement) {
 
     createChannel(context)
 
+    val bitmap = withContext(Dispatchers.IO) {
+        if (item.badgeName.isBlank()) null
+        else try {
+            val url = URL("https://media.retroachievements.org/Badge/${item.badgeName}.png")
+            url.openConnection().getInputStream().use {
+                BitmapFactory.decodeStream(it)
+            }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     val intent = Intent(context, MainActivity::class.java)
     val pending = PendingIntent.getActivity(
         context, item.id.hashCode(), intent,
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    val notification = NotificationCompat.Builder(context, CHANNEL)
+    val details = "${item.title}\n${item.game}\n${item.points} points\n\n${item.description}"
+
+    val builder = NotificationCompat.Builder(context, CHANNEL)
         .setSmallIcon(android.R.drawable.star_on)
         .setContentTitle("Achievement unlocked!")
         .setContentText("${item.title} • ${item.game}")
         .setStyle(
-            NotificationCompat.BigTextStyle()
-                .bigText("${item.title}\n${item.game}\n${item.points} points")
+            if (bitmap != null) {
+                NotificationCompat.BigPictureStyle()
+                    .bigPicture(bitmap)
+                    .setSummaryText(details)
+            } else {
+                NotificationCompat.BigTextStyle()
+                    .bigText(details)
+            }
         )
         .setContentIntent(pending)
         .setAutoCancel(true)
         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-        .build()
 
-    NotificationManagerCompat.from(context).notify(item.id.hashCode(), notification)
+    if (bitmap != null) builder.setLargeIcon(bitmap)
+
+    NotificationManagerCompat.from(context)
+        .notify(item.id.hashCode(), builder.build())
 }
 
 class AchievementWorker(
