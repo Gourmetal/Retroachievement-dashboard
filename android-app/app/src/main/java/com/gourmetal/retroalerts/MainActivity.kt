@@ -195,8 +195,6 @@ private fun scheduleChecks(context: Context) {
 private fun cancelChecks(context: Context) {
     WorkManager.getInstance(context).cancelUniqueWork(WORK)
 }
-
-private fun notifyAchievement(context: Context, item: Achievement) {
 private suspend fun notifyAchievement(context: Context, item: Achievement) {
     if (Build.VERSION.SDK_INT >= 33 &&
         ContextCompat.checkSelfPermission(
