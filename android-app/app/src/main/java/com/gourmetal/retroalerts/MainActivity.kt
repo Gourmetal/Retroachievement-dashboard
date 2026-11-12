@@ -347,6 +347,7 @@ class AchievementWorker(
                 achievements.filter {
                     it.id.isNotBlank() && it.id !in previousIds
                 }.forEach {
+                    saveMessage(applicationContext, it)
                     notifyAchievement(applicationContext, it)
                 }
                 prefs.edit().putStringSet("known_unlocks", currentIds).apply()
@@ -511,14 +512,14 @@ fun RetroAlertsApp() {
     }
 
     Box(
-        Modifier.fillMaxSize().background(theme.background).padding(12.dp),
-        contentAlignment = Alignment.Center
+        Modifier.fillMaxSize().background(theme.background),
+        contentAlignment = Alignment.TopStart
     ) {
         Column(
-            Modifier.fillMaxWidth()
-                .background(theme.panel, RoundedCornerShape(24.dp))
-                .border(2.dp, theme.accent.copy(alpha = 0.65f), RoundedCornerShape(24.dp))
-                .padding(14.dp)
+            Modifier.fillMaxSize()
+                .background(theme.panel)
+                .border(2.dp, theme.accent.copy(alpha = 0.65f))
+                .padding(12.dp)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -591,7 +592,7 @@ fun RetroAlertsApp() {
             }
 
             if (messagesScreen) {
-                messages = loadMessages(context)
+                LaunchedEffect(messagesScreen) { messages = loadMessages(context) }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text("${messages.size} SAVED ALERTS", color = theme.muted, fontSize = 10.sp)
                     TextButton(onClick = { prefs.edit().putString("messages", "[]").apply(); messages = emptyList() }) { Text("CLEAR ALL", color = theme.accent) }
@@ -600,7 +601,7 @@ fun RetroAlertsApp() {
                     Text("NO MESSAGES YET", color = theme.text, modifier = Modifier.padding(24.dp))
                     Text("New achievement notifications will appear here.", color = theme.muted, fontSize = 11.sp)
                 } else {
-                    LazyColumn(Modifier.heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(messages, key = { it.id }) { item -> AchievementCard(item, theme) { scope.launch { notifyAchievement(context, item); status = "ALERT RESENT" } } }
                     }
                 }
@@ -648,11 +649,13 @@ fun RetroAlertsApp() {
                     }
                 } else {
                     LazyColumn(
-                        Modifier.heightIn(max = 300.dp),
+                        Modifier.weight(1f).fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {items(achievements) { item ->
         AchievementCard(item, theme) {
         scope.launch {
+            saveMessage(context, item)
+            messages = loadMessages(context)
             notifyAchievement(context, item)
             status = "NOTIFICATION RESENT"
         }
