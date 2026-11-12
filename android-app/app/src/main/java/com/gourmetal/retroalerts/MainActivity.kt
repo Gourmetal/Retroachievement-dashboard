@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -62,7 +63,7 @@ import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.asImageBitmap
 import kotlinx.coroutines.withContext
 private const val PREFS = "retro_alerts"
-private const val CHANNEL = "achievement_alerts"
+private const val CHANNEL = "achievement_alerts_v2"
 private const val WORK = "achievement_checker"
 
 data class Achievement(
@@ -73,7 +74,10 @@ data class Achievement(
     val hardcore: Boolean,
     val date: String,
     val description: String,
-    val badgeName: String
+    val badgeName: String,
+    val gameId: String = "",
+    val gameIcon: String = "",
+    val trueRatio: Double = 0.0
 )
 data class AppTheme(
     val name: String,
@@ -175,7 +179,10 @@ private suspend fun getAchievements(apiKey: String): List<Achievement> =
                     item.optInt("HardcoreMode") == 1,
                     item.optString("Date", ""),
                     item.optString("Description", "No description available."),
-                    item.optString("BadgeName", "")
+                    item.optString("BadgeName", ""),
+                    item.optString("GameID", ""),
+                    item.optString("GameIcon", ""),
+                    item.optDouble("TrueRatio", item.optDouble("Rarity", 0.0))
                 )
             }
         } finally {
@@ -189,9 +196,9 @@ private fun createChannel(context: Context) {
         val channel = NotificationChannel(
             CHANNEL,
             "Achievement alerts",
-            NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "New RetroAchievements unlocks"
+            description = "Rich RetroAchievements unlock alerts"
             enableVibration(true)
         }
         manager.createNotificationChannel(channel)
@@ -213,6 +220,28 @@ private fun scheduleChecks(context: Context) {
 private fun cancelChecks(context: Context) {
     WorkManager.getInstance(context).cancelUniqueWork(WORK)
 }
+private fun franchiseColor(game: String): Int {
+    val name = game.lowercase()
+    val hex = when {
+        "zelda" in name || "minish cap" in name -> 0xFF70B85A
+        "mario" in name || "donkey kong" in name -> 0xFFE94B35
+        "pokemon" in name -> 0xFFE6B93D
+        "metroid" in name -> 0xFF55C6C8
+        "sonic" in name -> 0xFF3987E8
+        "castlevania" in name -> 0xFF9B69D6
+        "kirby" in name -> 0xFFE98AB8
+        "final fantasy" in name -> 0xFF8B9ED8
+        else -> 0xFFFF941F
+    }
+    return hex.toInt()
+}
+
+private fun gameArtworkUrl(gameIcon: String): String? {
+    if (gameIcon.isBlank()) return null
+    return if (gameIcon.startsWith("http")) gameIcon
+    else "https://media.retroachievements.org" + if (gameIcon.startsWith("/")) gameIcon else "/$gameIcon"
+}
+
 private suspend fun notifyAchievement(context: Context, item: Achievement) {
     if (Build.VERSION.SDK_INT >= 33 &&
         ContextCompat.checkSelfPermission(
@@ -222,45 +251,77 @@ private suspend fun notifyAchievement(context: Context, item: Achievement) {
 
     createChannel(context)
 
-    val bitmap = withContext(Dispatchers.IO) {
+    val badgeBitmap = withContext(Dispatchers.IO) {
         if (item.badgeName.isBlank()) null
         else try {
             val url = URL("https://media.retroachievements.org/Badge/${item.badgeName}.png")
-            url.openConnection().getInputStream().use {
-                BitmapFactory.decodeStream(it)
+            url.openConnection().getInputStream().use { BitmapFactory.decodeStream(it) }
+        } catch (_: Exception) { null }
+    }
+    val gameBitmap = withContext(Dispatchers.IO) {
+        val artworkUrl = gameArtworkUrl(item.gameIcon) ?: return@withContext null
+        try {
+            val connection = URL(artworkUrl).openConnection().apply {
+                connectTimeout = 10000
+                readTimeout = 10000
             }
-        } catch (_: Exception) {
-            null
-        }
+            connection.getInputStream().use { BitmapFactory.decodeStream(it) }
+        } catch (_: Exception) { null }
     }
 
-    val intent = Intent(context, MainActivity::class.java)
+    val achievementUrl = "https://retroachievements.org/achievement/${item.id}"
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(achievementUrl)).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
     val pending = PendingIntent.getActivity(
         context, item.id.hashCode(), intent,
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
-    val details = "${item.title}\n${item.game}\n${item.points} points\n\n${item.description}"
+    val rarity = item.trueRatio.takeIf { it > 0.0 }
+    val rarityLabel = when {
+        rarity != null && rarity <= 5.0 -> " • ULTRA RARE"
+        rarity != null && rarity <= 10.0 -> " • RARE"
+        else -> ""
+    }
+    val mode = if (item.hardcore) "HARDCORE" else "SOFTCORE"
+    val details = buildString {
+        append(item.game)
+        append(" • ${item.points} points • $mode")
+        if (rarityLabel.isNotEmpty()) append(rarityLabel)
+        append("\\n\\n")
+        append(item.description)
+    }
+    val accent = franchiseColor(item.game)
+    val art = gameBitmap ?: badgeBitmap
+    val titleLine = item.title + rarityLabel
 
     val builder = NotificationCompat.Builder(context, CHANNEL)
         .setSmallIcon(android.R.drawable.star_on)
-        .setContentTitle("Achievement unlocked!")
-        .setContentText("${item.title} • ${item.game}")
+        .setContentTitle("ACHIEVEMENT UNLOCKED")
+        .setContentText("$titleLine • ${item.game}")
+        .setSubText("$mode • ${item.points} POINTS")
         .setStyle(
-            if (bitmap != null) {
+            if (art != null) {
                 NotificationCompat.BigPictureStyle()
-                    .bigPicture(bitmap)
+                    .bigPicture(art)
+                    .bigLargeIcon(badgeBitmap)
                     .setSummaryText(details)
             } else {
-                NotificationCompat.BigTextStyle()
-                    .bigText(details)
+                NotificationCompat.BigTextStyle().bigText("$titleLine\\n$details")
             }
         )
         .setContentIntent(pending)
         .setAutoCancel(true)
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setColor(accent)
+        .setColorized(true)
+        .setPriority(
+            if (rarity != null && rarity <= 10.0)
+                NotificationCompat.PRIORITY_MAX
+            else NotificationCompat.PRIORITY_DEFAULT
+        )
 
-    if (bitmap != null) builder.setLargeIcon(bitmap)
+    if (badgeBitmap != null) builder.setLargeIcon(badgeBitmap)
 
     NotificationManagerCompat.from(context)
         .notify(item.id.hashCode(), builder.build())
