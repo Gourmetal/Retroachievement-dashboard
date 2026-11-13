@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 172744,
+    "totalRanked": 172926,
     "hardcorePoints": 1,
-    "softcorePoints": 838,
+    "softcorePoints": 851,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-13T14:12:42.047415+00:00",
+  "lastUpdated": "2026-11-13T23:23:30.749389+00:00",
   "games": [
     {
       "gameId": 744,
@@ -529,6 +529,259 @@
         "icon": "https://cdn2.steamgriddb.com/icon/81f89eda54f8e14777eddd0812aea85d.png"
       },
       "launchBoxSpine": "https://images.launchbox-app.com/fdc56a27-60dd-4150-b84b-1e08bdcbc9a8.jpg"
+    },
+    {
+      "gameId": 440,
+      "title": "Bonkers",
+      "console": "SNES/Super Famicom",
+      "earned": 2,
+      "hardcoreEarned": 0,
+      "total": 21,
+      "progress": 9.52,
+      "mode": "Softcore",
+      "lastPlayed": "",
+      "boxArt": "https://retroachievements.org/Images/131130.png",
+      "achievements": [
+        {
+          "id": 22502,
+          "badgeName": "22393",
+          "title": "Basic Spraining",
+          "description": "Collect a Heart to increase your health meter",
+          "points": 2,
+          "earned": true,
+          "dateEarned": "2026-11-13 19:04:50",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22499,
+          "badgeName": "22394",
+          "title": "Fall Apart Bomb Squad",
+          "description": "Collect enough Gold Shields to get an extra bomb in your arsenal",
+          "points": 1,
+          "earned": true,
+          "dateEarned": "2026-11-13 19:03:44",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22509,
+          "badgeName": "22463",
+          "title": "Ain't I a Louse?",
+          "description": "Defeat Louse and beat the Cruise Ship",
+          "points": 5,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22507,
+          "badgeName": "22460",
+          "title": "Calling All Cars",
+          "description": "Defeat Wooly and Bully and beat Wacky Studios",
+          "points": 5,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22508,
+          "badgeName": "22462",
+          "title": "Do Toons Dream of Animated Sheep?",
+          "description": "Defeat Wooly and Bully in Wacky Studios with full Hearts",
+          "points": 10,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22504,
+          "badgeName": "22398",
+          "title": "Fall-Apart Is Not Available",
+          "description": "Break the glass window in the Mansion",
+          "points": 2,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22518,
+          "badgeName": "22473",
+          "title": "Going Bonkers",
+          "description": "Beat the game without collecting any Hearts",
+          "points": 50,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22501,
+          "badgeName": "22396",
+          "title": "In Toons We Trust",
+          "description": "Have a total of 9 lives",
+          "points": 10,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22503,
+          "badgeName": "22395",
+          "title": "Love Stuck",
+          "description": "Collect all 10 Hearts in the game",
+          "points": 25,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22510,
+          "badgeName": "22464",
+          "title": "Once in a Blue Toon",
+          "description": "Defeat Louse in the Cruise Ship with full Hearts",
+          "points": 10,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22511,
+          "badgeName": "22475",
+          "title": "Stay Tooned",
+          "description": "Defeat Toon Helicopter and beat the Neighbourhood",
+          "points": 5,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22515,
+          "badgeName": "22470",
+          "title": "Stressed to Kill",
+          "description": "Defeat The Collector in the Underground with full Hearts",
+          "points": 10,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22517,
+          "badgeName": "22472",
+          "title": "The Day the Toon Stood Still",
+          "description": "Defeat Pops Clock in Toon World with full Hearts",
+          "points": 25,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22505,
+          "badgeName": "22457",
+          "title": "The Dimming",
+          "description": "Defeat the Luminous Figure and beat the Mansion",
+          "points": 5,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22513,
+          "badgeName": "22467",
+          "title": "They Ought to Be in Toons",
+          "description": "Find the hidden celebrities",
+          "points": 5,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22516,
+          "badgeName": "22471",
+          "title": "Time Wounds All Heels",
+          "description": "Defeat Pops Clock and beat Toon World",
+          "points": 10,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22500,
+          "badgeName": "22397",
+          "title": "Toon Blockbuster",
+          "description": "Carry a total of 30 bombs",
+          "points": 10,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22519,
+          "badgeName": "22474",
+          "title": "Toon for a Day",
+          "description": "View the ending scene",
+          "points": 10,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22512,
+          "badgeName": "22466",
+          "title": "Trains, Toons, and Toon Helicopters",
+          "description": "Defeat Toon Helicopter in the Neighborhood with full Hearts",
+          "points": 10,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22506,
+          "badgeName": "22459",
+          "title": "When the Spirit Moves You",
+          "description": "Defeat the Luminous Figure in the Mansion with full Hearts",
+          "points": 5,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 22514,
+          "badgeName": "22469",
+          "title": "Who Framed Bonkers D. Bobcat?",
+          "description": "Defeat The Collector and beat the Underground",
+          "points": 5,
+          "earned": false,
+          "dateEarned": "",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        }
+      ],
+      "steamGridDB": {
+        "gameId": 34900,
+        "grid": "https://cdn2.steamgriddb.com/grid/a51dc9e6634d9de6331435d90614a160.png",
+        "hero": "https://cdn2.steamgriddb.com/hero/d7528f9dcfa7877af9e4f86af207c469.jpg",
+        "logo": "https://cdn2.steamgriddb.com/logo/d77de86dc8bd445f5227875182805a61.png",
+        "icon": "https://cdn2.steamgriddb.com/icon/27c8ba9802bdd05698c845c4cc6cbed1.ico"
+      },
+      "launchBoxSpine": "https://images.launchbox-app.com/c86f0f74-4296-488a-9c4c-42dc935be0dc.jpg"
     },
     {
       "gameId": 510,
@@ -3372,10 +3625,10 @@
       "gameId": 771,
       "title": "Mario & Luigi: Superstar Saga",
       "console": "Game Boy Advance",
-      "earned": 4,
+      "earned": 5,
       "hardcoreEarned": 0,
       "total": 85,
-      "progress": 4.71,
+      "progress": 5.88,
       "mode": "Softcore",
       "lastPlayed": "",
       "boxArt": "https://retroachievements.org/Images/014492.png",
@@ -3388,6 +3641,17 @@
           "points": 10,
           "earned": true,
           "dateEarned": "2026-11-06 18:43:28",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 40696,
+          "badgeName": "186907",
+          "title": "Making a Molehill out of a Mountain",
+          "description": "Crush the Hoohoo Mountain midboss, Hoohooros!",
+          "points": 10,
+          "earned": true,
+          "dateEarned": "2026-11-13 18:29:16",
           "hardcore": false,
           "dateEarnedHardcore": ""
         },
@@ -3892,17 +4156,6 @@
           "title": "Make Neon Eggs, Throw Neon Eggs",
           "description": "Collect all seven neon eggs to get a beanstar piece.",
           "points": 5,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
-          "id": 40696,
-          "badgeName": "186907",
-          "title": "Making a Molehill out of a Mountain",
-          "description": "Crush the Hoohoo Mountain midboss, Hoohooros!",
-          "points": 10,
           "earned": false,
           "dateEarned": "",
           "hardcore": false,
@@ -20663,8 +20916,8 @@
   ],
   "recentAchievements": [],
   "stats": {
-    "gamesPlayed": 24,
-    "achievementsEarned": 170,
-    "achievementsTotal": 1829
+    "gamesPlayed": 25,
+    "achievementsEarned": 173,
+    "achievementsTotal": 1850
   }
 }

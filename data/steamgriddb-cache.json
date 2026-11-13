@@ -166,5 +166,12 @@
     "hero": "https://cdn2.steamgriddb.com/hero/537442dc2f31b1311163fef609949f9c.jpg",
     "logo": "https://cdn2.steamgriddb.com/logo/0b7a9d54deeb611edc4540d286e9a042.png",
     "icon": "https://cdn2.steamgriddb.com/icon/a1e833cec29c1bc16a71da454848a9db.ico"
+  },
+  "Bonkers": {
+    "gameId": 34900,
+    "grid": "https://cdn2.steamgriddb.com/grid/a51dc9e6634d9de6331435d90614a160.png",
+    "hero": "https://cdn2.steamgriddb.com/hero/d7528f9dcfa7877af9e4f86af207c469.jpg",
+    "logo": "https://cdn2.steamgriddb.com/logo/d77de86dc8bd445f5227875182805a61.png",
+    "icon": "https://cdn2.steamgriddb.com/icon/27c8ba9802bdd05698c845c4cc6cbed1.ico"
   }
 }
