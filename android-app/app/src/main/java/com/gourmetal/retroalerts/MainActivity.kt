@@ -705,8 +705,10 @@ fun RetroAlertsApp() {
             if (messagesScreen) {
                 LaunchedEffect(messagesScreen) { messages = loadMessages(context) }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("${messages.size} SAVED ALERTS", color = theme.muted, fontSize = 10.sp)
-                    TextButton(onClick = { prefs.edit().putString("messages", "[]").apply(); messages = emptyList() }) { Text("CLEAR ALL", color = theme.accent) }
+                    Text(if (stickerAlbum) "${achievements.size} ACCOUNT UNLOCKS" else "${messages.size} SAVED ALERTS", color = theme.muted, fontSize = 10.sp)
+                    if (!stickerAlbum) {
+                        TextButton(onClick = { prefs.edit().putString("messages", "[]").apply(); messages = emptyList() }) { Text("CLEAR ALL", color = theme.accent) }
+                    }
                 }
                 val meta = loadMessageMeta(context)
                 val collection = if (stickerAlbum) achievements else messages
@@ -751,8 +753,7 @@ fun RetroAlertsApp() {
                     }
                 }
                 Text(
-                    filtered.size.toString() + if (stickerAlbum) " MATCHING UNLOCKS • " else " MATCHING ALERTS • " +
-                        collection.sumOf { it.points } + " TOTAL POINTS",
+                    "${filtered.size} MATCHING ${if (stickerAlbum) "UNLOCKS" else "ALERTS"} • ${collection.sumOf { it.points }} TOTAL POINTS",
                     color = theme.accent,
                     fontSize = 10.sp
                 )
@@ -820,7 +821,7 @@ fun RetroAlertsApp() {
                     }
                     Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(14.dp)).padding(14.dp)) {
                         Text("STICKER COLLECTION", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 16.sp)
-                        Text("Every saved achievement becomes a collectible. Keep unlocking to fill your album.", color = theme.muted, fontSize = 11.sp)
+                        Text("Every unlock loaded from your RetroAchievements account becomes a collectible. Your inbox stays separate.", color = theme.muted, fontSize = 11.sp)
                         Spacer(Modifier.height(8.dp))
                         Text("${achievements.size} STICKERS COLLECTED", color = theme.text, fontWeight = FontWeight.Bold)
                         Button(onClick = { messagesScreen = true; playerScreen = false; dashboard = false; settings = false; stickerAlbum = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = theme.accent)) {
