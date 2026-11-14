@@ -372,6 +372,9 @@ class AchievementWorker(
 
         return try {
             val achievements = getRecentAchievements(key)
+            // Backfill the inbox from the recent account feed. This does not send
+            // duplicate notifications; it only restores the in-app alert history.
+            achievements.asReversed().forEach { saveMessage(applicationContext, it) }
             val prefs = applicationContext.getSharedPreferences(PREFS, 0)
             val currentIds = achievements.map { it.id }.filter { it.isNotBlank() }.toSet()
             val previousIds = prefs.getStringSet("known_unlocks", null)
@@ -641,6 +644,11 @@ fun RetroAlertsApp() {
             status = "CONNECTING..."
             try {
                 achievements = getAchievements(key)
+                // Keep the inbox populated with the latest account alerts even after an update
+                // or when the background worker has just established its first baseline.
+                val recentAlerts = runCatching { getRecentAchievements(key) }.getOrDefault(emptyList())
+                recentAlerts.asReversed().forEach { saveMessage(context, it) }
+                messages = loadMessages(context)
                 status = "${achievements.size} UNLOCKS LOADED"
             } catch (e: Exception) {
                 status = "ERROR: ${e.message ?: "CONNECTION FAILED"}"
@@ -806,7 +814,27 @@ fun RetroAlertsApp() {
                                         horizontalAlignment = Alignment.CenterHorizontally,
                                         verticalArrangement = Arrangement.Center
                                     ) {
-                                        Text(if (item.hardcore) "🏆" else "🎮", fontSize = 27.sp)
+                                        var stickerBadge by remember(item.id, item.badgeName) {
+                                            mutableStateOf<Bitmap?>(null)
+                                        }
+                                        LaunchedEffect(item.badgeName) {
+                                            stickerBadge = loadBadgeBitmap(item.badgeName)
+                                        }
+                                        if (stickerBadge != null) {
+                                            Image(
+                                                bitmap = stickerBadge!!.asImageBitmap(),
+                                                contentDescription = "${item.title} achievement badge",
+                                                modifier = Modifier.size(58.dp)
+                                            )
+                                        } else {
+                                            Box(
+                                                Modifier.size(58.dp).background(theme.background, RoundedCornerShape(9.dp)),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Text(if (item.hardcore) "🏆" else "🏅", fontSize = 27.sp)
+                                            }
+                                        }
+                                        Spacer(Modifier.height(5.dp))
                                         Text(item.title, color = theme.text, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 3)
                                         Spacer(Modifier.height(4.dp))
                                         Text(item.game, color = theme.accent, fontSize = 8.sp, maxLines = 2)
@@ -840,7 +868,23 @@ fun RetroAlertsApp() {
                 val hardcoreCount = achievements.count { it.hardcore }
                 Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(18.dp)).border(2.dp, theme.accent, RoundedCornerShape(18.dp)).padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        PixelPlayerAvatar(modifier = Modifier.size(124.dp).border(3.dp, theme.accent, RoundedCornerShape(16.dp)))
+                        val savedAvatar = remember {
+                            runCatching {
+                                BitmapFactory.decodeResource(context.resources, R.drawable.gourmetal_avatar)
+                                    ?.asImageBitmap()
+                            }.getOrNull()
+                        }
+                        if (savedAvatar != null) {
+                            Image(
+                                bitmap = savedAvatar,
+                                contentDescription = "Gourmetal player avatar",
+                                modifier = Modifier.size(124.dp).border(3.dp, theme.accent, RoundedCornerShape(16.dp))
+                            )
+                        } else {
+                            PixelPlayerAvatar(
+                                modifier = Modifier.size(124.dp).border(3.dp, theme.accent, RoundedCornerShape(16.dp))
+                            )
+                        }
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                             Text("PLAYER ONE", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 18.sp)
                             Text("LEVEL $level", color = theme.text, fontWeight = FontWeight.Bold, fontSize = 15.sp)
