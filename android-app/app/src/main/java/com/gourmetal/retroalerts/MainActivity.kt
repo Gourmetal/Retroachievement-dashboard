@@ -560,6 +560,7 @@ fun RetroAlertsApp() {
     var settings by remember { mutableStateOf(false) }
     var dashboard by remember { mutableStateOf(false) }
     var messagesScreen by remember { mutableStateOf(false) }
+    var playerScreen by remember { mutableStateOf(false) }
     var messages by remember { mutableStateOf(loadMessages(context)) }
     var messageSearch by remember { mutableStateOf("") }
     var messageFilter by remember { mutableStateOf("ALL") }
@@ -665,7 +666,7 @@ fun RetroAlertsApp() {
                     .padding(14.dp)
             ) {
                 Text(
-                    when { dashboard -> "DASHBOARD"; messagesScreen -> "MESSAGES"; settings -> "SETTINGS"; else -> "READY, PLAYER?" },
+                    when { dashboard -> "DASHBOARD"; messagesScreen -> "MESSAGES"; playerScreen -> "PLAYER PROFILE"; settings -> "SETTINGS"; else -> "READY, PLAYER?" },
                     color = theme.text,
                     fontSize = 21.sp,
                     fontWeight = FontWeight.Black
@@ -688,11 +689,11 @@ fun RetroAlertsApp() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    when { dashboard -> "RETROACHIEVEMENTS DASHBOARD"; messagesScreen -> "ALERT INBOX"; settings -> "PERSONALIZE YOUR APP"; else -> "RECENT UNLOCKS" },
+                    when { dashboard -> "RETROACHIEVEMENTS DASHBOARD"; messagesScreen -> "ALERT INBOX"; playerScreen -> "YOUR PLAYER PROFILE"; settings -> "PERSONALIZE YOUR APP"; else -> "RECENT UNLOCKS" },
                     color = theme.text,
                     fontWeight = FontWeight.Bold
                 )
-                if (!settings && !dashboard && !messagesScreen) {
+                if (!settings && !dashboard && !messagesScreen && !playerScreen) {
                     IconButton(onClick = { refresh() }, enabled = !loading) {
                         Icon(Icons.Default.Refresh, "Refresh", tint = theme.accent)
                     }
@@ -784,6 +785,44 @@ fun RetroAlertsApp() {
                                 TextButton(onClick = { removeMessage(context, item.id); messages = loadMessages(context) }) { Text("DELETE", color = theme.muted) }
                             }
                         }
+                    }
+                }
+            } else if (playerScreen) {
+                val totalPoints = achievements.sumOf { it.points }
+                val level = (totalPoints / 1000) + 1
+                val favorites = loadMessageMeta(context).values.count { it.favorite }
+                val hardcoreCount = achievements.count { it.hardcore }
+                Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(18.dp)).border(2.dp, theme.accent, RoundedCornerShape(18.dp)).padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                        Image(painter = painterResource(R.drawable.gourmetal_avatar), contentDescription = "Black and gold player avatar", modifier = Modifier.size(124.dp).border(3.dp, theme.accent, RoundedCornerShape(16.dp)))
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Text("PLAYER ONE", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 18.sp)
+                            Text("LEVEL $level", color = theme.text, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+                            Text("GOLDEN VOLT • RETRO HUNTER", color = theme.muted, fontSize = 9.sp)
+                            Text("$totalPoints POINTS", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Stat("UNLOCKS", achievements.size.toString(), Modifier.weight(1f), theme)
+                        Stat("HARDCORE", hardcoreCount.toString(), Modifier.weight(1f), theme)
+                        Stat("FAVORITES", favorites.toString(), Modifier.weight(1f), theme)
+                    }
+                    Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(14.dp)).padding(14.dp)) {
+                        Text("STICKER COLLECTION", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                        Text("Every saved achievement becomes a collectible. Keep unlocking to fill your album.", color = theme.muted, fontSize = 11.sp)
+                        Spacer(Modifier.height(8.dp))
+                        Text("${messages.size} STICKERS COLLECTED", color = theme.text, fontWeight = FontWeight.Bold)
+                        Button(onClick = { messagesScreen = true; playerScreen = false; dashboard = false; settings = false; stickerAlbum = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = theme.accent)) {
+                            Text("OPEN STICKER ALBUM", color = theme.background, fontWeight = FontWeight.Black)
+                        }
+                    }
+                    Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(14.dp)).padding(14.dp)) {
+                        Text("RECENT TROPHY", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 15.sp)
+                        if (messages.isNotEmpty()) {
+                            val latest = messages.first()
+                            Text(latest.title, color = theme.text, fontWeight = FontWeight.Bold)
+                            Text("${latest.game} • ${latest.points} PTS", color = theme.muted, fontSize = 11.sp)
+                        } else Text("Your first saved unlock will appear here.", color = theme.muted, fontSize = 11.sp)
                     }
                 }
             } else if (dashboard) {
@@ -1013,7 +1052,7 @@ fun RetroAlertsApp() {
 
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 Button(
-                    onClick = { dashboard = false; messagesScreen = false; settings = false },
+                    onClick = { dashboard = false; messagesScreen = false; playerScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (!settings && !dashboard) theme.accent else theme.card
@@ -1022,7 +1061,7 @@ fun RetroAlertsApp() {
                     Text("HOME", color = if (!settings && !dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
-                    onClick = { messagesScreen = true; dashboard = false; settings = false },
+                    onClick = { messagesScreen = true; dashboard = false; playerScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (messagesScreen) theme.accent else theme.card
@@ -1031,7 +1070,12 @@ fun RetroAlertsApp() {
                     Text("MESSAGES", color = if (messagesScreen) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
-                    onClick = { dashboard = true; messagesScreen = false; settings = false },
+                    onClick = { playerScreen = true; dashboard = false; messagesScreen = false; settings = false },
+                    modifier = Modifier.weight(0.85f),
+                    colors = ButtonDefaults.buttonColors(containerColor = if (playerScreen) theme.accent else theme.card)
+                ) { Text("PLAYER", color = if (playerScreen) theme.background else theme.text, fontSize = 9.sp, maxLines = 1, softWrap = false) }
+                Button(
+                    onClick = { dashboard = true; messagesScreen = false; playerScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (dashboard) theme.accent else theme.card
@@ -1040,7 +1084,7 @@ fun RetroAlertsApp() {
                     Text("DASHBOARD", color = if (dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
-                    onClick = { settings = true; dashboard = false; messagesScreen = false },
+                    onClick = { settings = true; dashboard = false; messagesScreen = false; playerScreen = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (settings) theme.accent else theme.card
