@@ -709,7 +709,8 @@ fun RetroAlertsApp() {
                     TextButton(onClick = { prefs.edit().putString("messages", "[]").apply(); messages = emptyList() }) { Text("CLEAR ALL", color = theme.accent) }
                 }
                 val meta = loadMessageMeta(context)
-                val filtered = messages.filter { item ->
+                val collection = if (stickerAlbum) achievements else messages
+                val filtered = collection.filter { item ->
                     val m = meta[item.id] ?: MessageMeta()
                     val textMatch = messageSearch.isBlank() || item.title.contains(messageSearch, true) || item.game.contains(messageSearch, true) || item.description.contains(messageSearch, true)
                     val filterMatch = when (messageFilter) {
@@ -791,19 +792,7 @@ fun RetroAlertsApp() {
                 val hardcoreCount = achievements.count { it.hardcore }
                 Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(18.dp)).border(2.dp, theme.accent, RoundedCornerShape(18.dp)).padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        val safeAvatar = remember {
-                            runCatching {
-                                BitmapFactory.decodeResource(context.resources, R.drawable.gourmetal_avatar)
-                                    ?.asImageBitmap()
-                            }.getOrNull()
-                        }
-                        if (safeAvatar != null) {
-                            Image(bitmap = safeAvatar, contentDescription = "Black and gold player avatar", modifier = Modifier.size(124.dp).border(3.dp, theme.accent, RoundedCornerShape(16.dp)))
-                        } else {
-                            Box(Modifier.size(124.dp).background(theme.background, RoundedCornerShape(16.dp)).border(3.dp, theme.accent, RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
-                                Text("⚡", color = theme.accent, fontSize = 54.sp)
-                            }
-                        }
+                        PixelPlayerAvatar(modifier = Modifier.size(124.dp).border(3.dp, theme.accent, RoundedCornerShape(16.dp)))
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                             Text("PLAYER ONE", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 18.sp)
                             Text("LEVEL $level", color = theme.text, fontWeight = FontWeight.Bold, fontSize = 15.sp)
@@ -820,15 +809,15 @@ fun RetroAlertsApp() {
                         Text("STICKER COLLECTION", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 16.sp)
                         Text("Every saved achievement becomes a collectible. Keep unlocking to fill your album.", color = theme.muted, fontSize = 11.sp)
                         Spacer(Modifier.height(8.dp))
-                        Text("${messages.size} STICKERS COLLECTED", color = theme.text, fontWeight = FontWeight.Bold)
+                        Text("${achievements.size} STICKERS COLLECTED", color = theme.text, fontWeight = FontWeight.Bold)
                         Button(onClick = { messagesScreen = true; playerScreen = false; dashboard = false; settings = false; stickerAlbum = true }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = theme.accent)) {
                             Text("OPEN STICKER ALBUM", color = theme.background, fontWeight = FontWeight.Black)
                         }
                     }
                     Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(14.dp)).padding(14.dp)) {
                         Text("RECENT TROPHY", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 15.sp)
-                        if (messages.isNotEmpty()) {
-                            val latest = messages.first()
+                        if (achievements.isNotEmpty()) {
+                            val latest = achievements.first()
                             Text(latest.title, color = theme.text, fontWeight = FontWeight.Bold)
                             Text("${latest.game} • ${latest.points} PTS", color = theme.muted, fontSize = 11.sp)
                         } else Text("Your first saved unlock will appear here.", color = theme.muted, fontSize = 11.sp)
