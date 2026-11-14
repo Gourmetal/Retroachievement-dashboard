@@ -635,12 +635,13 @@ fun RetroAlertsApp() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Image(
-                    painter = painterResource(R.drawable.gourmetal_avatar),
-                    contentDescription = "Gourmetal avatar",
-                    modifier = Modifier.size(64.dp)
-                        .border(2.dp, theme.accent, RoundedCornerShape(14.dp))
-                )
+                Box(
+                    Modifier.size(64.dp).background(theme.background, RoundedCornerShape(14.dp))
+                        .border(2.dp, theme.accent, RoundedCornerShape(14.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("⚡", fontSize = 30.sp)
+                }
                 Column {
                     Text(
                         "GOURMETAL",
