@@ -787,11 +787,23 @@ fun RetroAlertsApp() {
             } else if (playerScreen) {
                 val totalPoints = achievements.sumOf { it.points }
                 val level = (totalPoints / 1000) + 1
-                val favorites = loadMessageMeta(context).values.count { it.favorite }
+                val favorites = runCatching { loadMessageMeta(context).values.count { it.favorite } }.getOrDefault(0)
                 val hardcoreCount = achievements.count { it.hardcore }
                 Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(18.dp)).border(2.dp, theme.accent, RoundedCornerShape(18.dp)).padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                        Image(painter = painterResource(R.drawable.gourmetal_avatar), contentDescription = "Black and gold player avatar", modifier = Modifier.size(124.dp).border(3.dp, theme.accent, RoundedCornerShape(16.dp)))
+                        val safeAvatar = remember {
+                            runCatching {
+                                BitmapFactory.decodeResource(context.resources, R.drawable.gourmetal_avatar)
+                                    ?.asImageBitmap()
+                            }.getOrNull()
+                        }
+                        if (safeAvatar != null) {
+                            Image(bitmap = safeAvatar, contentDescription = "Black and gold player avatar", modifier = Modifier.size(124.dp).border(3.dp, theme.accent, RoundedCornerShape(16.dp)))
+                        } else {
+                            Box(Modifier.size(124.dp).background(theme.background, RoundedCornerShape(16.dp)).border(3.dp, theme.accent, RoundedCornerShape(16.dp)), contentAlignment = Alignment.Center) {
+                                Text("⚡", color = theme.accent, fontSize = 54.sp)
+                            }
+                        }
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                             Text("PLAYER ONE", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 18.sp)
                             Text("LEVEL $level", color = theme.text, fontWeight = FontWeight.Bold, fontSize = 15.sp)
