@@ -533,15 +533,11 @@ private fun ThemeBackdrop(theme: AppTheme) {
                     end = androidx.compose.ui.geometry.Offset(baseX - 5f, baseY + 15f),
                     strokeWidth = 1.5f
                 )
-                "leaves" -> {
-                    rotate(degrees = (drift * 360f + i * 19f) % 360f, pivotX = baseX, pivotY = baseY) {
-                        drawOval(
-                            color = theme.accent.copy(alpha = 0.22f),
-                            topLeft = androidx.compose.ui.geometry.Offset(baseX - 3f, baseY - 5f),
-                            size = androidx.compose.ui.geometry.Size(6f, 10f)
-                        )
-                    }
-                }
+                "leaves" -> drawOval(
+                    color = theme.accent.copy(alpha = 0.22f),
+                    topLeft = androidx.compose.ui.geometry.Offset(baseX - 3f, baseY - 5f),
+                    size = androidx.compose.ui.geometry.Size(6f, 10f)
+                )
                 else -> {
                     val twinkle = if ((i % 3) == 0) 3.2f else 1.8f
                     drawCircle(theme.accent.copy(alpha = 0.18f + pulse * 0.3f), twinkle, point)
