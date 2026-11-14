@@ -150,7 +150,59 @@ private object KeyVault {
 }
 
 
+private fun parseAchievementList(json: JSONArray): List<Achievement> {
+    val byId = linkedMapOf<String, Achievement>()
+    for (i in 0 until json.length()) {
+        val item = json.optJSONObject(i) ?: continue
+        val achievement = Achievement(
+            item.optString("AchievementID"),
+            item.optString("GameTitle", "Unknown game"),
+            item.optString("Title", "Achievement"),
+            item.optInt("Points"),
+            item.optInt("HardcoreMode") == 1,
+            item.optString("Date", ""),
+            item.optString("Description", "No description available."),
+            item.optString("BadgeName", ""),
+            item.optString("GameID", ""),
+            item.optString("GameIcon", ""),
+            item.optDouble("TrueRatio", item.optDouble("Rarity", 0.0))
+        )
+        if (achievement.id.isNotBlank()) {
+            val previous = byId[achievement.id]
+            if (previous == null || (!previous.hardcore && achievement.hardcore)) {
+                byId[achievement.id] = achievement
+            }
+        }
+    }
+    return byId.values.sortedByDescending { it.date }
+}
+
 private suspend fun getAchievements(apiKey: String): List<Achievement> =
+    withContext(Dispatchers.IO) {
+        val encoded = URLEncoder.encode(apiKey, "UTF-8")
+        val from = 946684800L // 2000-01-01 UTC
+        val to = System.currentTimeMillis() / 1000L
+        val url = URL(
+            "https://retroachievements.org/API/API_GetAchievementsEarnedBetween.php" +
+                "?u=Gourmetal&f=$from&t=$to&y=$encoded"
+        )
+        val connection = url.openConnection() as HttpURLConnection
+
+        try {
+            connection.connectTimeout = 20000
+            connection.readTimeout = 30000
+            connection.setRequestProperty("Accept", "application/json")
+            if (connection.responseCode !in 200..299) {
+                throw Exception("Connection error: \${connection.responseCode}")
+            }
+            val json = JSONArray(connection.inputStream.bufferedReader().use { it.readText() })
+            parseAchievementList(json)
+        } finally {
+            connection.disconnect()
+        }
+    }
+
+private suspend fun getRecentAchievements(apiKey: String): List<Achievement> =
     withContext(Dispatchers.IO) {
         val encoded = URLEncoder.encode(apiKey, "UTF-8")
         val url = URL(
@@ -163,29 +215,11 @@ private suspend fun getAchievements(apiKey: String): List<Achievement> =
             connection.connectTimeout = 15000
             connection.readTimeout = 15000
             connection.setRequestProperty("Accept", "application/json")
-
             if (connection.responseCode !in 200..299) {
-                throw Exception("Connection error: ${connection.responseCode}")
+                throw Exception("Connection error: \${connection.responseCode}")
             }
-
             val json = JSONArray(connection.inputStream.bufferedReader().use { it.readText() })
-
-            (0 until json.length()).map { i ->
-                val item = json.getJSONObject(i)
-                Achievement(
-                    item.optString("AchievementID"),
-                    item.optString("GameTitle", "Unknown game"),
-                    item.optString("Title", "Achievement"),
-                    item.optInt("Points"),
-                    item.optInt("HardcoreMode") == 1,
-                    item.optString("Date", ""),
-                    item.optString("Description", "No description available."),
-                    item.optString("BadgeName", ""),
-                    item.optString("GameID", ""),
-                    item.optString("GameIcon", ""),
-                    item.optDouble("TrueRatio", item.optDouble("Rarity", 0.0))
-                )
-            }
+            parseAchievementList(json)
         } finally {
             connection.disconnect()
         }
@@ -337,7 +371,7 @@ class AchievementWorker(
         val key = KeyVault.load(applicationContext) ?: return Result.success()
 
         return try {
-            val achievements = getAchievements(key)
+            val achievements = getRecentAchievements(key)
             val prefs = applicationContext.getSharedPreferences(PREFS, 0)
             val currentIds = achievements.map { it.id }.filter { it.isNotBlank() }.toSet()
             val previousIds = prefs.getStringSet("known_unlocks", null)
