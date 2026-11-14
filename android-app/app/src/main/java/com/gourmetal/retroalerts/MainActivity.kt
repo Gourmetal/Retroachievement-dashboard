@@ -713,17 +713,25 @@ fun RetroAlertsApp() {
                 val filtered = collection.filter { item ->
                     val m = meta[item.id] ?: MessageMeta()
                     val textMatch = messageSearch.isBlank() || item.title.contains(messageSearch, true) || item.game.contains(messageSearch, true) || item.description.contains(messageSearch, true)
-                    val filterMatch = when (messageFilter) {
-                        "UNREAD" -> !m.read
-                        "READ" -> m.read
-                        "FAVORITES" -> m.favorite
-                        "HARDCORE" -> item.hardcore
-                        "SOFTCORE" -> !item.hardcore
-                        else -> true
+                    val filterMatch = if (stickerAlbum) {
+                        when (messageFilter) {
+                            "HARDCORE" -> item.hardcore
+                            "SOFTCORE" -> !item.hardcore
+                            else -> true
+                        }
+                    } else {
+                        when (messageFilter) {
+                            "UNREAD" -> !m.read
+                            "READ" -> m.read
+                            "FAVORITES" -> m.favorite
+                            "HARDCORE" -> item.hardcore
+                            "SOFTCORE" -> !item.hardcore
+                            else -> true
+                        }
                     }
                     textMatch && filterMatch && (selectedGame == null || selectedGame == item.game)
                 }
-                OutlinedTextField(value = messageSearch, onValueChange = { messageSearch = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("Search messages") })
+                OutlinedTextField(value = messageSearch, onValueChange = { messageSearch = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text(if (stickerAlbum) "Search unlocked achievements" else "Search messages") })
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     listOf("ALL", "UNREAD", "READ", "FAVORITES", "HARDCORE", "SOFTCORE").forEach { filter ->
                         FilterChip(selected = messageFilter == filter, onClick = { messageFilter = filter }, label = { Text(filter) })
@@ -738,13 +746,18 @@ fun RetroAlertsApp() {
                 }
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                     FilterChip(selected = selectedGame == null, onClick = { selectedGame = null }, label = { Text("ALL GAMES") })
-                    messages.map { it.game }.distinct().sorted().forEach { game ->
+                    collection.map { it.game }.distinct().sorted().forEach { game ->
                         FilterChip(selected = selectedGame == game, onClick = { selectedGame = if (selectedGame == game) null else game }, label = { Text(game) })
                     }
                 }
-                Text(filtered.size.toString() + " MATCHING ALERTS • " + messages.sumOf { it.points } + " TOTAL POINTS", color = theme.accent, fontSize = 10.sp)
+                Text(
+                    filtered.size.toString() + if (stickerAlbum) " MATCHING UNLOCKS • " else " MATCHING ALERTS • " +
+                        collection.sumOf { it.points } + " TOTAL POINTS",
+                    color = theme.accent,
+                    fontSize = 10.sp
+                )
                 if (filtered.isEmpty()) {
-                    Text("NO MATCHING MESSAGES", color = theme.text, modifier = Modifier.padding(24.dp))
+                    Text(if (stickerAlbum) "NO MATCHING UNLOCKS" else "NO MATCHING MESSAGES", color = theme.text, modifier = Modifier.padding(24.dp))
                 } else if (stickerAlbum) {
                     LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                         items(filtered.chunked(3)) { rowItems ->
@@ -1101,6 +1114,76 @@ fun RetroAlertsApp() {
                 letterSpacing = 1.sp
             )
         }
+    }
+}
+
+
+@Composable
+private fun PixelPlayerAvatar(modifier: Modifier = Modifier) {
+    Canvas(modifier) {
+        val cell = size.minDimension / 20f
+        fun block(x: Int, y: Int, w: Int, h: Int, color: Color) {
+            drawRect(
+                color = color,
+                topLeft = androidx.compose.ui.geometry.Offset(x * cell, y * cell),
+                size = androidx.compose.ui.geometry.Size(w * cell, h * cell)
+            )
+        }
+
+        val void = Color(0xFF101018)
+        val shadow = Color(0xFF171923)
+        val hood = Color(0xFF242936)
+        val hoodie = Color(0xFF11151E)
+        val trim = Color(0xFF596174)
+        val gold = Color(0xFFFFC928)
+        val glow = Color(0xFFFFE58A)
+
+        block(0, 0, 20, 20, void)
+
+        // Electric gold lightning framing the character.
+        block(2, 1, 2, 2, gold)
+        block(1, 3, 2, 2, gold)
+        block(2, 5, 2, 2, gold)
+        block(3, 7, 2, 2, gold)
+        block(1, 9, 2, 2, glow)
+        block(3, 11, 2, 2, gold)
+        block(16, 1, 2, 2, gold)
+        block(17, 3, 2, 2, gold)
+        block(16, 5, 2, 2, gold)
+        block(15, 7, 2, 2, gold)
+        block(17, 9, 2, 2, glow)
+        block(15, 11, 2, 2, gold)
+
+        // Hood silhouette and shoulders.
+        block(5, 4, 10, 2, trim)
+        block(4, 6, 12, 8, hood)
+        block(3, 12, 14, 6, hood)
+        block(2, 16, 16, 3, hoodie)
+        block(5, 17, 10, 3, hoodie)
+
+        // Face and black cap.
+        block(6, 6, 8, 8, Color(0xFF080A10))
+        block(6, 4, 8, 2, Color(0xFF050609))
+        block(5, 5, 10, 2, Color(0xFF050609))
+        block(4, 6, 12, 1, Color(0xFF050609))
+        block(7, 3, 6, 1, trim)
+        block(8, 4, 4, 1, Color(0xFF343B4A))
+
+        // Glowing golden eyes.
+        block(7, 9, 2, 2, gold)
+        block(11, 9, 2, 2, gold)
+        block(7, 9, 1, 1, glow)
+        block(11, 9, 1, 1, glow)
+        block(8, 12, 4, 1, trim)
+
+        // Hoodie collar, zipper, and electric details.
+        block(7, 14, 6, 2, Color(0xFF080A10))
+        block(9, 15, 2, 4, gold)
+        block(9, 16, 1, 2, glow)
+        block(4, 15, 2, 2, trim)
+        block(14, 15, 2, 2, trim)
+        block(3, 19, 5, 1, gold)
+        block(12, 19, 5, 1, gold)
     }
 }
 
