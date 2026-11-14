@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 172961,
+    "totalRanked": 172992,
     "hardcorePoints": 1,
-    "softcorePoints": 851,
+    "softcorePoints": 861,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-14T05:34:37.427409+00:00",
+  "lastUpdated": "2026-11-14T13:12:10.348684+00:00",
   "games": [
     {
       "gameId": 744,
@@ -3625,10 +3625,10 @@
       "gameId": 771,
       "title": "Mario & Luigi: Superstar Saga",
       "console": "Game Boy Advance",
-      "earned": 5,
+      "earned": 6,
       "hardcoreEarned": 0,
       "total": 85,
-      "progress": 5.88,
+      "progress": 7.06,
       "mode": "Softcore",
       "lastPlayed": "",
       "boxArt": "https://retroachievements.org/Images/014492.png",
@@ -3663,6 +3663,17 @@
           "points": 1,
           "earned": true,
           "dateEarned": "2026-11-06 18:55:30",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 40697,
+          "badgeName": "186908",
+          "title": "ROCK THE DRAGON!",
+          "description": "Defeat Dragohoho at the top of Hoohoo Mountain!",
+          "points": 10,
+          "earned": true,
+          "dateEarned": "2026-11-14 06:46:28",
           "hardcore": false,
           "dateEarnedHardcore": ""
         },
@@ -4277,17 +4288,6 @@
           "title": "Rewards in the Outskirts",
           "description": "Receive a Golden Mushroom, 1-Up Mushroom, and Red and Green Peppers as a gift from Celebrity Moles in BeanBean Outskirts",
           "points": 5,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
-          "id": 40697,
-          "badgeName": "186908",
-          "title": "ROCK THE DRAGON!",
-          "description": "Defeat Dragohoho at the top of Hoohoo Mountain!",
-          "points": 10,
           "earned": false,
           "dateEarned": "",
           "hardcore": false,
@@ -20917,7 +20917,7 @@
   "recentAchievements": [],
   "stats": {
     "gamesPlayed": 25,
-    "achievementsEarned": 173,
+    "achievementsEarned": 174,
     "achievementsTotal": 1850
   }
 }
