@@ -1186,7 +1186,7 @@ fun RetroAlertsApp() {
 
             Spacer(Modifier.height(8.dp))
             Text(
-                "GBA EDITION • VERSION 0.6.0",
+                "GBA EDITION • VERSION 0.7.0",
                 Modifier.align(Alignment.CenterHorizontally),
                 color = theme.muted,
                 fontSize = 9.sp,
