@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 173145,
+    "totalRanked": 173220,
     "hardcorePoints": 1,
-    "softcorePoints": 861,
+    "softcorePoints": 912,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-15T13:39:54.512858+00:00",
+  "lastUpdated": "2026-11-15T22:37:08.613670+00:00",
   "games": [
     {
       "gameId": 744,
@@ -3625,14 +3625,36 @@
       "gameId": 771,
       "title": "Mario & Luigi: Superstar Saga",
       "console": "Game Boy Advance",
-      "earned": 6,
+      "earned": 13,
       "hardcoreEarned": 0,
       "total": 85,
-      "progress": 7.06,
+      "progress": 15.29,
       "mode": "Softcore",
       "lastPlayed": "",
       "boxArt": "https://retroachievements.org/Images/014492.png",
       "achievements": [
+        {
+          "id": 40755,
+          "badgeName": "186966",
+          "title": "Bouncing Here and There and Everywhere",
+          "description": "Upgrade Bounce Brothers to ADVANCE Level!",
+          "points": 5,
+          "earned": true,
+          "dateEarned": "2026-11-15 18:15:00",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 40751,
+          "badgeName": "186962",
+          "title": "CANNONBALLLLL!!",
+          "description": "Upgrade Splash Brothers to ADVANCE Level!",
+          "points": 5,
+          "earned": true,
+          "dateEarned": "2026-11-15 18:15:00",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
         {
           "id": 40691,
           "badgeName": "186902",
@@ -3641,6 +3663,28 @@
           "points": 10,
           "earned": true,
           "dateEarned": "2026-11-06 18:43:28",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 40706,
+          "badgeName": "186917",
+          "title": "Cyberdyne Systems' Liquid-Joke Beverage",
+          "description": "Sentient soda has escaped, terminate with extreme prejudice.",
+          "points": 10,
+          "earned": true,
+          "dateEarned": "2026-11-15 19:35:48",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 40704,
+          "badgeName": "186915",
+          "title": "Gold That IS Worth a Hill of Beans",
+          "description": "Get a Spike Badge from a Gold Beanie!",
+          "points": 10,
+          "earned": true,
+          "dateEarned": "2026-11-15 18:14:59",
           "hardcore": false,
           "dateEarnedHardcore": ""
         },
@@ -3663,6 +3707,17 @@
           "points": 1,
           "earned": true,
           "dateEarned": "2026-11-06 18:55:30",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 40703,
+          "badgeName": "186914",
+          "title": "Of Mice and Moles",
+          "description": "Get the two goblets by using your new hammer abilities!",
+          "points": 1,
+          "earned": true,
+          "dateEarned": "2026-11-15 18:36:03",
           "hardcore": false,
           "dateEarnedHardcore": ""
         },
@@ -3696,6 +3751,28 @@
           "points": 10,
           "earned": true,
           "dateEarned": "2026-11-07 23:49:36",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 40702,
+          "badgeName": "186913",
+          "title": "WE'RE Shakin' Up the Soda Here Now, See?",
+          "description": "Defeat Popple and Rookie at Chateau de Chucklehuck!",
+          "points": 10,
+          "earned": true,
+          "dateEarned": "2026-11-15 18:31:40",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 40705,
+          "badgeName": "186916",
+          "title": "Wiggle Me This, Fatman!",
+          "description": "Defeat Wiggler in Chucklehuck Woods!",
+          "points": 10,
+          "earned": true,
+          "dateEarned": "2026-11-15 18:58:32",
           "hardcore": false,
           "dateEarnedHardcore": ""
         },
@@ -3788,17 +3865,6 @@
           "dateEarnedHardcore": ""
         },
         {
-          "id": 40755,
-          "badgeName": "186966",
-          "title": "Bouncing Here and There and Everywhere",
-          "description": "Upgrade Bounce Brothers to ADVANCE Level!",
-          "points": 5,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
           "id": 40743,
           "badgeName": "186954",
           "title": "Breakout the Salt",
@@ -3843,17 +3909,6 @@
           "dateEarnedHardcore": ""
         },
         {
-          "id": 40751,
-          "badgeName": "186962",
-          "title": "CANNONBALLLLL!!",
-          "description": "Upgrade Splash Brothers to ADVANCE Level!",
-          "points": 5,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
           "id": 40736,
           "badgeName": "186947",
           "title": "Check Your G-Diffusers for Bonus Reward Points",
@@ -3881,17 +3936,6 @@
           "title": "Colonel Mustard's Last Stand",
           "description": "Defeat Fawful for the last time!",
           "points": 25,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
-          "id": 40706,
-          "badgeName": "186917",
-          "title": "Cyberdyne Systems' Liquid-Joke Beverage",
-          "description": "Sentient soda has escaped, terminate with extreme prejudice.",
-          "points": 10,
           "earned": false,
           "dateEarned": "",
           "hardcore": false,
@@ -3980,17 +4024,6 @@
           "title": "Give me a B! Give me an EAN!",
           "description": "Collect every bean in the beanholes of Woohoo Hooniversity",
           "points": 5,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
-          "id": 40704,
-          "badgeName": "186915",
-          "title": "Gold That IS Worth a Hill of Beans",
-          "description": "Get a Spike Badge from a Gold Beanie!",
-          "points": 10,
           "earned": false,
           "dateEarned": "",
           "hardcore": false,
@@ -4239,17 +4272,6 @@
           "dateEarnedHardcore": ""
         },
         {
-          "id": 40703,
-          "badgeName": "186914",
-          "title": "Of Mice and Moles",
-          "description": "Get the two goblets by using your new hammer abilities!",
-          "points": 1,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
           "id": 469973,
           "badgeName": "532714",
           "title": "Peppers to Heat Up the Cold",
@@ -4481,17 +4503,6 @@
           "dateEarnedHardcore": ""
         },
         {
-          "id": 40702,
-          "badgeName": "186913",
-          "title": "WE'RE Shakin' Up the Soda Here Now, See?",
-          "description": "Defeat Popple and Rookie at Chateau de Chucklehuck!",
-          "points": 10,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
           "id": 40731,
           "badgeName": "186942",
           "title": "Whack-A-Wendy",
@@ -4508,17 +4519,6 @@
           "title": "What Not to Care",
           "description": "Get the Beanstar Piece from Harhall.",
           "points": 5,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
-          "id": 40705,
-          "badgeName": "186916",
-          "title": "Wiggle Me This, Fatman!",
-          "description": "Defeat Wiggler in Chucklehuck Woods!",
-          "points": 10,
           "earned": false,
           "dateEarned": "",
           "hardcore": false,
@@ -20917,7 +20917,7 @@
   "recentAchievements": [],
   "stats": {
     "gamesPlayed": 25,
-    "achievementsEarned": 174,
+    "achievementsEarned": 181,
     "achievementsTotal": 1850
   }
 }
