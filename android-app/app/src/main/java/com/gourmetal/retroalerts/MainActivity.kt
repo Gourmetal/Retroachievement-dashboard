@@ -744,7 +744,14 @@ fun RetroAlertsApp() {
             }
 
             if (messagesScreen) {
-                LaunchedEffect(messagesScreen) { messages = loadMessages(context) }
+                LaunchedEffect(messagesScreen) {
+                    // Keep the inbox in sync with alerts saved by the background worker
+                    // while the Messages screen is open.
+                    while (messagesScreen) {
+                        messages = loadMessages(context)
+                        delay(2500)
+                    }
+                }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(if (stickerAlbum) "${achievements.size} ACCOUNT UNLOCKS" else "${messages.size} SAVED ALERTS", color = theme.muted, fontSize = 10.sp)
                     if (!stickerAlbum) {
@@ -854,7 +861,14 @@ fun RetroAlertsApp() {
                                     TextButton(onClick = { setMessageMeta(context, item.id, favorite = !m.favorite); messages = loadMessages(context) }) { Text(if (m.favorite) "★ FAVORITE" else "☆ FAVORITE", color = theme.accent) }
                                     TextButton(onClick = { setMessageMeta(context, item.id, read = !m.read); messages = loadMessages(context) }) { Text(if (m.read) "UNREAD" else "MARK READ", color = theme.accent) }
                                 }
-                                AchievementCard(item, theme) { scope.launch { saveMessage(context, item); notifyAchievement(context, item); status = "ALERT RESENT" } }
+                                AchievementCard(item, theme) {
+                                    scope.launch {
+                                        saveMessage(context, item)
+                                        messages = loadMessages(context)
+                                        notifyAchievement(context, item)
+                                        status = "ALERT RESENT • SAVED TO INBOX"
+                                    }
+                                }
                                 TextButton(onClick = { removeMessage(context, item.id); messages = loadMessages(context) }) { Text("DELETE", color = theme.muted) }
                             }
                         }
@@ -877,11 +891,17 @@ fun RetroAlertsApp() {
                             Image(
                                 bitmap = savedAvatar,
                                 contentDescription = "Gourmetal player avatar",
-                                modifier = Modifier.size(124.dp).border(3.dp, theme.accent, RoundedCornerShape(16.dp))
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .size(width = 124.dp, height = 165.dp)
+                                    .background(theme.background, RoundedCornerShape(16.dp))
+                                    .border(3.dp, theme.accent, RoundedCornerShape(16.dp))
                             )
                         } else {
                             PixelPlayerAvatar(
-                                modifier = Modifier.size(124.dp).border(3.dp, theme.accent, RoundedCornerShape(16.dp))
+                                modifier = Modifier
+                                    .size(width = 124.dp, height = 165.dp)
+                                    .border(3.dp, theme.accent, RoundedCornerShape(16.dp))
                             )
                         }
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
