@@ -261,7 +261,7 @@ private fun scheduleChecks(context: Context, intervalMinutes: Int = 15) {
 
     WorkManager.getInstance(context).enqueueUniquePeriodicWork(
         WORK,
-        ExistingPeriodicWorkPolicy.KEEP,
+        ExistingPeriodicWorkPolicy.UPDATE,
         request
     )
 }
@@ -383,42 +383,59 @@ class AchievementWorker(
 
     override suspend fun doWork(): Result {
         val key = KeyVault.load(applicationContext) ?: return Result.success()
+        val prefs = applicationContext.getSharedPreferences(PREFS, 0)
 
         return try {
-            val achievements = getRecentAchievements(key)
-            val prefs = applicationContext.getSharedPreferences(PREFS, 0)
-            // On upgrade, treat the existing inbox as history; only new unlocks become unread.
+            // Prefer the recent feed, but fall back to full history if that endpoint fails.
+            val achievements = try {
+                getRecentAchievements(key)
+            } catch (_: Exception) {
+                getAchievements(key)
+            }
+
             if (!prefs.getBoolean("unread_initialized", false)) {
-                loadMessages(applicationContext).forEach { setMessageMeta(applicationContext, it.id, read = true) }
+                loadMessages(applicationContext).forEach {
+                    setMessageMeta(applicationContext, it.id, read = true)
+                }
                 prefs.edit().putBoolean("unread_initialized", true).apply()
             }
-            // Backfill the inbox from the recent account feed without duplicating entries.
-            achievements.asReversed().forEach { saveMessage(applicationContext, it) }
-            val currentIds = achievements.map { it.id }.filter { it.isNotBlank() }.toSet()
-            val previousIds = prefs.getStringSet("known_unlocks", null)
 
-            if (previousIds == null) {
-                achievements.forEach { setMessageMeta(applicationContext, it.id, read = true) }
-                prefs.edit().putStringSet("known_unlocks", currentIds).apply()
-            } else {
-                achievements.filter {
-                    it.id.isNotBlank() && it.id !in previousIds
-                }.forEach {
-                    saveMessage(applicationContext, it)
-                    playRetroSound(applicationContext, alert = true)
-                    notifyAchievement(applicationContext, it)
+            val previousIds = prefs.getStringSet("known_unlocks", null)?.toSet()
+            val lastCheck = prefs.getString("last_check", null)?.toLongOrNull() ?: 0L
+
+            achievements.take(100).asReversed().forEach { saveMessage(applicationContext, it) }
+
+            if (previousIds == null || lastCheck <= 0L) {
+                achievements.forEach {
+                    setMessageMeta(applicationContext, it.id, read = true)
                 }
-                prefs.edit().putStringSet("known_unlocks", currentIds).apply()
+            } else {
+                val newUnlocks = achievements.filter { item ->
+                    item.id.isNotBlank() &&
+                        item.id !in previousIds &&
+                        achievementTimestamp(item.date) >= (lastCheck - 5 * 60 * 1000L)
+                }
+                newUnlocks.forEach { item ->
+                    saveMessage(applicationContext, item)
+                    playRetroSound(applicationContext, alert = true)
+                    notifyAchievement(applicationContext, item)
+                }
             }
 
-            prefs.edit().putString("last_check", System.currentTimeMillis().toString()).apply()
+            // Keep previously seen IDs when the recent feed rolls older items off.
+            val known = previousIds.orEmpty() +
+                achievements.map { it.id }.filter { it.isNotBlank() }
+            prefs.edit()
+                .putStringSet("known_unlocks", known)
+                .putString("last_check", System.currentTimeMillis().toString())
+                .apply()
+
             Result.success()
         } catch (_: Exception) {
             Result.retry()
         }
     }
 }
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -692,6 +709,10 @@ fun RetroAlertsApp() {
         if (connected) refresh()
     }
 
+    LaunchedEffect(notifications, checkMinutes) {
+        if (notifications) scheduleChecks(context, checkMinutes)
+    }
+
     LaunchedEffect(Unit) {
         while (true) {
             messages = loadMessages(context)
@@ -949,7 +970,15 @@ fun RetroAlertsApp() {
                         Stat("HARDCORE", hardcoreCount.toString(), Modifier.weight(1f), theme)
                         Stat("FAVORITES", favorites.toString(), Modifier.weight(1f), theme)
                     }
-                    AchievementCalendar(achievements, theme)
+                    AchievementCalendar(achievements, theme) { item ->
+                        scope.launch {
+                            saveMessage(context, item)
+                            messages = loadMessages(context)
+                            playRetroSound(context, alert = true)
+                            notifyAchievement(context, item)
+                            status = "ALERT RESENT • SAVED TO INBOX"
+                        }
+                    }
                     Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(14.dp)).padding(14.dp)) {
                         Text("STICKER COLLECTION", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 16.sp)
                         Text("Every unlock loaded from your RetroAchievements account becomes a collectible. Your inbox stays separate.", color = theme.muted, fontSize = 11.sp)
@@ -1486,29 +1515,71 @@ private fun AchievementCard(
     }
 }
 
+private fun parseAchievementDate(value: String): java.time.LocalDate? {
+    return runCatching { java.time.LocalDate.parse(value.trim().take(10)) }.getOrNull()
+}
+
+private fun achievementTimestamp(value: String): Long {
+    val instant = runCatching { java.time.Instant.parse(value) }.getOrNull()
+    if (instant != null) return instant.toEpochMilli()
+    val localDateTime = runCatching {
+        java.time.LocalDateTime.parse(
+            value.take(19),
+            java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        )
+    }.getOrNull()
+    if (localDateTime != null) return localDateTime.toInstant(java.time.ZoneOffset.UTC).toEpochMilli()
+    return parseAchievementDate(value)?.atStartOfDay(java.time.ZoneOffset.UTC)
+        ?.toInstant()?.toEpochMilli() ?: 0L
+}
+
 @Composable
-private fun AchievementCalendar(achievements: List<Achievement>, theme: AppTheme) {
+private fun AchievementCalendar(
+    achievements: List<Achievement>,
+    theme: AppTheme,
+    onResend: (Achievement) -> Unit
+) {
     val latestMonth = remember(achievements) {
-        achievements.mapNotNull { runCatching { java.time.LocalDate.parse(it.date.take(10)) }.getOrNull() }
+        achievements.mapNotNull { parseAchievementDate(it.date) }
             .maxOrNull()?.let { java.time.YearMonth.from(it) } ?: java.time.YearMonth.now()
     }
     var month by remember(achievements) { mutableStateOf(latestMonth) }
-    val unlockDays = remember(achievements, month) {
-        achievements.mapNotNull { item -> runCatching { java.time.LocalDate.parse(item.date.take(10)) }.getOrNull() }
-            .filter { java.time.YearMonth.from(it) == month }.groupingBy { it.dayOfMonth }.eachCount()
+    var selectedDate by remember(achievements) { mutableStateOf<java.time.LocalDate?>(null) }
+
+    val datedAchievements = remember(achievements) {
+        achievements.mapNotNull { item -> parseAchievementDate(item.date)?.let { it to item } }
     }
-    Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(14.dp))
-        .border(1.dp, theme.accent.copy(alpha = 0.55f), RoundedCornerShape(14.dp)).padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val dayAchievements = remember(datedAchievements, selectedDate) {
+        datedAchievements.filter { it.first == selectedDate }
+            .map { it.second }.sortedByDescending { it.date }
+    }
+    val unlockDays = remember(datedAchievements, month) {
+        datedAchievements.map { it.first }
+            .filter { java.time.YearMonth.from(it) == month }
+            .groupingBy { it.dayOfMonth }.eachCount()
+    }
+
+    Column(
+        Modifier.fillMaxWidth()
+            .background(theme.card, RoundedCornerShape(14.dp))
+            .border(1.dp, theme.accent.copy(alpha = 0.55f), RoundedCornerShape(14.dp))
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
         Text("ACHIEVEMENT HISTORY", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 15.sp)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            IconButton(onClick = { month = month.minusMonths(1) }) { Icon(Icons.Default.ChevronLeft, "Previous month", tint = theme.accent) }
+            IconButton(onClick = { month = month.minusMonths(1); selectedDate = null }) {
+                Icon(Icons.Default.ChevronLeft, "Previous month", tint = theme.accent)
+            }
             Text("${month.month.name} ${month.year}", color = theme.text, fontWeight = FontWeight.Bold)
-            IconButton(onClick = { month = month.plusMonths(1) }) { Icon(Icons.Default.ChevronRight, "Next month", tint = theme.accent) }
+            IconButton(onClick = { month = month.plusMonths(1); selectedDate = null }) {
+                Icon(Icons.Default.ChevronRight, "Next month", tint = theme.accent)
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
             listOf("S", "M", "T", "W", "T", "F", "S").forEach {
-                Text(it, Modifier.weight(1f), color = theme.muted, fontSize = 10.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                Text(it, Modifier.weight(1f), color = theme.muted, fontSize = 10.sp,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center)
             }
         }
         val offset = month.atDay(1).dayOfWeek.value % 7
@@ -1518,23 +1589,65 @@ private fun AchievementCalendar(achievements: List<Achievement>, theme: AppTheme
                 (weekStart until weekStart + 7).forEach { cell ->
                     val day = cell - offset + 1
                     val valid = day in 1..month.lengthOfMonth()
+                    val date = if (valid) month.atDay(day) else null
                     val count = if (valid) unlockDays[day] ?: 0 else 0
-                    Box(Modifier.weight(1f).aspectRatio(1f)
-                        .background(if (count > 0) theme.accent else theme.background, RoundedCornerShape(7.dp)),
-                        contentAlignment = Alignment.Center) {
-                        if (valid) Text(if (count > 0) "$day\n$count" else day.toString(),
-                            color = if (count > 0) theme.background else theme.muted,
+                    val selected = date != null && date == selectedDate
+                    Box(
+                        Modifier.weight(1f).aspectRatio(1f)
+                            .background(
+                                if (selected) theme.text else if (count > 0) theme.accent else theme.background,
+                                RoundedCornerShape(7.dp)
+                            )
+                            .then(if (valid && count > 0) Modifier.clickable {
+                                selectedDate = if (selectedDate == date) null else date
+                            } else Modifier),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (valid) Text(
+                            if (count > 0) "$day\n$count" else day.toString(),
+                            color = if (selected || count > 0) theme.background else theme.muted,
                             fontSize = if (count > 0) 9.sp else 10.sp,
-                            fontWeight = if (count > 0) FontWeight.Black else FontWeight.Normal,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center, lineHeight = 10.sp)
+                            fontWeight = if (count > 0 || selected) FontWeight.Black else FontWeight.Normal,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                            lineHeight = 10.sp
+                        )
                     }
                 }
             }
         }
-        Text("${unlockDays.values.sum()} UNLOCKS • ${unlockDays.size} ACTIVE DAYS", color = theme.muted, fontSize = 10.sp)
+        Text("${unlockDays.values.sum()} UNLOCKS • ${unlockDays.size} ACTIVE DAYS",
+            color = theme.muted, fontSize = 10.sp)
+
+        if (selectedDate != null) {
+            HorizontalDivider(color = theme.accent.copy(alpha = 0.45f))
+            Text(
+                "UNLOCKS ON ${selectedDate!!.month.name} ${selectedDate!!.dayOfMonth}, ${selectedDate!!.year}",
+                color = theme.accent, fontWeight = FontWeight.Black, fontSize = 12.sp
+            )
+            if (dayAchievements.isEmpty()) {
+                Text("No achievements were recorded for this day.", color = theme.muted, fontSize = 11.sp)
+            } else {
+                dayAchievements.forEach { item ->
+                    Column(
+                        Modifier.fillMaxWidth().background(theme.background, RoundedCornerShape(9.dp)).padding(9.dp),
+                        verticalArrangement = Arrangement.spacedBy(3.dp)
+                    ) {
+                        Text(item.title, color = theme.text, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                        Text(item.game, color = theme.accent, fontSize = 10.sp)
+                        Text("${item.points} PTS • ${if (item.hardcore) "HARDCORE" else "SOFTCORE"}",
+                            color = theme.muted, fontSize = 9.sp)
+                        Text(item.description, color = theme.muted, fontSize = 10.sp)
+                        TextButton(onClick = { onResend(item) }, contentPadding = PaddingValues(0.dp)) {
+                            Text("RESEND ALERT", color = theme.accent, fontSize = 10.sp)
+                        }
+                    }
+                }
+            }
+        } else {
+            Text("Tap a highlighted day to see its achievements.", color = theme.muted, fontSize = 10.sp)
+        }
     }
 }
-
 private data class MessageMeta(val read: Boolean = false, val favorite: Boolean = false)
 
 private fun loadMessageMeta(context: Context): Map<String, MessageMeta> {
