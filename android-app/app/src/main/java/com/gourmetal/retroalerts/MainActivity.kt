@@ -12,6 +12,10 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
+import android.os.Handler
+import android.os.Looper
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.graphics.Canvas
 import android.graphics.Movie
 import android.graphics.Paint
@@ -41,6 +45,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -66,6 +71,15 @@ import kotlinx.coroutines.withContext
 private const val PREFS = "retro_alerts"
 private const val CHANNEL = "achievement_alerts_v2"
 private const val WORK = "achievement_checker"
+
+private fun playRetroSound(context: Context, alert: Boolean = false) {
+    if (!context.getSharedPreferences(PREFS, 0).getBoolean("retro_sounds", true)) return
+    try {
+        val tone = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 70)
+        tone.startTone(if (alert) ToneGenerator.TONE_PROP_ACK else ToneGenerator.TONE_PROP_BEEP, if (alert) 180 else 75)
+        Handler(Looper.getMainLooper()).postDelayed({ tone.release() }, 300)
+    } catch (_: Exception) { }
+}
 
 data class Achievement(
     val id: String,
@@ -380,12 +394,14 @@ class AchievementWorker(
             val previousIds = prefs.getStringSet("known_unlocks", null)
 
             if (previousIds == null) {
+                achievements.forEach { setMessageMeta(applicationContext, it.id, read = true) }
                 prefs.edit().putStringSet("known_unlocks", currentIds).apply()
             } else {
                 achievements.filter {
                     it.id.isNotBlank() && it.id !in previousIds
                 }.forEach {
                     saveMessage(applicationContext, it)
+                    playRetroSound(applicationContext, alert = true)
                     notifyAchievement(applicationContext, it)
                 }
                 prefs.edit().putStringSet("known_unlocks", currentIds).apply()
@@ -595,6 +611,7 @@ fun RetroAlertsApp() {
     var messagesScreen by remember { mutableStateOf(false) }
     var playerScreen by remember { mutableStateOf(false) }
     var messages by remember { mutableStateOf(loadMessages(context)) }
+    var retroSounds by remember { mutableStateOf(prefs.getBoolean("retro_sounds", true)) }
     var messageSearch by remember { mutableStateOf("") }
     var messageFilter by remember { mutableStateOf("ALL") }
     var selectedGame by remember { mutableStateOf<String?>(null) }
@@ -615,6 +632,8 @@ fun RetroAlertsApp() {
     }
 
     val theme = themes[selectedTheme]
+    val messageMeta = remember(messages) { loadMessageMeta(context) }
+    val unreadCount = messages.count { !(messageMeta[it.id]?.read ?: false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -646,7 +665,11 @@ fun RetroAlertsApp() {
                 achievements = getAchievements(key)
                 // Build the inbox from the full account history so it still works if the
                 // separate recent-feed endpoint is unavailable. Keep the latest 100 alerts.
-                achievements.take(100).asReversed().forEach { saveMessage(context, it) }
+                val hadInboxHistory = loadMessages(context).isNotEmpty()
+                achievements.take(100).asReversed().forEach { item ->
+                    saveMessage(context, item)
+                    if (!hadInboxHistory) setMessageMeta(context, item.id, read = true)
+                }
                 messages = loadMessages(context)
                 status = "${achievements.size} UNLOCKS LOADED • ${messages.size} ALERTS READY"
             } catch (e: Exception) {
@@ -758,7 +781,7 @@ fun RetroAlertsApp() {
                         TextButton(onClick = { prefs.edit().putString("messages", "[]").apply(); messages = emptyList() }) { Text("CLEAR ALL", color = theme.accent) }
                     }
                 }
-                val meta = loadMessageMeta(context)
+                val meta = messageMeta
                 val collection = if (stickerAlbum) achievements else messages
                 val filtered = collection.filter { item ->
                     val m = meta[item.id] ?: MessageMeta()
