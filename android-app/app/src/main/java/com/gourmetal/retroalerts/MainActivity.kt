@@ -23,9 +23,6 @@ import android.view.View
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.webkit.WebChromeClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -52,7 +49,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.*
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.work.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
@@ -748,6 +744,8 @@ fun RetroAlertsApp() {
     var hubScreen by remember { mutableStateOf(true) }
     var settings by remember { mutableStateOf(false) }
     var dashboard by remember { mutableStateOf(false) }
+    var dashboardSection by remember { mutableStateOf("library") }
+    var librarySearch by remember { mutableStateOf("") }
     var messagesScreen by remember { mutableStateOf(false) }
     var playerScreen by remember { mutableStateOf(false) }
     var messages by remember { mutableStateOf(loadMessages(context)) }
@@ -890,6 +888,8 @@ fun RetroAlertsApp() {
                         hubScreen = true
                         settings = false
                         dashboard = false
+                        dashboardSection = "library"
+                        librarySearch = ""
                         messagesScreen = false
                         playerScreen = false
                         roadmapScreen = false
@@ -962,6 +962,8 @@ fun RetroAlertsApp() {
                                             settings = false
                                             messagesScreen = false
                                             dashboard = item.third == "library" || item.third == "trophies" || item.third == "gameplay"
+                                            dashboardSection = item.third
+                                            librarySearch = ""
                                             playerScreen = item.third == "player"
                                             roadmapScreen = item.third == "roadmap"
                                             backlogScreen = item.third == "backlog"
@@ -1372,35 +1374,98 @@ fun RetroAlertsApp() {
                     }
                 }
             } else if (dashboard) {
-                AndroidView(
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 300.dp, max = 470.dp),
-                    factory = { viewContext ->
-                        WebView(viewContext).apply {
-                            setBackgroundColor(theme.background.toArgb())
-                            webViewClient = object : WebViewClient() {
-                                override fun onPageFinished(view: WebView, url: String) {
-                                    val pageColor = String.format(
-                                        "#%06X",
-                                        0xFFFFFF and theme.background.toArgb()
-                                    )
-                                    view.evaluateJavascript(
-                                        "document.documentElement.style.backgroundColor='$pageColor';" +
-                                            "document.body.style.backgroundColor='$pageColor';",
-                                        null
-                                    )
+                when (dashboardSection) {
+                    "library" -> {
+                        val filteredGames = gameLibrary.filter { it.title.contains(librarySearch, ignoreCase = true) || it.console.contains(librarySearch, ignoreCase = true) }
+                        Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = librarySearch,
+                                onValueChange = { librarySearch = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                label = { Text("Search your game library") }
+                            )
+                            Text("${filteredGames.size} GAMES • TAP A GAME FOR ITS ACHIEVEMENT ROADMAP", color = theme.accent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                            if (filteredGames.isEmpty()) {
+                                Text(if (gameLibrary.isEmpty()) "Connect your RetroAchievements account and refresh Home to load your games." else "No games match that search.", color = theme.muted, fontSize = 12.sp, modifier = Modifier.padding(12.dp))
+                            } else {
+                                LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                    items(filteredGames, key = { it.id }) { game ->
+                                        Column(
+                                            Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(10.dp))
+                                                .border(1.dp, theme.accent.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
+                                                .clickable {
+                                                    val key = KeyVault.load(context)
+                                                    if (key != null) scope.launch {
+                                                        roadmapLoading = true
+                                                        selectedRoadmap = null
+                                                        try { selectedRoadmap = getGameRoadmap(key, game); roadmapScreen = true; dashboard = false }
+                                                        catch (e: Exception) { status = "ROADMAP ERROR: ${e.message}" }
+                                                        roadmapLoading = false
+                                                    } else { settings = true; hubScreen = false; status = "CONNECT YOUR ACCOUNT FIRST" }
+                                                }.padding(10.dp),
+                                            verticalArrangement = Arrangement.spacedBy(5.dp)
+                                        ) {
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(game.title, Modifier.weight(1f), color = theme.text, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                                Text("${game.earned}/${game.total}", color = theme.accent, fontSize = 10.sp)
+                                            }
+                                            LinearProgressIndicator(progress = { game.progress / 100f }, modifier = Modifier.fillMaxWidth().height(6.dp), color = theme.accent, trackColor = theme.background)
+                                            Text("${game.progress}% COMPLETE • ${game.console}", color = theme.muted, fontSize = 9.sp)
+                                        }
+                                    }
                                 }
                             }
-                            this.settings.javaScriptEnabled = true
-                            this.settings.domStorageEnabled = true
-                            this.settings.mediaPlaybackRequiresUserGesture = false
-                            this.settings.allowFileAccess = true
-                            this.settings.allowContentAccess = true
-                            this.settings.loadsImagesAutomatically = true
-                            this.webChromeClient = WebChromeClient()
-                            loadUrl("file:///android_asset/gourme-hub/index.html")
                         }
                     }
-                )
+                    "trophies" -> {
+                        val totalPoints = achievements.sumOf { it.points }
+                        val hardcoreCount = achievements.count { it.hardcore }
+                        Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                                Stat("TROPHIES", achievements.size.toString(), Modifier.weight(1f), theme)
+                                Stat("POINTS", totalPoints.toString(), Modifier.weight(1f), theme)
+                                Stat("HARDCORE", hardcoreCount.toString(), Modifier.weight(1f), theme)
+                            }
+                            Text("YOUR UNLOCKED ACHIEVEMENTS", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                            if (achievements.isEmpty()) Text("No trophies yet. Connect your account and refresh Home.", color = theme.muted, fontSize = 12.sp)
+                            else LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                items(achievements, key = { it.id }) { item ->
+                                    Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(10.dp)).border(1.dp, theme.accent.copy(alpha = 0.35f), RoundedCornerShape(10.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text(item.title, color = theme.text, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                        Text(item.game, color = theme.accent, fontSize = 10.sp)
+                                        Text("${item.points} POINTS • ${if (item.hardcore) "HARDCORE" else "SOFTCORE"}", color = theme.muted, fontSize = 9.sp)
+                                        if (item.description.isNotBlank()) Text(item.description, color = theme.text, fontSize = 10.sp, maxLines = 3)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else -> {
+                        val gameplayGames = gameLibrary.take(30)
+                        Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("GAMEPLAY VIDEOS & WALKTHROUGHS", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 13.sp)
+                            Text("Choose a game to search YouTube. Video playback opens outside the app; this screen stays native.", color = theme.muted, fontSize = 10.sp)
+                            if (gameplayGames.isEmpty()) Text("Connect your account and refresh Home to load game suggestions.", color = theme.muted, fontSize = 12.sp)
+                            else LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                items(gameplayGames, key = { it.id }) { game ->
+                                    Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(9.dp)).border(1.dp, theme.accent.copy(alpha = 0.4f), RoundedCornerShape(9.dp)).clickable {
+                                        val query = URLEncoder.encode("${game.title} ${game.console} gameplay walkthrough", "UTF-8")
+                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=$query")))
+                                    }.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Text("▶", color = theme.accent, fontSize = 18.sp, modifier = Modifier.padding(end = 10.dp))
+                                        Column(Modifier.weight(1f)) {
+                                            Text(game.title, color = theme.text, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                            Text("${game.console} • Gameplay & walkthroughs", color = theme.muted, fontSize = 9.sp)
+                                        }
+                                        Icon(Icons.Default.OpenInNew, contentDescription = "Search videos", tint = theme.accent)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             } else if (!settings) {
                 if (recentAchievements.isEmpty()) {
                     Column(
