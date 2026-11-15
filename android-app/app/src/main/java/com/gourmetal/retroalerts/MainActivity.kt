@@ -884,6 +884,22 @@ fun RetroAlertsApp() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                if (!hubScreen) {
+                    IconButton(onClick = {
+                        playRetroSound(context)
+                        hubScreen = true
+                        settings = false
+                        dashboard = false
+                        messagesScreen = false
+                        playerScreen = false
+                        roadmapScreen = false
+                        backlogScreen = false
+                        selectedRoadmap = null
+                        selectedAchievementDetail = null
+                    }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back to home", tint = theme.accent)
+                    }
+                }
                 Box(
                     Modifier.size(64.dp).background(theme.background, RoundedCornerShape(14.dp))
                         .border(2.dp, theme.accent, RoundedCornerShape(14.dp)),
@@ -992,10 +1008,14 @@ fun RetroAlertsApp() {
                 Text(status, color = theme.muted, fontSize = 11.sp)
                 Spacer(Modifier.height(12.dp))
 
-                Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    Stat("UNLOCKS", achievements.size.toString(), Modifier.weight(1f), theme)
-                    Stat("POINTS", achievements.sumOf { it.points }.toString(), Modifier.weight(1f), theme)
-                    Stat("STATUS", if (connected) "LINKED" else "OFFLINE", Modifier.weight(1f), theme)
+                if (!settings) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        Stat("UNLOCKS", achievements.size.toString(), Modifier.weight(1f), theme)
+                        Stat("POINTS", achievements.sumOf { it.points }.toString(), Modifier.weight(1f), theme)
+                        Stat("STATUS", if (connected) "LINKED" else "OFFLINE", Modifier.weight(1f), theme)
+                    }
+                } else {
+                    Text(achievements.size.toString() + " UNLOCKS • " + (if (connected) "ACCOUNT LINKED" else "ACCOUNT OFFLINE"), color = theme.accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -1622,64 +1642,6 @@ fun RetroAlertsApp() {
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
-
-            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                Button(
-                    onClick = { playRetroSound(context); hubScreen = true; dashboard = false; messagesScreen = false; playerScreen = false; roadmapScreen = false; backlogScreen = false; settings = false },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (!settings && !dashboard && !messagesScreen && !playerScreen) theme.accent else theme.card
-                    )
-                ) {
-                    Text("HOME", color = if (!settings && !dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
-                }
-                Button(
-                    onClick = { playRetroSound(context); messagesScreen = true; dashboard = false; playerScreen = false; roadmapScreen = false; backlogScreen = false; settings = false },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (messagesScreen) theme.accent else theme.card
-                    )
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
-                        Text("MESSAGES", color = if (messagesScreen) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
-                        if (unreadCount > 0) {
-                            Spacer(Modifier.width(4.dp))
-                            Text(unreadCount.coerceAtMost(99).toString(), color = theme.background, fontSize = 9.sp, fontWeight = FontWeight.Black,
-                                modifier = Modifier.background(theme.accent, RoundedCornerShape(10.dp)).padding(horizontal = 5.dp, vertical = 2.dp))
-                        }
-                    }
-                }
-                Button(
-                    onClick = { playRetroSound(context); playerScreen = true; dashboard = false; messagesScreen = false; roadmapScreen = false; backlogScreen = false; settings = false },
-                    modifier = Modifier.weight(0.85f),
-                    colors = ButtonDefaults.buttonColors(containerColor = if (playerScreen) theme.accent else theme.card)
-                ) { Text("PLAYER", color = if (playerScreen) theme.background else theme.text, fontSize = 9.sp, maxLines = 1, softWrap = false) }
-                Button(onClick = { playRetroSound(context); roadmapScreen = true; backlogScreen = false; dashboard = false; messagesScreen = false; playerScreen = false; settings = false }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = if (roadmapScreen) theme.accent else theme.card)) {
-                    Text("ROADMAP", color = if (roadmapScreen) theme.background else theme.text, fontSize = 9.sp, maxLines = 1, softWrap = false)
-                }
-                Button(onClick = { playRetroSound(context); backlogScreen = true; roadmapScreen = false; dashboard = false; messagesScreen = false; playerScreen = false; settings = false }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = if (backlogScreen) theme.accent else theme.card)) {
-                    Text("BACKLOG", color = if (backlogScreen) theme.background else theme.text, fontSize = 9.sp, maxLines = 1, softWrap = false)
-                }
-                Button(
-                    onClick = { playRetroSound(context); dashboard = true; messagesScreen = false; playerScreen = false; roadmapScreen = false; backlogScreen = false; settings = false },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (dashboard) theme.accent else theme.card
-                    )
-                ) {
-                    Text("DASHBOARD", color = if (dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
-                }
-                Button(
-                    onClick = { playRetroSound(context); settings = true; dashboard = false; messagesScreen = false; playerScreen = false; roadmapScreen = false; backlogScreen = false },
-                    modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (settings) theme.accent else theme.card
-                    )
-                ) {
-                    Text("SETTINGS", color = if (settings) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
-                }
-            }
             }
 
             Spacer(Modifier.height(8.dp))
