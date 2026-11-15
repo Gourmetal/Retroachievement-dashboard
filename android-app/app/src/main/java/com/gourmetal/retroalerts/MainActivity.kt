@@ -1466,7 +1466,8 @@ fun RetroAlertsApp() {
                         }
                     }
                 }
-            else if (!settings) {
+                }
+            } else if (!settings) {
                 if (recentAchievements.isEmpty()) {
                     Column(
                         Modifier.fillMaxWidth().heightIn(min = 150.dp)
