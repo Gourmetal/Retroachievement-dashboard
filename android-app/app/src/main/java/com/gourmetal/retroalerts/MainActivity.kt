@@ -324,7 +324,7 @@ private suspend fun notifyAchievement(context: Context, item: Achievement) {
         append(item.game)
         append(" • ${item.points} points • $mode")
         if (rarityLabel.isNotEmpty()) append(rarityLabel)
-        append("\\n\\n")
+        append("\n\n")
         append(item.description)
     }
     val accent = franchiseColor(item.game)
@@ -343,7 +343,7 @@ private suspend fun notifyAchievement(context: Context, item: Achievement) {
                     .bigLargeIcon(badgeBitmap)
                     .setSummaryText(details)
             } else {
-                NotificationCompat.BigTextStyle().bigText("$titleLine\\n$details")
+                NotificationCompat.BigTextStyle().bigText("$titleLine\n$details")
             }
         )
         .setContentIntent(pending)
@@ -644,12 +644,11 @@ fun RetroAlertsApp() {
             status = "CONNECTING..."
             try {
                 achievements = getAchievements(key)
-                // Keep the inbox populated with the latest account alerts even after an update
-                // or when the background worker has just established its first baseline.
-                val recentAlerts = runCatching { getRecentAchievements(key) }.getOrDefault(emptyList())
-                recentAlerts.asReversed().forEach { saveMessage(context, it) }
+                // Build the inbox from the full account history so it still works if the
+                // separate recent-feed endpoint is unavailable. Keep the latest 100 alerts.
+                achievements.take(100).asReversed().forEach { saveMessage(context, it) }
                 messages = loadMessages(context)
-                status = "${achievements.size} UNLOCKS LOADED"
+                status = "${achievements.size} UNLOCKS LOADED • ${messages.size} ALERTS READY"
             } catch (e: Exception) {
                 status = "ERROR: ${e.message ?: "CONNECTION FAILED"}"
             }
@@ -1294,78 +1293,124 @@ private suspend fun loadBadgeBitmap(badgeName: String): Bitmap? =
         }
     }
 
+private suspend fun loadRemoteBitmap(url: String?): Bitmap? =
+    withContext(Dispatchers.IO) {
+        if (url.isNullOrBlank()) return@withContext null
+        try {
+            val connection = URL(url).openConnection().apply {
+                connectTimeout = 10000
+                readTimeout = 10000
+            }
+            connection.getInputStream().use { BitmapFactory.decodeStream(it) }
+        } catch (_: Exception) {
+            null
+        }
+    }
+
 @Composable
 private fun AchievementCard(
     item: Achievement,
     theme: AppTheme,
     onResend: () -> Unit
 ) {
-    var badge by remember(item.badgeName) {
-        mutableStateOf<Bitmap?>(null)
-    }
+    var badge by remember(item.badgeName) { mutableStateOf<Bitmap?>(null) }
+    var gameArt by remember(item.gameIcon) { mutableStateOf<Bitmap?>(null) }
 
     LaunchedEffect(item.badgeName) {
         badge = loadBadgeBitmap(item.badgeName)
+    }
+    LaunchedEffect(item.gameIcon) {
+        gameArt = loadRemoteBitmap(gameArtworkUrl(item.gameIcon))
+    }
+
+    val rarityLabel = when {
+        item.trueRatio > 0.0 && item.trueRatio <= 5.0 -> "ULTRA RARE"
+        item.trueRatio > 0.0 && item.trueRatio <= 10.0 -> "RARE"
+        else -> null
     }
 
     Column(
         Modifier.fillMaxWidth()
             .background(theme.card, RoundedCornerShape(12.dp))
-            .border(1.dp, theme.accent.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+            .border(1.dp, theme.accent.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
             .padding(12.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            if (badge != null) {
-                Image(
-                    bitmap = badge!!.asImageBitmap(),
-                    contentDescription = "Achievement badge",
-                    modifier = Modifier.size(64.dp)
-                )
-                Spacer(Modifier.width(12.dp))
-            }
-
-            Column(Modifier.weight(1f)) {
-                Text(item.game, color = theme.accent, fontSize = 11.sp)
-                Text(item.title, color = theme.text, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-
         Text(
-            item.description,
-            color = theme.muted,
-            fontSize = 11.sp
+            "ACHIEVEMENT UNLOCKED",
+            color = theme.accent,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Black,
+            letterSpacing = 1.sp
         )
-
-        Spacer(Modifier.height(6.dp))
+        Spacer(Modifier.height(8.dp))
 
         Row(
             Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            if (badge != null) {
+                Image(
+                    bitmap = badge!!.asImageBitmap(),
+                    contentDescription = "${item.title} achievement badge",
+                    modifier = Modifier.size(68.dp)
+                )
+            } else if (gameArt != null) {
+                Image(
+                    bitmap = gameArt!!.asImageBitmap(),
+                    contentDescription = "${item.game} game artwork",
+                    modifier = Modifier.size(68.dp)
+                )
+            } else {
+                Box(
+                    Modifier.size(68.dp).background(theme.background, RoundedCornerShape(10.dp)),
+                    contentAlignment = Alignment.Center
+                ) { Text(if (item.hardcore) "🏆" else "🏅", fontSize = 30.sp) }
+            }
+
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Text(item.game, color = theme.accent, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text(item.title, color = theme.text, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                if (rarityLabel != null) {
+                    Text("✦ $rarityLabel", color = theme.accent, fontSize = 9.sp, fontWeight = FontWeight.Black)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
+        Text(
+            item.description.ifBlank { "No description available." },
+            color = theme.text,
+            fontSize = 12.sp
+        )
+        Spacer(Modifier.height(10.dp))
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                if (item.hardcore) "HARDCORE" else "SOFTCORE",
+                if (item.hardcore) "HARDCORE MODE" else "SOFTCORE MODE",
                 color = if (item.hardcore) theme.accent else theme.muted,
-                fontSize = 10.sp
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
             )
-            Text("${item.points} POINTS", color = theme.text, fontSize = 10.sp)
+            Text("${item.points} POINTS", color = theme.text, fontSize = 10.sp, fontWeight = FontWeight.Bold)
         }
 
         if (item.date.isNotBlank()) {
-            Text(item.date, color = theme.muted, fontSize = 9.sp)
+            Spacer(Modifier.height(5.dp))
+            Text("UNLOCKED • ${item.date}", color = theme.muted, fontSize = 9.sp)
         }
 
         Spacer(Modifier.height(8.dp))
-
-        OutlinedButton(
-            onClick = onResend,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("RESEND ALERT", color = Color.White)
+        OutlinedButton(onClick = onResend, modifier = Modifier.fillMaxWidth()) {
+            Text("RESEND FULL ALERT", color = Color.White)
         }
     }
-} 
+}
+
 private data class MessageMeta(val read: Boolean = false, val favorite: Boolean = false)
 
 private fun loadMessageMeta(context: Context): Map<String, MessageMeta> {
