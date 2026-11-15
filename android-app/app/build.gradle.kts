@@ -29,8 +29,8 @@ android {
         applicationId = "com.gourmetal.retroalerts"
         minSdk = 26
         targetSdk = 35
-        versionCode = 17
-        versionName = "0.7.4"
+        versionCode = 18
+        versionName = "0.7.5"
     }
 
     compileOptions {
