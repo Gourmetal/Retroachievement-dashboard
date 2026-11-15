@@ -497,8 +497,7 @@ private class BootGifView(
         postInvalidateDelayed(16)
     }
 
-    private fun drawMovie(canvas: Canvas, gif: Movie) {
-        val sourceWidth = gif.width().coerceAtLeast(1)
+    private fun drawMovie(canvas: Canvas, gif: Movie) {        val sourceWidth = gif.width().coerceAtLeast(1)
         val sourceHeight = gif.height().coerceAtLeast(1)
         val scale = minOf(
             width.toFloat() / sourceWidth,
@@ -997,8 +996,7 @@ fun RetroAlertsApp() {
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Stat("UNLOCKS", achievements.size.toString(), Modifier.weight(1f), theme)
-                        Stat("HARDCORE", hardcoreCount.toString(), Modifier.weight(1f), theme)
+                        Stat("UNLOCKS", achievements.size.toString(), Modifier.weight(1f), theme)                        Stat("HARDCORE", hardcoreCount.toString(), Modifier.weight(1f), theme)
                         Stat("FAVORITES", favorites.toString(), Modifier.weight(1f), theme)
                     }
                     AchievementCalendar(achievements, theme) { item ->
@@ -1498,7 +1496,6 @@ private fun Stat(label: String, value: String, modifier: Modifier, theme: AppThe
 private suspend fun loadBadgeBitmap(badgeName: String): Bitmap? =
     withContext(Dispatchers.IO) {
         if (badgeName.isBlank()) return@withContext null
-
         try {
             val url = URL(
                 "https://media.retroachievements.org/Badge/$badgeName.png"
@@ -1581,6 +1578,7 @@ private fun GameCartridgeCard(
     }
 }
 
+@Composable
 private fun AchievementCard(
     item: Achievement,
     theme: AppTheme,
@@ -1888,4 +1886,3 @@ private fun loadMessages(context: Context): List<Achievement> {
         )
     }
 }
-
