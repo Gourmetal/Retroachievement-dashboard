@@ -745,6 +745,7 @@ fun RetroAlertsApp() {
     val scope = rememberCoroutineScope()
     val prefs = remember { context.getSharedPreferences(PREFS, 0) }
 
+    var hubScreen by remember { mutableStateOf(true) }
     var settings by remember { mutableStateOf(false) }
     var dashboard by remember { mutableStateOf(false) }
     var messagesScreen by remember { mutableStateOf(false) }
@@ -903,6 +904,78 @@ fun RetroAlertsApp() {
                 }
             }
 
+            if (hubScreen) {
+                Column(
+                    Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Column(
+                        Modifier.fillMaxWidth()
+                            .background(Color(0xFF101010), RoundedCornerShape(8.dp))
+                            .border(2.dp, Color(0xFFFF7900), RoundedCornerShape(8.dp))
+                            .padding(18.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text("GOURMETAL", color = Color(0xFFFF7900), fontSize = 25.sp,
+                            fontWeight = FontWeight.Black, letterSpacing = 3.sp)
+                        Text("RETRO ACHIEVEMENTS HUB", color = Color.White, fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
+                        Text("PLAYER ONE • READY TO PLAY", color = Color(0xFFFFA34D), fontSize = 9.sp)
+                        Spacer(Modifier.height(4.dp))
+                        Text("CHOOSE YOUR DESTINATION", color = Color.White,
+                            fontWeight = FontWeight.Black, fontSize = 14.sp)
+                    }
+                    val hubItems = listOf(
+                        Triple("HOME", "Recent unlocks and live account stats", "home"),
+                        Triple("GAME LIBRARY", "Browse games, search and filter your collection", "library"),
+                        Triple("TROPHY ROOM", "Achievement showcase and your trophy wall", "trophies"),
+                        Triple("HUNTING ASSISTANT", "Roadmaps, unlock conditions and missable flags", "roadmap"),
+                        Triple("GAMEPLAY", "Gameplay gallery, previews and walkthroughs", "gameplay"),
+                        Triple("PLAYER PROFILE", "Your player card, stats and collections", "player"),
+                        Triple("BACKLOG MANAGER", "Track games you want to play or finish", "backlog")
+                    )
+                    hubItems.chunked(2).forEach { pair ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            pair.forEach { item ->
+                                Column(
+                                    Modifier.weight(1f).heightIn(min = 108.dp)
+                                        .background(Color(0xFF151515), RoundedCornerShape(7.dp))
+                                        .border(1.5.dp, Color(0xFFFF7900), RoundedCornerShape(7.dp))
+                                        .clickable {
+                                            hubScreen = false
+                                            settings = false
+                                            messagesScreen = false
+                                            dashboard = item.third == "library" || item.third == "trophies" || item.third == "gameplay"
+                                            playerScreen = item.third == "player"
+                                            roadmapScreen = item.third == "roadmap"
+                                            backlogScreen = item.third == "backlog"
+                                            if (item.third == "home") {
+                                                dashboard = false; playerScreen = false
+                                                roadmapScreen = false; backlogScreen = false
+                                            }
+                                            if (dashboard) status = "GOURME HUB • IN-APP EDITION"
+                                        }
+                                        .padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(7.dp)
+                                ) {
+                                    Text("▸ " + item.first, color = Color(0xFFFF7900),
+                                        fontWeight = FontWeight.Black, fontSize = 12.sp)
+                                    Text(item.second, color = Color(0xFFE0E0E0), fontSize = 10.sp)
+                                }
+                            }
+                            if (pair.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                    Text("${achievements.size} UNLOCKS • ${gameLibrary.size} GAMES IN YOUR LIBRARY",
+                        color = Color(0xFFFFA34D), fontSize = 10.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally))
+                    OutlinedButton(
+                        onClick = { settings = true; hubScreen = false },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF7900))
+                    ) { Text("SETTINGS & ACCOUNT CONNECTION", color = Color(0xFFFF7900)) }
+                }
+            } else {
             Spacer(Modifier.height(14.dp))
 
             Column(
@@ -1300,10 +1373,11 @@ fun RetroAlertsApp() {
                             this.settings.javaScriptEnabled = true
                             this.settings.domStorageEnabled = true
                             this.settings.mediaPlaybackRequiresUserGesture = false
-                            this.settings.allowFileAccess = false
+                            this.settings.allowFileAccess = true
+                            this.settings.allowContentAccess = true
                             this.settings.loadsImagesAutomatically = true
                             this.webChromeClient = WebChromeClient()
-                            loadUrl("https://gourmetal.github.io/Retroachievement-dashboard/")
+                            loadUrl("file:///android_asset/gourme-hub/index.html")
                         }
                     }
                 )
@@ -1552,7 +1626,7 @@ fun RetroAlertsApp() {
 
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 Button(
-                    onClick = { playRetroSound(context); dashboard = false; messagesScreen = false; playerScreen = false; roadmapScreen = false; backlogScreen = false; settings = false },
+                    onClick = { playRetroSound(context); hubScreen = true; dashboard = false; messagesScreen = false; playerScreen = false; roadmapScreen = false; backlogScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (!settings && !dashboard && !messagesScreen && !playerScreen) theme.accent else theme.card
@@ -1605,6 +1679,7 @@ fun RetroAlertsApp() {
                 ) {
                     Text("SETTINGS", color = if (settings) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
+            }
             }
 
             Spacer(Modifier.height(8.dp))
