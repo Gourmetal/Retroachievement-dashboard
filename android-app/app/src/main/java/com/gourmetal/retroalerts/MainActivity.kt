@@ -45,6 +45,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -884,9 +885,13 @@ fun RetroAlertsApp() {
         contentAlignment = Alignment.TopStart
     ) {
         ThemeBackdrop(theme, animatedBackground)
-        val baseDensity = androidx.compose.ui.platform.LocalDensity.current
+        val baseDensity = LocalDensity.current
+        val adjustedDensity = Density(
+            density = baseDensity.density,
+            fontScale = baseDensity.fontScale * appFontScale
+        )
         CompositionLocalProvider(
-            LocalDensity provides baseDensity.copy(fontScale = baseDensity.fontScale * appFontScale),
+            LocalDensity provides adjustedDensity,
             LocalTextStyle provides LocalTextStyle.current.copy(
                 fontFamily = customFontFamily ?: if (pixelFont) FontFamily.Monospace else FontFamily.Default
             )
