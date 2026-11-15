@@ -765,6 +765,7 @@ fun RetroAlertsApp() {
     var journalNotes by remember { mutableStateOf("") }
     var customFontUri by remember { mutableStateOf(prefs.getString("custom_font_uri", null)) }
     var customFontFamily by remember { mutableStateOf<FontFamily?>(null) }
+    var appFontScale by remember { mutableFloatStateOf(prefs.getFloat("app_font_scale", 1.2f).coerceIn(1.0f, 1.5f)) }
     var messagesScreen by remember { mutableStateOf(false) }
     var playerScreen by remember { mutableStateOf(false) }
     var messages by remember { mutableStateOf(loadMessages(context)) }
@@ -883,7 +884,9 @@ fun RetroAlertsApp() {
         contentAlignment = Alignment.TopStart
     ) {
         ThemeBackdrop(theme, animatedBackground)
+        val baseDensity = androidx.compose.ui.platform.LocalDensity.current
         CompositionLocalProvider(
+            LocalDensity provides baseDensity.copy(fontScale = baseDensity.fontScale * appFontScale),
             LocalTextStyle provides LocalTextStyle.current.copy(
                 fontFamily = customFontFamily ?: if (pixelFont) FontFamily.Monospace else FontFamily.Default
             )
@@ -1548,6 +1551,24 @@ fun RetroAlertsApp() {
                         }
                     }
 
+                    HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
+
+                    Text("APP TEXT SIZE", color = theme.accent, fontWeight = FontWeight.Black)
+                    Text("Make menus, buttons and game details easier to read: ${((appFontScale - 1f) * 100).toInt() + 100}%", color = theme.muted, fontSize = 11.sp)
+                    Slider(
+                        value = appFontScale,
+                        onValueChange = { value ->
+                            appFontScale = value
+                            prefs.edit().putFloat("app_font_scale", value).apply()
+                        },
+                        valueRange = 1.0f..1.5f,
+                        steps = 4
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("NORMAL", color = theme.muted, fontSize = 9.sp)
+                        Text("LARGE", color = theme.muted, fontSize = 9.sp)
+                        Text("EXTRA LARGE", color = theme.muted, fontSize = 9.sp)
+                    }
                     HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
 
                     Text("CUSTOM FONT", color = theme.accent, fontWeight = FontWeight.Black)
