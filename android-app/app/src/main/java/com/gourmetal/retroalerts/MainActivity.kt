@@ -615,6 +615,7 @@ fun RetroAlertsApp() {
     var messagesScreen by remember { mutableStateOf(false) }
     var playerScreen by remember { mutableStateOf(false) }
     var messages by remember { mutableStateOf(loadMessages(context)) }
+    var inboxRefresh by remember { mutableIntStateOf(0) }
     var retroSounds by remember { mutableStateOf(prefs.getBoolean("retro_sounds", true)) }
     var messageSearch by remember { mutableStateOf("") }
     var messageFilter by remember { mutableStateOf("ALL") }
@@ -636,7 +637,7 @@ fun RetroAlertsApp() {
     }
 
     val theme = themes[selectedTheme]
-    val messageMeta = remember(messages) { loadMessageMeta(context) }
+    val messageMeta = remember(messages, inboxRefresh) { loadMessageMeta(context) }
     val unreadCount = messages.count { !(messageMeta[it.id]?.read ?: false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -694,6 +695,7 @@ fun RetroAlertsApp() {
     LaunchedEffect(Unit) {
         while (true) {
             messages = loadMessages(context)
+            inboxRefresh++
             delay(2500)
         }
     }
@@ -888,8 +890,8 @@ fun RetroAlertsApp() {
                             Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(12.dp)).padding(8.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(if (m.read) "READ" else "UNREAD", color = theme.accent, modifier = Modifier.weight(1f), fontSize = 10.sp)
-                                    TextButton(onClick = { setMessageMeta(context, item.id, favorite = !m.favorite); messages = loadMessages(context) }) { Text(if (m.favorite) "★ FAVORITE" else "☆ FAVORITE", color = theme.accent) }
-                                    TextButton(onClick = { setMessageMeta(context, item.id, read = !m.read); messages = loadMessages(context) }) { Text(if (m.read) "UNREAD" else "MARK READ", color = theme.accent) }
+                                    TextButton(onClick = { setMessageMeta(context, item.id, favorite = !m.favorite); messages = loadMessages(context); inboxRefresh++ }) { Text(if (m.favorite) "★ FAVORITE" else "☆ FAVORITE", color = theme.accent) }
+                                    TextButton(onClick = { setMessageMeta(context, item.id, read = !m.read); messages = loadMessages(context); inboxRefresh++ }) { Text(if (m.read) "UNREAD" else "MARK READ", color = theme.accent) }
                                 }
                                 AchievementCard(item, theme) {
                                     scope.launch {
