@@ -888,6 +888,7 @@ fun RetroAlertsApp() {
                                     scope.launch {
                                         saveMessage(context, item)
                                         messages = loadMessages(context)
+                                        playRetroSound(context, alert = true)
                                         notifyAchievement(context, item)
                                         status = "ALERT RESENT • SAVED TO INBOX"
                                     }
@@ -1009,6 +1010,7 @@ fun RetroAlertsApp() {
         scope.launch {
             saveMessage(context, item)
             messages = loadMessages(context)
+            playRetroSound(context, alert = true)
             notifyAchievement(context, item)
             status = "NOTIFICATION RESENT"
         }
