@@ -939,6 +939,7 @@ fun RetroAlertsApp() {
                         Stat("HARDCORE", hardcoreCount.toString(), Modifier.weight(1f), theme)
                         Stat("FAVORITES", favorites.toString(), Modifier.weight(1f), theme)
                     }
+                    AchievementCalendar(achievements, theme)
                     Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(14.dp)).padding(14.dp)) {
                         Text("STICKER COLLECTION", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 16.sp)
                         Text("Every unlock loaded from your RetroAchievements account becomes a collectible. Your inbox stays separate.", color = theme.muted, fontSize = 11.sp)
@@ -1060,6 +1061,19 @@ fun RetroAlertsApp() {
 
                     HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
 
+                    Text("SOUND & FEEDBACK", color = theme.accent, fontWeight = FontWeight.Black)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Retro sound effects", color = theme.text, fontWeight = FontWeight.Bold)
+                            Text("Arcade bleeps for taps and new unlocks", color = theme.muted, fontSize = 10.sp)
+                        }
+                        Switch(checked = retroSounds, onCheckedChange = { enabled ->
+                            retroSounds = enabled
+                            prefs.edit().putBoolean("retro_sounds", enabled).apply()
+                            if (enabled) playRetroSound(context)
+                        })
+                    }
+                    HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
                     Text("NOTIFICATIONS", color = theme.accent, fontWeight = FontWeight.Black)
                     Text("Background check frequency", color = theme.muted, fontSize = 11.sp)
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1199,7 +1213,14 @@ fun RetroAlertsApp() {
                         containerColor = if (messagesScreen) theme.accent else theme.card
                     )
                 ) {
-                    Text("MESSAGES", color = if (messagesScreen) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {
+                        Text("MESSAGES", color = if (messagesScreen) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
+                        if (unreadCount > 0) {
+                            Spacer(Modifier.width(4.dp))
+                            Text(unreadCount.coerceAtMost(99).toString(), color = theme.background, fontSize = 9.sp, fontWeight = FontWeight.Black,
+                                modifier = Modifier.background(theme.accent, RoundedCornerShape(10.dp)).padding(horizontal = 5.dp, vertical = 2.dp))
+                        }
+                    }
                 }
                 Button(
                     onClick = { playerScreen = true; dashboard = false; messagesScreen = false; settings = false },
