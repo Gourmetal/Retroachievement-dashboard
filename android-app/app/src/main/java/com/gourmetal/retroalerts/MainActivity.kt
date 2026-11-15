@@ -19,6 +19,7 @@ import android.media.ToneGenerator
 import android.graphics.Canvas
 import android.graphics.Movie
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.view.View
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
@@ -123,6 +124,17 @@ private fun saveBacklog(context: Context, id: String, status: String) {
     val json = org.json.JSONObject(prefs.getString("game_backlog", "{}") ?: "{}")
     if (status == "NONE") json.remove(id) else json.put(id, status)
     prefs.edit().putString("game_backlog", json.toString()).apply()
+}
+private data class SaveJournalEntry(val id: String, val game: String, val savePoint: String, val notes: String, val savedAt: Long)
+private fun loadSaveJournal(context: Context): List<SaveJournalEntry> {
+    val raw = context.getSharedPreferences(PREFS, 0).getString("save_point_journal", "[]") ?: "[]"
+    val arr = JSONArray(raw)
+    return (0 until arr.length()).mapNotNull { i -> arr.optJSONObject(i)?.let { SaveJournalEntry(it.optString("id"), it.optString("game"), it.optString("savePoint"), it.optString("notes"), it.optLong("savedAt")) } }
+}
+private fun persistSaveJournal(context: Context, entries: List<SaveJournalEntry>) {
+    val arr = JSONArray()
+    entries.forEach { e -> arr.put(org.json.JSONObject().apply { put("id", e.id); put("game", e.game); put("savePoint", e.savePoint); put("notes", e.notes); put("savedAt", e.savedAt) }) }
+    context.getSharedPreferences(PREFS, 0).edit().putString("save_point_journal", arr.toString()).apply()
 }
 private fun loadMissableFlags(context: Context): Set<String> =
     context.getSharedPreferences(PREFS, 0).getStringSet("missable_flags", emptySet())?.toSet() ?: emptySet()
@@ -747,6 +759,12 @@ fun RetroAlertsApp() {
     var dashboard by remember { mutableStateOf(false) }
     var dashboardSection by remember { mutableStateOf("library") }
     var librarySearch by remember { mutableStateOf("") }
+    var journalEntries by remember { mutableStateOf(loadSaveJournal(context)) }
+    var journalGame by remember { mutableStateOf("") }
+    var journalSavePoint by remember { mutableStateOf("") }
+    var journalNotes by remember { mutableStateOf("") }
+    var customFontUri by remember { mutableStateOf(prefs.getString("custom_font_uri", null)) }
+    var customFontFamily by remember { mutableStateOf<FontFamily?>(null) }
     var messagesScreen by remember { mutableStateOf(false) }
     var playerScreen by remember { mutableStateOf(false) }
     var messages by remember { mutableStateOf(loadMessages(context)) }
@@ -785,6 +803,8 @@ fun RetroAlertsApp() {
     var pixelFont by remember { mutableStateOf(prefs.getBoolean("pixel_font", false)) }
 
     val theme = themes[selectedTheme]
+    LaunchedEffect(customFontUri) { customFontFamily = try { val u = customFontUri?.let { Uri.parse(it) }; if (u == null) null else context.contentResolver.openFileDescriptor(u, "r")?.use { FontFamily(Typeface.Builder(it.fileDescriptor).build()) } } catch (_: Exception) { null } }
+    val fontPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { u -> if (u != null) try { context.contentResolver.takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION); customFontUri = u.toString(); prefs.edit().putString("custom_font_uri", u.toString()).apply(); status = "CUSTOM FONT LOADED" } catch (_: Exception) { status = "COULD NOT LOAD FONT" } }
     val messageMeta = remember(messages, inboxRefresh) { loadMessageMeta(context) }
     val unreadCount = messages.count { !(messageMeta[it.id]?.read ?: false) }
 
@@ -865,7 +885,7 @@ fun RetroAlertsApp() {
         ThemeBackdrop(theme, animatedBackground)
         CompositionLocalProvider(
             LocalTextStyle provides LocalTextStyle.current.copy(
-                fontFamily = if (pixelFont) FontFamily.Monospace else FontFamily.Default
+                fontFamily = customFontFamily ?: if (pixelFont) FontFamily.Monospace else FontFamily.Default
             )
         ) {
         Column(
@@ -937,9 +957,9 @@ fun RetroAlertsApp() {
                             fontWeight = FontWeight.Black, letterSpacing = 3.sp)
                         Text("RETRO ACHIEVEMENTS HUB", color = Color.White, fontSize = 11.sp,
                             fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
-                        Text("PLAYER ONE • READY TO PLAY", color = Color(0xFFFFA34D), fontSize = 9.sp)
+                        Text("PLAYER ONE • READY TO PLAY", color = theme.muted, fontSize = 9.sp)
                         Spacer(Modifier.height(4.dp))
-                        Text("CHOOSE YOUR DESTINATION", color = Color.White,
+                        Text("CHOOSE YOUR DESTINATION", color = theme.text,
                             fontWeight = FontWeight.Black, fontSize = 14.sp)
                     }
                     val hubItems = listOf(
@@ -947,7 +967,7 @@ fun RetroAlertsApp() {
                         Triple("GAME LIBRARY", "Browse games, search and filter your collection", "library"),
                         Triple("TROPHY ROOM", "Achievement showcase and your trophy wall", "trophies"),
                         Triple("HUNTING ASSISTANT", "Roadmaps, unlock conditions and missable flags", "roadmap"),
-                        Triple("GAMEPLAY", "Gameplay gallery, previews and walkthroughs", "gameplay"),
+                        Triple("SAVE POINT JOURNAL", "Record save points, progress and personal notes", "journal"),
                         Triple("PLAYER PROFILE", "Your player card, stats and collections", "player"),
                         Triple("BACKLOG MANAGER", "Track games you want to play or finish", "backlog")
                     )
@@ -962,7 +982,7 @@ fun RetroAlertsApp() {
                                             hubScreen = false
                                             settings = false
                                             messagesScreen = false
-                                            dashboard = item.third == "library" || item.third == "trophies" || item.third == "gameplay"
+                                            dashboard = item.third == "library" || item.third == "trophies" || item.third == "journal"
                                             dashboardSection = item.third
                                             librarySearch = ""
                                             playerScreen = item.third == "player"
@@ -977,9 +997,9 @@ fun RetroAlertsApp() {
                                         .padding(12.dp),
                                     verticalArrangement = Arrangement.spacedBy(7.dp)
                                 ) {
-                                    Text("▸ " + item.first, color = Color(0xFFFF7900),
+                                    Text("▸ " + item.first, color = theme.accent,
                                         fontWeight = FontWeight.Black, fontSize = 12.sp)
-                                    Text(item.second, color = Color(0xFFE0E0E0), fontSize = 10.sp)
+                                    Text(item.second, color = theme.muted, fontSize = 10.sp)
                                 }
                             }
                             if (pair.size == 1) Spacer(Modifier.weight(1f))
@@ -992,7 +1012,7 @@ fun RetroAlertsApp() {
                         onClick = { settings = true; hubScreen = false },
                         modifier = Modifier.fillMaxWidth(),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF7900))
-                    ) { Text("SETTINGS & ACCOUNT CONNECTION", color = Color(0xFFFF7900)) }
+                    ) { Text("SETTINGS & ACCOUNT CONNECTION", color = theme.accent) }
                 }
             } else {
             Spacer(Modifier.height(14.dp))
@@ -1443,24 +1463,18 @@ fun RetroAlertsApp() {
                         }
                     }
                     else -> {
-                        val gameplayGames = gameLibrary.take(30)
+                    "journal" -> {
                         Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("GAMEPLAY VIDEOS & WALKTHROUGHS", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 13.sp)
-                            Text("Choose a game to search YouTube. Video playback opens outside the app; this screen stays native.", color = theme.muted, fontSize = 10.sp)
-                            if (gameplayGames.isEmpty()) Text("Connect your account and refresh Home to load game suggestions.", color = theme.muted, fontSize = 12.sp)
-                            else LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                                items(gameplayGames, key = { it.id }) { game ->
-                                    Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(9.dp)).border(1.dp, theme.accent.copy(alpha = 0.4f), RoundedCornerShape(9.dp)).clickable {
-                                        val query = URLEncoder.encode("${game.title} ${game.console} gameplay walkthrough", "UTF-8")
-                                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=$query")))
-                                    }.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        Text("▶", color = theme.accent, fontSize = 18.sp, modifier = Modifier.padding(end = 10.dp))
-                                        Column(Modifier.weight(1f)) {
-                                            Text(game.title, color = theme.text, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                                            Text("${game.console} • Gameplay & walkthroughs", color = theme.muted, fontSize = 9.sp)
-                                        }
-                                        Icon(Icons.Default.OpenInNew, contentDescription = "Search videos", tint = theme.accent)
-                                    }
+                            Text("SAVE POINT JOURNAL", color = theme.accent, fontWeight = FontWeight.Black)
+                            OutlinedTextField(journalGame, { journalGame = it }, Modifier.fillMaxWidth(), label = { Text("Game") }, singleLine = true)
+                            OutlinedTextField(journalSavePoint, { journalSavePoint = it }, Modifier.fillMaxWidth(), label = { Text("Save point / location") }, singleLine = true)
+                            OutlinedTextField(journalNotes, { journalNotes = it }, Modifier.fillMaxWidth(), label = { Text("Notes / next steps") }, minLines = 3)
+                            Button(onClick = { if (journalGame.isNotBlank() || journalSavePoint.isNotBlank() || journalNotes.isNotBlank()) { val e = SaveJournalEntry(java.util.UUID.randomUUID().toString(), journalGame.ifBlank { "Untitled game" }, journalSavePoint.ifBlank { "Unspecified" }, journalNotes, System.currentTimeMillis()); journalEntries = listOf(e) + journalEntries; persistSaveJournal(context, journalEntries); journalGame = ""; journalSavePoint = ""; journalNotes = ""; status = "JOURNAL ENTRY SAVED" } else status = "ADD A NOTE FIRST" }, modifier = Modifier.fillMaxWidth(), colors = ButtonDefaults.buttonColors(containerColor = theme.accent)) { Text("SAVE JOURNAL ENTRY", color = theme.background) }
+                            Text("SAVED NOTES • ${journalEntries.size}", color = theme.accent, fontWeight = FontWeight.Bold)
+                            LazyColumn(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) { items(journalEntries, key = { it.id }) { e -> Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(8.dp)).padding(10.dp)) { Row(verticalAlignment = Alignment.CenterVertically) { Text(e.game, Modifier.weight(1f), color = theme.accent, fontWeight = FontWeight.Bold); TextButton(onClick = { journalEntries = journalEntries.filterNot { it.id == e.id }; persistSaveJournal(context, journalEntries) }) { Text("DELETE") } }; Text("SAVE POINT: ${e.savePoint}", color = theme.text); if (e.notes.isNotBlank()) Text(e.notes, color = theme.text); Text(java.text.SimpleDateFormat("MMM d, yyyy h:mm a", java.util.Locale.getDefault()).format(java.util.Date(e.savedAt)), color = theme.muted, fontSize = 9.sp) } } }
+                        }
+                    }
+                    else -> { Text("Choose a section from Home.", color = theme.muted) }
                                 }
                             }
                         }
@@ -1541,6 +1555,11 @@ fun RetroAlertsApp() {
 
                     HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
 
+                    Text("CUSTOM FONT", color = theme.accent, fontWeight = FontWeight.Black)
+                    Text(customFontUri?.substringAfterLast("/") ?: "No custom font selected", color = theme.muted, fontSize = 10.sp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { OutlinedButton(onClick = { fontPicker.launch(arrayOf("font/ttf", "font/otf", "application/octet-stream")) }, modifier = Modifier.weight(1f)) { Text("CHOOSE FONT FILE") }; if (customFontUri != null) OutlinedButton(onClick = { customFontUri = null; customFontFamily = null; prefs.edit().remove("custom_font_uri").apply() }) { Text("RESET") } }
+                    Text("Choose a TTF or OTF file. Your choice is remembered on this device.", color = theme.muted, fontSize = 10.sp)
+                    HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
                     Text("HANDHELD COSMETICS", color = theme.accent, fontWeight = FontWeight.Black)
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
