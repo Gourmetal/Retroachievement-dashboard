@@ -691,6 +691,13 @@ fun RetroAlertsApp() {
         if (connected) refresh()
     }
 
+    LaunchedEffect(Unit) {
+        while (true) {
+            messages = loadMessages(context)
+            delay(2500)
+        }
+    }
+
     Box(
         Modifier.fillMaxSize().background(theme.background),
         contentAlignment = Alignment.TopStart
@@ -775,14 +782,6 @@ fun RetroAlertsApp() {
             }
 
             if (messagesScreen) {
-                LaunchedEffect(messagesScreen) {
-                    // Keep the inbox in sync with alerts saved by the background worker
-                    // while the Messages screen is open.
-                    while (messagesScreen) {
-                        messages = loadMessages(context)
-                        delay(2500)
-                    }
-                }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(if (stickerAlbum) "${achievements.size} ACCOUNT UNLOCKS" else "${messages.size} SAVED ALERTS", color = theme.muted, fontSize = 10.sp)
                     if (!stickerAlbum) {
