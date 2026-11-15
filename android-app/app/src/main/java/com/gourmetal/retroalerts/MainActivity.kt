@@ -208,7 +208,7 @@ private suspend fun getAchievements(apiKey: String): List<Achievement> =
             connection.readTimeout = 30000
             connection.setRequestProperty("Accept", "application/json")
             if (connection.responseCode !in 200..299) {
-                throw Exception("Connection error: \${connection.responseCode}")
+                throw Exception("Connection error: ${connection.responseCode}")
             }
             val json = JSONArray(connection.inputStream.bufferedReader().use { it.readText() })
             parseAchievementList(json)
@@ -231,7 +231,7 @@ private suspend fun getRecentAchievements(apiKey: String): List<Achievement> =
             connection.readTimeout = 15000
             connection.setRequestProperty("Accept", "application/json")
             if (connection.responseCode !in 200..299) {
-                throw Exception("Connection error: \${connection.responseCode}")
+                throw Exception("Connection error: ${connection.responseCode}")
             }
             val json = JSONArray(connection.inputStream.bufferedReader().use { it.readText() })
             parseAchievementList(json)
@@ -270,6 +270,17 @@ private fun scheduleChecks(context: Context, intervalMinutes: Int = 15) {
 private fun cancelChecks(context: Context) {
     WorkManager.getInstance(context).cancelUniqueWork(WORK)
 }
+
+private fun isWithinQuietHours(context: Context): Boolean {
+    val prefs = context.getSharedPreferences(PREFS, 0)
+    if (!prefs.getBoolean("quiet_enabled", false)) return false
+    val start = runCatching { java.time.LocalTime.parse(prefs.getString("quiet_start", "22:00") ?: "22:00") }.getOrNull() ?: return false
+    val end = runCatching { java.time.LocalTime.parse(prefs.getString("quiet_end", "08:00") ?: "08:00") }.getOrNull() ?: return false
+    if (start == end) return false
+    val now = java.time.LocalTime.now()
+    return if (start.isBefore(end)) !now.isBefore(start) && now.isBefore(end) else !now.isBefore(start) || now.isBefore(end)
+}
+
 private fun franchiseColor(game: String): Int {
     val name = game.lowercase()
     val hex = when {
@@ -424,8 +435,10 @@ class AchievementWorker(
                 }
                 newUnlocks.forEach { item ->
                     saveMessage(applicationContext, item)
-                    playRetroSound(applicationContext, alert = true)
-                    notifyAchievement(applicationContext, item)
+                    if (!isWithinQuietHours(applicationContext)) {
+                        playRetroSound(applicationContext, alert = true)
+                        notifyAchievement(applicationContext, item)
+                    }
                 }
             }
 
@@ -558,8 +571,8 @@ private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
         val w = size.width
         val h = size.height
         val accent = theme.accent.copy(alpha = motionPulse)
-        val isGameBoy = theme.name == "Game Boy"
-        val isNeon = theme.name == "Retro Neon"
+        val isGameBoy = theme.name == "DMG • Classic Green"
+        val isNeon = theme.name == "GBA • Neon Purple"
         val spacing = if (isGameBoy) 34f else 46f
         for (x in 0..(w / spacing).toInt()) {
             for (y in 0..(h / spacing).toInt()) {
@@ -601,8 +614,8 @@ private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
         }
         // Theme-specific pixel weather: falling leaves, rain, and drifting stars.
         val weather = when (theme.name) {
-            "Classic Orange", "Emerald", "Game Boy" -> "leaves"
-            "Midnight", "GBA Purple" -> "stars"
+            "GBA • Classic Orange", "GBA • Emerald", "DMG • Classic Green" -> "leaves"
+            "GBA • Midnight Black", "GBA • Neon Purple", "GBA • Glacier Purple" -> "stars"
             else -> "rain"
         }
         for (i in 0..22) {
@@ -675,7 +688,7 @@ fun RetroAlertsApp() {
         if (granted) {
             notifications = true
             prefs.edit().putBoolean("notifications", true).apply()
-            scheduleChecks(context)
+            scheduleChecks(context, checkMinutes)
             status = "NOTIFICATIONS ENABLED"
         } else {
             notifications = false
@@ -935,7 +948,7 @@ fun RetroAlertsApp() {
                                     TextButton(onClick = { setMessageMeta(context, item.id, favorite = !m.favorite); messages = loadMessages(context); inboxRefresh++ }) { Text(if (m.favorite) "★ FAVORITE" else "☆ FAVORITE", color = theme.accent) }
                                     TextButton(onClick = { setMessageMeta(context, item.id, read = !m.read); messages = loadMessages(context); inboxRefresh++ }) { Text(if (m.read) "UNREAD" else "MARK READ", color = theme.accent) }
                                 }
-                                AchievementCard(item, theme) {
+                                AchievementCard(item, theme, pixelBorders) {
                                     scope.launch {
                                         saveMessage(context, item)
                                         messages = loadMessages(context)
@@ -1088,7 +1101,7 @@ fun RetroAlertsApp() {
                         Modifier.weight(1f).fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {items(achievements) { item ->
-        AchievementCard(item, theme) {
+        AchievementCard(item, theme, pixelBorders) {
         scope.launch {
             saveMessage(context, item)
             messages = loadMessages(context)
@@ -1236,7 +1249,7 @@ fun RetroAlertsApp() {
                                     } else {
                                         notifications = true
                                         prefs.edit().putBoolean("notifications", true).apply()
-                                        scheduleChecks(context)
+                                        scheduleChecks(context, checkMinutes)
                                         status = "NOTIFICATIONS ENABLED"
                                     }
                                 } else {
@@ -1318,7 +1331,7 @@ fun RetroAlertsApp() {
                     onClick = { playRetroSound(context); dashboard = false; messagesScreen = false; playerScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = if (!settings && !dashboard) theme.accent else theme.card
+                        containerColor = if (!settings && !dashboard && !messagesScreen && !playerScreen) theme.accent else theme.card
                     )
                 ) {
                     Text("HOME", color = if (!settings && !dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
@@ -1584,8 +1597,10 @@ private fun GameCartridgeCard(
 private fun AchievementCard(
     item: Achievement,
     theme: AppTheme,
+    pixelBorders: Boolean,
     onResend: () -> Unit
 ) {
+    val cardShape = if (pixelBorders) RoundedCornerShape(4.dp) else RoundedCornerShape(12.dp)
     var badge by remember(item.badgeName) { mutableStateOf<Bitmap?>(null) }
     var gameArt by remember(item.gameIcon) { mutableStateOf<Bitmap?>(null) }
 
@@ -1604,8 +1619,8 @@ private fun AchievementCard(
 
     Column(
         Modifier.fillMaxWidth()
-            .background(theme.card, RoundedCornerShape(4.dp))
-            .border(2.dp, theme.accent.copy(alpha = 0.75f), RoundedCornerShape(4.dp))
+            .background(theme.card, cardShape)
+            .border(2.dp, theme.accent.copy(alpha = 0.75f), cardShape)
             .padding(12.dp)
     ) {
         Text(
