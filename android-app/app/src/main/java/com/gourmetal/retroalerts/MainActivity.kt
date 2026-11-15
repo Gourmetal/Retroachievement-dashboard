@@ -668,6 +668,7 @@ fun RetroAlertsApp() {
     var apiKey by remember { mutableStateOf("") }
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
+    var recentAchievements by remember { mutableStateOf(emptyList<Achievement>()) }
     var status by remember { mutableStateOf("READY, PLAYER?") }
     var loading by remember { mutableStateOf(false) }
     var notifications by remember { mutableStateOf(prefs.getBoolean("notifications", false)) }
@@ -710,6 +711,11 @@ fun RetroAlertsApp() {
             status = "CONNECTING..."
             try {
                 achievements = getAchievements(key)
+                recentAchievements = try {
+                    getRecentAchievements(key).ifEmpty { achievements.take(20) }
+                } catch (_: Exception) {
+                    achievements.take(20)
+                }
                 // Build the inbox from the full account history so it still works if the
                 // separate recent-feed endpoint is unavailable. Keep the latest 100 alerts.
                 if (!prefs.getBoolean("unread_initialized", false)) {
@@ -1084,7 +1090,7 @@ fun RetroAlertsApp() {
                     }
                 )
             } else if (!settings) {
-                if (achievements.isEmpty()) {
+                if (recentAchievements.isEmpty()) {
                     Column(
                         Modifier.fillMaxWidth().heightIn(min = 150.dp)
                             .background(theme.card, RoundedCornerShape(14.dp))
@@ -1100,7 +1106,7 @@ fun RetroAlertsApp() {
                     LazyColumn(
                         Modifier.weight(1f).fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {items(achievements) { item ->
+                    ) {items(recentAchievements.take(20), key = { it.id }) { item ->
         AchievementCard(item, theme, pixelBorders) {
         scope.launch {
             saveMessage(context, item)
