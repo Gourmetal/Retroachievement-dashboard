@@ -1434,7 +1434,7 @@ fun RetroAlertsApp() {
                 Column(
                     Modifier.fillMaxWidth().heightIn(max = 470.dp)
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text("APPEARANCE", color = theme.accent, fontWeight = FontWeight.Black)
                     themes.forEachIndexed { index, option ->
@@ -1453,7 +1453,7 @@ fun RetroAlertsApp() {
                                     selectedTheme = index
                                     prefs.edit().putInt("selected_theme", index).apply()
                                 }
-                                .padding(12.dp),
+                                .padding(vertical = 7.dp, horizontal = 9.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
@@ -1644,7 +1644,7 @@ fun RetroAlertsApp() {
 
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(2.dp))
             Text(
                 "GBA EDITION • VERSION 0.8.0",
                 Modifier.align(Alignment.CenterHorizontally),
