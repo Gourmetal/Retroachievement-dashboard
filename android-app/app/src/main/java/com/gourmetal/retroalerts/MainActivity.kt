@@ -581,22 +581,22 @@ private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
                 val py = y * spacing
                 if (isGameBoy) {
                     drawRect(
-                        color = accent.copy(alpha = motionPulse * 0.45f),
+                        color = accent.copy(alpha = if (animated) 0.32f else 0.16f),
                         topLeft = androidx.compose.ui.geometry.Offset(px, py),
                         size = androidx.compose.ui.geometry.Size(3f, 3f)
                     )
                 } else if (isNeon) {
-                    drawCircle(accent, radius = 2.5f + motionPulse * 7f,
+                    drawCircle(accent.copy(alpha = if (animated) 0.34f else 0.18f), radius = 3.5f + motionPulse * 8f,
                         center = androidx.compose.ui.geometry.Offset(px, py))
                 } else {
-                    drawCircle(accent.copy(alpha = motionPulse * 0.55f), radius = 1.8f,
+                    drawCircle(accent.copy(alpha = if (animated) 0.30f else 0.14f), radius = 2.5f,
                         center = androidx.compose.ui.geometry.Offset(px, py))
                 }
             }
         }
         val bandY = (h * motionDrift)
         drawLine(
-            color = theme.accent.copy(alpha = 0.035f),
+            color = theme.accent.copy(alpha = if (animated) 0.10f else 0.045f),
             start = androidx.compose.ui.geometry.Offset(0f, bandY),
             end = androidx.compose.ui.geometry.Offset(w, bandY),
             strokeWidth = if (isGameBoy) 18f else 30f
@@ -605,7 +605,7 @@ private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
             for (line in 0..(h / 7f).toInt()) {
                 val y = line * 7f
                 drawLine(
-                    color = theme.accent.copy(alpha = 0.025f),
+                    color = theme.accent.copy(alpha = if (animated) 0.055f else 0.025f),
                     start = androidx.compose.ui.geometry.Offset(0f, y),
                     end = androidx.compose.ui.geometry.Offset(w, y),
                     strokeWidth = 1f
@@ -765,7 +765,7 @@ fun RetroAlertsApp() {
         Column(
             Modifier.fillMaxSize()
                 .safeDrawingPadding()
-                .background(theme.panel)
+                .background(theme.panel.copy(alpha = 0.72f))
                 .border(
                     if (pixelBorders) 3.dp else 1.dp,
                     theme.accent.copy(alpha = 0.75f),
@@ -1560,41 +1560,57 @@ private fun GameCartridgeCard(
     }
     val points = unlocks.sumOf { it.points }
     val hardcore = unlocks.count { it.hardcore }
-    val shape = if (pixelBorders) RoundedCornerShape(3.dp) else RoundedCornerShape(12.dp)
-    Row(
+    val shellColor = Color(franchiseColor(game))
+    val shellShape = if (pixelBorders) RoundedCornerShape(5.dp) else RoundedCornerShape(16.dp)
+
+    Column(
         Modifier.fillMaxWidth()
-            .background(theme.background, shape)
-            .border(2.dp, Color(franchiseColor(game)).copy(alpha = 0.85f), shape)
-            .padding(9.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+            .background(shellColor.copy(alpha = 0.22f), shellShape)
+            .border(2.dp, shellColor, shellShape)
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Box(
-            Modifier.size(width = 62.dp, height = 76.dp)
-                .background(theme.card, shape)
-                .border(1.dp, theme.accent.copy(alpha = 0.55f), shape),
-            contentAlignment = Alignment.Center
+        Row(Modifier.fillMaxWidth().height(8.dp), horizontalArrangement = Arrangement.Center) {
+            Box(Modifier.width(72.dp).height(5.dp).background(shellColor.copy(alpha = 0.8f), RoundedCornerShape(3.dp)))
+        }
+        Row(
+            Modifier.fillMaxWidth()
+                .background(theme.card, if (pixelBorders) RoundedCornerShape(2.dp) else RoundedCornerShape(9.dp))
+                .border(2.dp, shellColor.copy(alpha = 0.95f), if (pixelBorders) RoundedCornerShape(2.dp) else RoundedCornerShape(9.dp))
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            if (artwork != null) {
-                Image(
-                    bitmap = artwork!!.asImageBitmap(),
-                    contentDescription = "$game cartridge artwork",
-                    modifier = Modifier.fillMaxSize().padding(3.dp),
-                    contentScale = ContentScale.Crop
-                )
-            } else {
-                Text("🎮", fontSize = 25.sp)
+            Box(
+                Modifier.size(width = 70.dp, height = 82.dp)
+                    .background(theme.background, RoundedCornerShape(3.dp))
+                    .border(2.dp, theme.accent.copy(alpha = 0.8f), RoundedCornerShape(3.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (artwork != null) {
+                    Image(
+                        bitmap = artwork!!.asImageBitmap(),
+                        contentDescription = "$game cartridge label artwork",
+                        modifier = Modifier.fillMaxSize().padding(3.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                } else Text("🎮", fontSize = 28.sp)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text("GAME BOY ADVANCE", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 8.sp, letterSpacing = 1.sp)
+                Text(game, color = theme.text, fontWeight = FontWeight.Black, fontSize = 12.sp, maxLines = 2)
+                Text("${unlocks.size} UNLOCKS  •  $points PTS", color = theme.accent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                Text("$hardcore HARDCORE  •  ${unlocks.size - hardcore} SOFTCORE", color = theme.muted, fontSize = 8.sp)
+            }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("★", color = theme.accent, fontSize = 18.sp)
+                Text("${unlocks.size}", color = theme.text, fontSize = 12.sp, fontWeight = FontWeight.Black)
             }
         }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text("GAME PAK", color = theme.muted, fontSize = 8.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-            Text(game, color = theme.text, fontWeight = FontWeight.Black, fontSize = 12.sp, maxLines = 2)
-            Text("${unlocks.size} UNLOCKS • $points PTS", color = theme.accent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-            Text("$hardcore HARDCORE • ${unlocks.size - hardcore} SOFTCORE", color = theme.muted, fontSize = 8.sp)
-        }
-        Column(horizontalAlignment = Alignment.End) {
-            Text("★", color = theme.accent, fontSize = 16.sp)
-            Text("${unlocks.size}", color = theme.text, fontSize = 12.sp, fontWeight = FontWeight.Black)
+        Row(Modifier.fillMaxWidth().height(7.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+            repeat(18) {
+                Box(Modifier.padding(horizontal = 2.dp).width(5.dp).height(5.dp).background(theme.background.copy(alpha = 0.9f), RoundedCornerShape(1.dp)))
+            }
         }
     }
 }
