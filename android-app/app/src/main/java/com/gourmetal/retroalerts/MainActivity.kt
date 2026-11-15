@@ -1198,7 +1198,7 @@ fun RetroAlertsApp() {
 
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 Button(
-                    onClick = { dashboard = false; messagesScreen = false; playerScreen = false; settings = false },
+                    onClick = { playRetroSound(context); dashboard = false; messagesScreen = false; playerScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (!settings && !dashboard) theme.accent else theme.card
@@ -1207,7 +1207,7 @@ fun RetroAlertsApp() {
                     Text("HOME", color = if (!settings && !dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
-                    onClick = { messagesScreen = true; dashboard = false; playerScreen = false; settings = false },
+                    onClick = { playRetroSound(context); messagesScreen = true; dashboard = false; playerScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (messagesScreen) theme.accent else theme.card
@@ -1223,12 +1223,12 @@ fun RetroAlertsApp() {
                     }
                 }
                 Button(
-                    onClick = { playerScreen = true; dashboard = false; messagesScreen = false; settings = false },
+                    onClick = { playRetroSound(context); playerScreen = true; dashboard = false; messagesScreen = false; settings = false },
                     modifier = Modifier.weight(0.85f),
                     colors = ButtonDefaults.buttonColors(containerColor = if (playerScreen) theme.accent else theme.card)
                 ) { Text("PLAYER", color = if (playerScreen) theme.background else theme.text, fontSize = 9.sp, maxLines = 1, softWrap = false) }
                 Button(
-                    onClick = { dashboard = true; messagesScreen = false; playerScreen = false; settings = false },
+                    onClick = { playRetroSound(context); dashboard = true; messagesScreen = false; playerScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (dashboard) theme.accent else theme.card
@@ -1237,7 +1237,7 @@ fun RetroAlertsApp() {
                     Text("DASHBOARD", color = if (dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
-                    onClick = { settings = true; dashboard = false; messagesScreen = false; playerScreen = false },
+                    onClick = { playRetroSound(context); settings = true; dashboard = false; messagesScreen = false; playerScreen = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (settings) theme.accent else theme.card
@@ -1472,6 +1472,55 @@ private fun AchievementCard(
         OutlinedButton(onClick = onResend, modifier = Modifier.fillMaxWidth()) {
             Text("RESEND FULL ALERT", color = Color.White)
         }
+    }
+}
+
+@Composable
+private fun AchievementCalendar(achievements: List<Achievement>, theme: AppTheme) {
+    val latestMonth = remember(achievements) {
+        achievements.mapNotNull { runCatching { java.time.LocalDate.parse(it.date.take(10)) }.getOrNull() }
+            .maxOrNull()?.let { java.time.YearMonth.from(it) } ?: java.time.YearMonth.now()
+    }
+    var month by remember(achievements) { mutableStateOf(latestMonth) }
+    val unlockDays = remember(achievements, month) {
+        achievements.mapNotNull { item -> runCatching { java.time.LocalDate.parse(item.date.take(10)) }.getOrNull() }
+            .filter { java.time.YearMonth.from(it) == month }.groupingBy { it.dayOfMonth }.eachCount()
+    }
+    Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(14.dp))
+        .border(1.dp, theme.accent.copy(alpha = 0.55f), RoundedCornerShape(14.dp)).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("ACHIEVEMENT HISTORY", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 15.sp)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            IconButton(onClick = { month = month.minusMonths(1) }) { Icon(Icons.Default.ChevronLeft, "Previous month", tint = theme.accent) }
+            Text("${month.month.name} ${month.year}", color = theme.text, fontWeight = FontWeight.Bold)
+            IconButton(onClick = { month = month.plusMonths(1) }) { Icon(Icons.Default.ChevronRight, "Next month", tint = theme.accent) }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+            listOf("S", "M", "T", "W", "T", "F", "S").forEach {
+                Text(it, Modifier.weight(1f), color = theme.muted, fontSize = 10.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
+        }
+        val offset = month.atDay(1).dayOfWeek.value % 7
+        val cellCount = ((offset + month.lengthOfMonth() + 6) / 7) * 7
+        (0 until cellCount step 7).forEach { weekStart ->
+            Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                (weekStart until weekStart + 7).forEach { cell ->
+                    val day = cell - offset + 1
+                    val valid = day in 1..month.lengthOfMonth()
+                    val count = if (valid) unlockDays[day] ?: 0 else 0
+                    Box(Modifier.weight(1f).aspectRatio(1f)
+                        .background(if (count > 0) theme.accent else theme.background, RoundedCornerShape(7.dp)),
+                        contentAlignment = Alignment.Center) {
+                        if (valid) Text(if (count > 0) "$day\n$count" else day.toString(),
+                            color = if (count > 0) theme.background else theme.muted,
+                            fontSize = if (count > 0) 9.sp else 10.sp,
+                            fontWeight = if (count > 0) FontWeight.Black else FontWeight.Normal,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center, lineHeight = 10.sp)
+                    }
+                }
+            }
+        }
+        Text("${unlockDays.values.sum()} UNLOCKS • ${unlockDays.size} ACTIVE DAYS", color = theme.muted, fontSize = 10.sp)
     }
 }
 
