@@ -1462,7 +1462,6 @@ fun RetroAlertsApp() {
                             }
                         }
                     }
-                    else -> {
                     "journal" -> {
                         Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("SAVE POINT JOURNAL", color = theme.accent, fontWeight = FontWeight.Black)
@@ -1475,9 +1474,6 @@ fun RetroAlertsApp() {
                         }
                     }
                     else -> { Text("Choose a section from Home.", color = theme.muted) }
-                                }
-                            }
-                        }
                     }
                 }
             } else if (!settings) {
