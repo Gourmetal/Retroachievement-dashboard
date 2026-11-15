@@ -1010,6 +1010,19 @@ fun RetroAlertsApp() {
                             status = "ALERT RESENT • SAVED TO INBOX"
                         }
                     }
+                    Column(
+                        Modifier.fillMaxWidth()
+                            .background(theme.card, RoundedCornerShape(if (pixelBorders) 4.dp else 14.dp))
+                            .border(1.dp, theme.accent.copy(alpha = 0.55f), RoundedCornerShape(if (pixelBorders) 4.dp else 14.dp))
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(9.dp)
+                    ) {
+                        Text("GAME CARTRIDGES", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 16.sp)
+                        Text("YOUR UNLOCK COLLECTION BY GAME", color = theme.muted, fontSize = 9.sp)
+                        achievements.groupBy { it.game }.entries.sortedByDescending { it.value.size }.forEach { entry ->
+                            GameCartridgeCard(entry.key, entry.value, theme, pixelBorders)
+                        }
+                    }
                     Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(14.dp)).padding(14.dp)) {
                         Text("STICKER COLLECTION", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 16.sp)
                         Text("Every unlock loaded from your RetroAchievements account becomes a collectible. Your inbox stays separate.", color = theme.muted, fontSize = 11.sp)
@@ -1130,6 +1143,39 @@ fun RetroAlertsApp() {
                         }
                     }
 
+                    HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
+
+                    Text("HANDHELD COSMETICS", color = theme.accent, fontWeight = FontWeight.Black)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Animated pixel background", color = theme.text, fontWeight = FontWeight.Bold)
+                            Text("Drifting stars, pixels and scanline shimmer", color = theme.muted, fontSize = 10.sp)
+                        }
+                        Switch(checked = animatedBackground, onCheckedChange = {
+                            animatedBackground = it
+                            prefs.edit().putBoolean("animated_background", it).apply()
+                        })
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Pixel-cut borders", color = theme.text, fontWeight = FontWeight.Bold)
+                            Text("Square corners and crisp handheld frames", color = theme.muted, fontSize = 10.sp)
+                        }
+                        Switch(checked = pixelBorders, onCheckedChange = {
+                            pixelBorders = it
+                            prefs.edit().putBoolean("pixel_borders", it).apply()
+                        })
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Pixel font mode", color = theme.text, fontWeight = FontWeight.Bold)
+                            Text("Monospaced retro lettering throughout the app", color = theme.muted, fontSize = 10.sp)
+                        }
+                        Switch(checked = pixelFont, onCheckedChange = {
+                            pixelFont = it
+                            prefs.edit().putBoolean("pixel_font", it).apply()
+                        })
+                    }
                     HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
 
                     Text("SOUND & FEEDBACK", color = theme.accent, fontWeight = FontWeight.Black)
@@ -1320,7 +1366,7 @@ fun RetroAlertsApp() {
 
             Spacer(Modifier.height(8.dp))
             Text(
-                "GBA EDITION • VERSION 0.7.5",
+                "GBA EDITION • VERSION 0.8.0",
                 Modifier.align(Alignment.CenterHorizontally),
                 color = theme.muted,
                 fontSize = 9.sp,
@@ -1485,6 +1531,58 @@ private suspend fun loadRemoteBitmap(url: String?): Bitmap? =
     }
 
 @Composable
+@Composable
+private fun GameCartridgeCard(
+    game: String,
+    unlocks: List<Achievement>,
+    theme: AppTheme,
+    pixelBorders: Boolean
+) {
+    var artwork by remember(game, unlocks.firstOrNull()?.gameIcon) { mutableStateOf<Bitmap?>(null) }
+    LaunchedEffect(game, unlocks.firstOrNull()?.gameIcon) {
+        artwork = loadRemoteBitmap(gameArtworkUrl(unlocks.firstOrNull()?.gameIcon))
+    }
+    val points = unlocks.sumOf { it.points }
+    val hardcore = unlocks.count { it.hardcore }
+    val shape = if (pixelBorders) RoundedCornerShape(3.dp) else RoundedCornerShape(12.dp)
+    Row(
+        Modifier.fillMaxWidth()
+            .background(theme.background, shape)
+            .border(2.dp, Color(franchiseColor(game)).copy(alpha = 0.85f), shape)
+            .padding(9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Box(
+            Modifier.size(width = 62.dp, height = 76.dp)
+                .background(theme.card, shape)
+                .border(1.dp, theme.accent.copy(alpha = 0.55f), shape),
+            contentAlignment = Alignment.Center
+        ) {
+            if (artwork != null) {
+                Image(
+                    bitmap = artwork!!.asImageBitmap(),
+                    contentDescription = "$game cartridge artwork",
+                    modifier = Modifier.fillMaxSize().padding(3.dp),
+                    contentScale = ContentScale.Crop
+                )
+            } else {
+                Text("🎮", fontSize = 25.sp)
+            }
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text("GAME PAK", color = theme.muted, fontSize = 8.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+            Text(game, color = theme.text, fontWeight = FontWeight.Black, fontSize = 12.sp, maxLines = 2)
+            Text("${unlocks.size} UNLOCKS • $points PTS", color = theme.accent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+            Text("$hardcore HARDCORE • ${unlocks.size - hardcore} SOFTCORE", color = theme.muted, fontSize = 8.sp)
+        }
+        Column(horizontalAlignment = Alignment.End) {
+            Text("★", color = theme.accent, fontSize = 16.sp)
+            Text("${unlocks.size}", color = theme.text, fontSize = 12.sp, fontWeight = FontWeight.Black)
+        }
+    }
+}
+
 private fun AchievementCard(
     item: Achievement,
     theme: AppTheme,
@@ -1508,8 +1606,8 @@ private fun AchievementCard(
 
     Column(
         Modifier.fillMaxWidth()
-            .background(theme.card, RoundedCornerShape(12.dp))
-            .border(1.dp, theme.accent.copy(alpha = 0.55f), RoundedCornerShape(12.dp))
+            .background(theme.card, RoundedCornerShape(4.dp))
+            .border(2.dp, theme.accent.copy(alpha = 0.75f), RoundedCornerShape(4.dp))
             .padding(12.dp)
     ) {
         Text(
