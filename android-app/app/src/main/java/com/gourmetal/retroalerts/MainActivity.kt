@@ -900,7 +900,7 @@ fun RetroAlertsApp() {
                         } else {
                             PixelPlayerAvatar(
                                 modifier = Modifier
-                                    .size(width = 124.dp, height = 165.dp)
+                                    .size(124.dp)
                                     .border(3.dp, theme.accent, RoundedCornerShape(16.dp))
                             )
                         }
