@@ -581,12 +581,12 @@ private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
                 val py = y * spacing
                 if (isGameBoy) {
                     drawRect(
-                        color = accent.copy(alpha = pulse * 0.45f),
+                        color = accent.copy(alpha = motionPulse * 0.45f),
                         topLeft = androidx.compose.ui.geometry.Offset(px, py),
                         size = androidx.compose.ui.geometry.Size(3f, 3f)
                     )
                 } else if (isNeon) {
-                    drawCircle(accent, radius = 2.5f + pulse * 7f,
+                    drawCircle(accent, radius = 2.5f + motionPulse * 7f,
                         center = androidx.compose.ui.geometry.Offset(px, py))
                 } else {
                     drawCircle(accent.copy(alpha = pulse * 0.55f), radius = 1.8f,
@@ -636,7 +636,7 @@ private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
                 )
                 else -> {
                     val twinkle = if ((i % 3) == 0) 3.2f else 1.8f
-                    drawCircle(theme.accent.copy(alpha = 0.18f + pulse * 0.3f), twinkle, point)
+                    drawCircle(theme.accent.copy(alpha = 0.18f + motionPulse * 0.3f), twinkle, point)
                 }
             }
         }
