@@ -1373,6 +1373,7 @@ fun RetroAlertsApp() {
                 letterSpacing = 1.sp
             )
         }
+        }
     }
 }
 
@@ -1530,7 +1531,6 @@ private suspend fun loadRemoteBitmap(url: String?): Bitmap? =
         }
     }
 
-@Composable
 @Composable
 private fun GameCartridgeCard(
     game: String,
