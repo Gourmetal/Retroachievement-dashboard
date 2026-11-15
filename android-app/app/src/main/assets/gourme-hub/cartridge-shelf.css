@@ -1,0 +1,572 @@
+
+/* =========================================
+   GOURME HUB — GAMEPLAY VIDEO GALLERY
+   ========================================= */
+
+.gh-cartridge-section {
+  margin: 42px 0;
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,155,20,.11), transparent 65%),
+    var(--panel);
+  box-shadow: var(--glow);
+}
+
+.gh-cartridge-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.gh-cartridge-eyebrow {
+  margin: 0 0 7px;
+  color: var(--accent);
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: 3px;
+}
+
+.gh-cartridge-heading h2 {
+  margin: 0;
+  color: var(--text);
+  text-shadow: 0 0 12px var(--accent);
+}
+
+.gh-cartridge-subtitle {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: .88rem;
+}
+
+.gh-cartridge-count {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--accent);
+  background: var(--panel-light);
+  font-size: .78rem;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+/* SEARCH AND FILTER */
+
+.gh-cartridge-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.gh-cartridge-controls input,
+.gh-cartridge-controls select {
+  min-width: 0;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text);
+  background: var(--panel-light);
+  font: inherit;
+}
+
+.gh-cartridge-controls input {
+  flex: 1;
+}
+
+.gh-cartridge-controls select {
+  flex: 0 0 auto;
+}
+
+.gh-cartridge-controls input:focus,
+.gh-cartridge-controls select:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* GALLERY */
+
+#gh-cartridge-grid {
+  padding: 16px;
+  border: 1px solid rgba(255,155,20,.2);
+  border-radius: 13px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255,155,20,.09), transparent 65%),
+    rgba(0,0,0,.22);
+}
+
+.gh-video-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 17px;
+}
+
+/* GAME CARD */
+
+.gh-gallery-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  background: var(--panel-light);
+  text-align: left;
+  cursor: pointer;
+  transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gh-gallery-card:hover,
+.gh-gallery-card:focus-visible {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 17px rgba(255,155,20,.2);
+}
+
+.gh-gallery-image-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #111;
+}
+
+.gh-gallery-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .25s ease;
+}
+
+.gh-gallery-card:hover .gh-gallery-art {
+  transform: scale(1.05);
+}
+
+.gh-gallery-art-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  background:
+    radial-gradient(circle, rgba(255,155,20,.16), transparent 65%),
+    #111;
+  font-size: 3rem;
+}
+
+.gh-gallery-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  padding-left: 3px;
+  border: 2px solid rgba(255,255,255,.85);
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(0,0,0,.72);
+  font-size: 1.25rem;
+  opacity: .9;
+  transform: translate(-50%, -50%);
+  transition: background .2s ease, transform .2s ease;
+}
+
+.gh-gallery-card:hover .gh-gallery-play {
+  background: var(--accent);
+  transform: translate(-50%, -50%) scale(1.12);
+}
+
+.gh-gallery-card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 11px;
+}
+
+.gh-gallery-title {
+  display: -webkit-box;
+  min-height: 2.5em;
+  overflow: hidden;
+  color: var(--text);
+  font-size: .88rem;
+  font-weight: 850;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.gh-gallery-console,
+.gh-gallery-achievements,
+.gh-gallery-status {
+  color: var(--muted);
+  font-size: .72rem;
+}
+
+.gh-gallery-progress {
+  display: block;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(0,0,0,.45);
+}
+
+.gh-gallery-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  box-shadow: 0 0 7px var(--accent);
+}
+
+.gh-gallery-card.completed .gh-gallery-progress span {
+  background: #ffd76a;
+  box-shadow: 0 0 7px #ffd76a;
+}
+
+.gh-gallery-card.in-progress .gh-gallery-progress span {
+  background: #63cfff;
+  box-shadow: 0 0 7px #63cfff;
+}
+
+.gh-cartridge-empty {
+  padding: 28px 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.gh-cartridge-hint {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: .78rem;
+  text-align: center;
+}
+
+/* =========================================
+   GAMEPLAY VIDEO POPUP
+   ========================================= */
+
+.gh-video-modal {
+  position: fixed;
+  z-index: 99999;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  overflow-y: auto;
+  background: rgba(0,0,0,.88);
+  backdrop-filter: blur(7px);
+}
+
+.gh-video-modal.open {
+  display: flex;
+}
+
+.gh-video-dialog {
+  position: relative;
+  width: min(900px, 100%);
+  max-height: 94vh;
+  padding: 22px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  color: var(--text);
+  background: var(--panel);
+  box-shadow: 0 0 35px rgba(255,155,20,.18);
+}
+
+.gh-video-close {
+  position: absolute;
+  z-index: 5;
+  top: 9px;
+  right: 12px;
+  display: grid;
+  width: 39px;
+  height: 39px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--text);
+  background: var(--panel-light);
+  font-size: 1.7rem;
+  cursor: pointer;
+}
+
+.gh-video-close:hover {
+  color: #fff;
+  background: #b52b2b;
+}
+
+.gh-video-heading {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  padding-right: 40px;
+  margin-bottom: 20px;
+}
+
+.gh-video-game-art {
+  flex: 0 0 112px;
+  width: 112px;
+  height: 100px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  object-fit: cover;
+  background: #111;
+}
+
+.gh-video-art-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  font-size: 2.6rem;
+}
+
+.gh-video-game-info {
+  min-width: 0;
+}
+
+.gh-video-eyebrow {
+  margin: 0 0 5px;
+  color: var(--accent);
+  font-size: .65rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+}
+
+.gh-video-game-info h2 {
+  margin: 0 0 7px;
+  font-size: 1.25rem;
+  overflow-wrap: anywhere;
+}
+
+.gh-video-game-info p {
+  margin: 4px 0;
+  color: var(--muted);
+  font-size: .8rem;
+}
+
+.gh-video-progress {
+  width: min(280px, 100%);
+  height: 6px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(0,0,0,.45);
+}
+
+.gh-video-progress span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+/* VIDEO FRAME — CENTERED */
+
+.gh-video-player {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: #000;
+}
+
+.gh-video-player iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.gh-video-player video {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  margin: auto;
+}
+
+.gh-video-source {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: .75rem;
+  text-align: right;
+}
+
+/* SEARCH FALLBACK */
+
+.gh-video-search-preview {
+  display: flex;
+  min-height: 270px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 25px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at center, rgba(255,155,20,.14), transparent 65%),
+    #080808;
+  text-align: center;
+}
+
+.gh-video-search-icon {
+  display: grid;
+  width: 68px;
+  height: 68px;
+  place-items: center;
+  padding-left: 4px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-size: 1.8rem;
+  box-shadow: 0 0 20px rgba(255,155,20,.2);
+}
+
+.gh-video-search-preview h3 {
+  margin: 16px 0 7px;
+}
+
+.gh-video-search-preview p {
+  max-width: 440px;
+  color: var(--muted);
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+.gh-video-watch-button {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 12px 18px;
+  border: 1px solid var(--accent);
+  border-radius: 9px;
+  color: #111;
+  background: var(--accent);
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.gh-video-watch-button:hover {
+  filter: brightness(1.12);
+}
+
+.gh-video-footer {
+  margin: 15px 0 0;
+  color: var(--muted);
+  font-size: .75rem;
+  text-align: center;
+}
+
+/* MOBILE */
+
+@media (max-width: 600px) {
+  .gh-cartridge-section {
+    padding: 14px;
+  }
+
+  .gh-cartridge-controls {
+    flex-direction: column;
+  }
+
+  .gh-cartridge-controls select {
+    width: 100%;
+  }
+
+  #gh-cartridge-grid {
+    padding: 10px;
+  }
+
+  .gh-video-gallery-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .gh-gallery-card-copy {
+    padding: 8px;
+  }
+
+  .gh-gallery-title {
+    font-size: .78rem;
+  }
+
+  .gh-gallery-console,
+  .gh-gallery-achievements,
+  .gh-gallery-status {
+    font-size: .65rem;
+  }
+
+  .gh-gallery-play {
+    width: 39px;
+    height: 39px;
+  }
+
+  .gh-video-modal {
+    align-items: flex-start;
+    padding: 8px;
+  }
+
+  .gh-video-dialog {
+    max-height: 98vh;
+    padding: 15px;
+  }
+
+  .gh-video-heading {
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .gh-video-game-art {
+    flex-basis: 78px;
+    width: 78px;
+    height: 85px;
+  }
+
+  .gh-video-game-info h2 {
+    font-size: 1rem;
+  }
+
+  .gh-video-search-preview {
+    min-height: 230px;
+    padding: 18px;
+  }
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+  .gh-gallery-card,
+  .gh-gallery-art,
+  .gh-gallery-play {
+    transition: none !important;
+  }
+}
+
+/* THEME VARIANTS */
+
+body[data-gh-theme="midnight"] .gh-gallery-play {
+  color: #fff;
+}
+
+body[data-gh-theme="retro-neon"] .gh-gallery-card:hover {
+  box-shadow: 0 0 18px rgba(200,94,210,.3);
+}
