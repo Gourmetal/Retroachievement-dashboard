@@ -948,14 +948,14 @@ fun RetroAlertsApp() {
                 ) {
                     Column(
                         Modifier.fillMaxWidth()
-                            .background(Color(0xFF101010), RoundedCornerShape(8.dp))
-                            .border(2.dp, Color(0xFFFF7900), RoundedCornerShape(8.dp))
+                            .background(theme.card, RoundedCornerShape(8.dp))
+                            .border(2.dp, theme.accent, RoundedCornerShape(8.dp))
                             .padding(18.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Text("GOURMETAL", color = Color(0xFFFF7900), fontSize = 25.sp,
+                        Text("GOURMETAL", color = theme.accent, fontSize = 25.sp,
                             fontWeight = FontWeight.Black, letterSpacing = 3.sp)
-                        Text("RETRO ACHIEVEMENTS HUB", color = Color.White, fontSize = 11.sp,
+                        Text("RETRO ACHIEVEMENTS HUB", color = theme.text, fontSize = 11.sp,
                             fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
                         Text("PLAYER ONE • READY TO PLAY", color = theme.muted, fontSize = 9.sp)
                         Spacer(Modifier.height(4.dp))
@@ -976,8 +976,8 @@ fun RetroAlertsApp() {
                             pair.forEach { item ->
                                 Column(
                                     Modifier.weight(1f).heightIn(min = 108.dp)
-                                        .background(Color(0xFF151515), RoundedCornerShape(7.dp))
-                                        .border(1.5.dp, Color(0xFFFF7900), RoundedCornerShape(7.dp))
+                                        .background(theme.card, RoundedCornerShape(7.dp))
+                                        .border(1.5.dp, theme.accent, RoundedCornerShape(7.dp))
                                         .clickable {
                                             hubScreen = false
                                             settings = false
@@ -1006,12 +1006,12 @@ fun RetroAlertsApp() {
                         }
                     }
                     Text("${achievements.size} UNLOCKS • ${gameLibrary.size} GAMES IN YOUR LIBRARY",
-                        color = Color(0xFFFFA34D), fontSize = 10.sp,
+                        color = theme.accent, fontSize = 10.sp,
                         modifier = Modifier.align(Alignment.CenterHorizontally))
                     OutlinedButton(
                         onClick = { settings = true; hubScreen = false },
                         modifier = Modifier.fillMaxWidth(),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFF7900))
+                        border = androidx.compose.foundation.BorderStroke(1.dp, theme.accent)
                     ) { Text("SETTINGS & ACCOUNT CONNECTION", color = theme.accent) }
                 }
             } else {
