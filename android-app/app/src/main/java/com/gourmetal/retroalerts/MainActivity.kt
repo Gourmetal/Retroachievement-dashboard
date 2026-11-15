@@ -387,9 +387,15 @@ class AchievementWorker(
 
         return try {
             // Prefer the recent feed, but fall back to full history if that endpoint fails.
-            val achievements = try {
+            val recent = try {
                 getRecentAchievements(key)
             } catch (_: Exception) {
+                emptyList()
+            }
+            val achievements = if (recent.isNotEmpty()) {
+                recent
+            } else {
+                // An empty or unavailable recent feed should not disable checking.
                 getAchievements(key)
             }
 
