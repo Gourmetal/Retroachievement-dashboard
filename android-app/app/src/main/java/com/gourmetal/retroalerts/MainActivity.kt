@@ -769,6 +769,7 @@ fun RetroAlertsApp() {
     var backlogScreen by remember { mutableStateOf(false) }
     var gameLibrary by remember { mutableStateOf(emptyList<RetroGame>()) }
     var selectedRoadmap by remember { mutableStateOf<GameRoadmap?>(null) }
+    var selectedAchievementDetail by remember { mutableStateOf<GameAchievement?>(null) }
     var roadmapLoading by remember { mutableStateOf(false) }
     var backlog by remember { mutableStateOf(loadBacklog(context)) }
     var missableFlags by remember { mutableStateOf(loadMissableFlags(context)) }
@@ -949,6 +950,35 @@ fun RetroAlertsApp() {
                 Spacer(Modifier.height(8.dp))
             }
 
+            selectedAchievementDetail?.let { a ->
+                val hinted = possibleMissableHint(a.description)
+                val manuallyFlagged = a.id in missableFlags
+                AlertDialog(
+                    onDismissRequest = { selectedAchievementDetail = null },
+                    containerColor = theme.card,
+                    title = { Text(a.title, color = theme.accent, fontWeight = FontWeight.Black) },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("${a.points} POINTS • ${if (a.earned) "UNLOCKED" else "LOCKED"}", color = theme.muted, fontSize = 10.sp)
+                            Text("UNLOCK CONDITION", color = theme.accent, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            Text(a.description.ifBlank { "No unlock condition was supplied by RetroAchievements for this achievement." }, color = theme.text, fontSize = 13.sp)
+                            if (!a.earned && (hinted || manuallyFlagged)) {
+                                Text(if (manuallyFlagged) "⚠ YOU FLAGGED THIS AS NEEDING SPECIAL ATTENTION." else "⚠ THIS DESCRIPTION MAY CONTAIN A SPECIAL OR MISSABLE CONDITION. PLEASE VERIFY IT.", color = theme.accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (!a.earned) TextButton(onClick = {
+                                saveMissableFlag(context, a.id, !manuallyFlagged)
+                                missableFlags = loadMissableFlags(context)
+                            }) { Text(if (manuallyFlagged) "REMOVE FLAG" else "FLAG IT", color = theme.accent) }
+                            TextButton(onClick = { selectedAchievementDetail = null }) { Text("CLOSE", color = theme.accent) }
+                        }
+                    }
+                )
+            }
+
             if (roadmapScreen) {
                 Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                     Text("Choose a game to load its full achievement list and progress.", color = theme.muted, fontSize = 11.sp)
@@ -985,12 +1015,11 @@ fun RetroAlertsApp() {
                                 items(roadmap.achievements, key = { it.id }) { a ->
                                     val hinted = possibleMissableHint(a.description)
                                     val manuallyFlagged = a.id in missableFlags
-                                    Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(7.dp)).padding(7.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(7.dp)).clickable { selectedAchievementDetail = a }.padding(7.dp), verticalAlignment = Alignment.CenterVertically) {
                                         Column(Modifier.weight(1f)) {
                                             Text(if (a.earned) "✓ ${a.title}" else a.title, color = if (a.earned) theme.muted else theme.text, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                            Text("${a.points} PTS • ${if (a.earned) "UNLOCKED" else "LOCKED"}", color = theme.muted, fontSize = 9.sp)
+                                            Text("${a.points} PTS • ${if (a.earned) "UNLOCKED" else "LOCKED"} • TAP FOR CONDITION", color = theme.muted, fontSize = 9.sp)
                                             if (!a.earned && (hinted || manuallyFlagged)) Text(if (manuallyFlagged) "⚠ USER-FLAGGED • CHECK REQUIREMENTS" else "⚠ POSSIBLE SPECIAL CONDITION • VERIFY", color = theme.accent, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                                            if (!a.earned && a.description.isNotBlank()) Text(a.description, color = theme.muted, fontSize = 9.sp, maxLines = 3)
                                         }
                                         if (!a.earned) TextButton(onClick = {
                                             saveMissableFlag(context, a.id, !manuallyFlagged)
