@@ -1466,7 +1466,6 @@ fun RetroAlertsApp() {
                         }
                     }
                 }
-                }
             } else if (!settings) {
                 if (recentAchievements.isEmpty()) {
                     Column(
@@ -1500,7 +1499,7 @@ fun RetroAlertsApp() {
                 Column(
                     Modifier.weight(1f).fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.Bottom)
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Text("APPEARANCE", color = theme.accent, fontWeight = FontWeight.Black)
                     themes.forEachIndexed { index, option ->
