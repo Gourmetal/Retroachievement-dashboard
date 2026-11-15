@@ -49,6 +49,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.viewinterop.AndroidView
@@ -104,12 +105,12 @@ data class AppTheme(
     val muted: Color
 )
 private val themes = listOf(
-    AppTheme("Classic Orange", Color(0xFF08090F), Color(0xFF171923), Color(0xFF222531), Color(0xFFFF941F), Color.White, Color(0xFFB8BBC8)),
-    AppTheme("Midnight", Color(0xFF080E1B), Color(0xFF14213A), Color(0xFF1D2D4A), Color(0xFF75A9FF), Color.White, Color(0xFFB5C4DC)),
-    AppTheme("Retro Neon", Color(0xFF160D24), Color(0xFF28163C), Color(0xFF38204F), Color(0xFFD38AFF), Color.White, Color(0xFFD0B9E5)),
-    AppTheme("Game Boy", Color(0xFF17251A), Color(0xFF344C32), Color(0xFF486744), Color(0xFFD9F0C0), Color(0xFFF0F8E9), Color(0xFFC2D7B5)),
-    AppTheme("GBA Purple", Color(0xFF17142A), Color(0xFF34285F), Color(0xFF493B78), Color(0xFFB8A9E8), Color.White, Color(0xFFD8CFF4)),
-    AppTheme("Emerald", Color(0xFF091A15), Color(0xFF15372B), Color(0xFF20503C), Color(0xFF55E0A0), Color.White, Color(0xFFB2DCC8))
+    AppTheme("GBA • Classic Orange", Color(0xFF08090F), Color(0xFF171923), Color(0xFF222531), Color(0xFFFF941F), Color.White, Color(0xFFB8BBC8)),
+    AppTheme("GBA • Midnight Black", Color(0xFF080E1B), Color(0xFF14213A), Color(0xFF1D2D4A), Color(0xFF75A9FF), Color.White, Color(0xFFB5C4DC)),
+    AppTheme("GBA • Neon Purple", Color(0xFF160D24), Color(0xFF28163C), Color(0xFF38204F), Color(0xFFD38AFF), Color.White, Color(0xFFD0B9E5)),
+    AppTheme("DMG • Classic Green", Color(0xFF17251A), Color(0xFF344C32), Color(0xFF486744), Color(0xFFD9F0C0), Color(0xFFF0F8E9), Color(0xFFC2D7B5)),
+    AppTheme("GBA • Glacier Purple", Color(0xFF17142A), Color(0xFF34285F), Color(0xFF493B78), Color(0xFFB8A9E8), Color.White, Color(0xFFD8CFF4)),
+    AppTheme("GBA • Emerald", Color(0xFF091A15), Color(0xFF15372B), Color(0xFF20503C), Color(0xFF55E0A0), Color.White, Color(0xFFB2DCC8))
 )
 
 
@@ -531,7 +532,7 @@ private fun BootSplash(onFinished: () -> Unit) {
 }
 
 @Composable
-private fun ThemeBackdrop(theme: AppTheme) {
+private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
     val motion = rememberInfiniteTransition(label = "theme_background")
     val drift by motion.animateFloat(
         initialValue = 0f,
@@ -551,16 +552,18 @@ private fun ThemeBackdrop(theme: AppTheme) {
         ),
         label = "background_pulse"
     )
+    val motionDrift = if (animated) drift else 0f
+    val motionPulse = if (animated) pulse else 0.10f
     Canvas(Modifier.fillMaxSize()) {
         val w = size.width
         val h = size.height
-        val accent = theme.accent.copy(alpha = pulse)
+        val accent = theme.accent.copy(alpha = motionPulse)
         val isGameBoy = theme.name == "Game Boy"
         val isNeon = theme.name == "Retro Neon"
         val spacing = if (isGameBoy) 34f else 46f
         for (x in 0..(w / spacing).toInt()) {
             for (y in 0..(h / spacing).toInt()) {
-                val offset = if ((x + y) % 2 == 0) drift * spacing else -drift * spacing
+                val offset = if ((x + y) % 2 == 0) motionDrift * spacing else -motionDrift * spacing
                 val px = x * spacing + offset
                 val py = y * spacing
                 if (isGameBoy) {
@@ -578,7 +581,7 @@ private fun ThemeBackdrop(theme: AppTheme) {
                 }
             }
         }
-        val bandY = (h * drift)
+        val bandY = (h * motionDrift)
         drawLine(
             color = theme.accent.copy(alpha = 0.035f),
             start = androidx.compose.ui.geometry.Offset(0f, bandY),
@@ -603,8 +606,8 @@ private fun ThemeBackdrop(theme: AppTheme) {
             else -> "rain"
         }
         for (i in 0..22) {
-            val baseX = ((i * 83f + drift * (if (weather == "rain") 95f else 42f)) % (w + 30f))
-            val baseY = ((i * 67f + drift * 230f) % (h + 30f))
+            val baseX = ((i * 83f + motionDrift * (if (weather == "rain") 95f else 42f)) % (w + 30f))
+            val baseY = ((i * 67f + motionDrift * 230f) % (h + 30f))
             val point = androidx.compose.ui.geometry.Offset(baseX, baseY)
             when (weather) {
                 "rain" -> drawLine(
@@ -658,6 +661,9 @@ fun RetroAlertsApp() {
     var selectedTheme by remember {
         mutableIntStateOf(prefs.getInt("selected_theme", 0).coerceIn(0, themes.lastIndex))
     }
+    var animatedBackground by remember { mutableStateOf(prefs.getBoolean("animated_background", true)) }
+    var pixelBorders by remember { mutableStateOf(prefs.getBoolean("pixel_borders", true)) }
+    var pixelFont by remember { mutableStateOf(prefs.getBoolean("pixel_font", false)) }
 
     val theme = themes[selectedTheme]
     val messageMeta = remember(messages, inboxRefresh) { loadMessageMeta(context) }
@@ -731,12 +737,21 @@ fun RetroAlertsApp() {
         Modifier.fillMaxSize().background(theme.background),
         contentAlignment = Alignment.TopStart
     ) {
-        ThemeBackdrop(theme)
+        ThemeBackdrop(theme, animatedBackground)
+        CompositionLocalProvider(
+            LocalTextStyle provides LocalTextStyle.current.copy(
+                fontFamily = if (pixelFont) FontFamily.Monospace else FontFamily.Default
+            )
+        ) {
         Column(
             Modifier.fillMaxSize()
                 .safeDrawingPadding()
                 .background(theme.panel)
-                .border(2.dp, theme.accent.copy(alpha = 0.65f))
+                .border(
+                    if (pixelBorders) 3.dp else 1.dp,
+                    theme.accent.copy(alpha = 0.75f),
+                    if (pixelBorders) RoundedCornerShape(3.dp) else RoundedCornerShape(16.dp)
+                )
                 .padding(12.dp)
         ) {
             Row(
@@ -1354,6 +1369,8 @@ private fun trimAvatarArtwork(source: Bitmap): Bitmap {
     val cropBottom = (bottom + padY + 1).coerceAtMost(source.height)
     if (cropRight - cropLeft < source.width / 4 || cropBottom - cropTop < source.height / 4) return source
     return Bitmap.createBitmap(source, cropLeft, cropTop, cropRight - cropLeft, cropBottom - cropTop)
+        }
+
 }
 
 @Composable
