@@ -939,11 +939,12 @@ fun RetroAlertsApp() {
                 val level = (totalPoints / 1000) + 1
                 val favorites = runCatching { loadMessageMeta(context).values.count { it.favorite } }.getOrDefault(0)
                 val hardcoreCount = achievements.count { it.hardcore }
-                Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(18.dp)).border(2.dp, theme.accent, RoundedCornerShape(18.dp)).padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                         val savedAvatar = remember {
                             runCatching {
                                 BitmapFactory.decodeResource(context.resources, R.drawable.gourmetal_avatar)
+                                    ?.let { trimAvatarArtwork(it) }
                                     ?.asImageBitmap()
                             }.getOrNull()
                         }
@@ -953,14 +954,14 @@ fun RetroAlertsApp() {
                                 contentDescription = "Gourmetal player avatar",
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier
-                                    .size(width = 124.dp, height = 165.dp)
+                                    .size(142.dp)
                                     .background(theme.background, RoundedCornerShape(16.dp))
                                     .border(3.dp, theme.accent, RoundedCornerShape(16.dp))
                             )
                         } else {
                             PixelPlayerAvatar(
                                 modifier = Modifier
-                                    .size(124.dp)
+                                    .size(142.dp)
                                     .border(3.dp, theme.accent, RoundedCornerShape(16.dp))
                             )
                         }
@@ -969,6 +970,15 @@ fun RetroAlertsApp() {
                             Text("LEVEL $level", color = theme.text, fontWeight = FontWeight.Bold, fontSize = 15.sp)
                             Text("GOLDEN VOLT • RETRO HUNTER", color = theme.muted, fontSize = 9.sp)
                             Text("$totalPoints POINTS", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                            val pointsIntoLevel = totalPoints % 1000
+                            LinearProgressIndicator(
+                                progress = { pointsIntoLevel / 1000f },
+                                modifier = Modifier.fillMaxWidth().height(6.dp),
+                                color = theme.accent,
+                                trackColor = theme.background
+                            )
+                            Text("${pointsIntoLevel}/1000 XP • ${1000 - pointsIntoLevel} TO NEXT LEVEL",
+                                color = theme.muted, fontSize = 8.sp)
                         }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1295,7 +1305,7 @@ fun RetroAlertsApp() {
 
             Spacer(Modifier.height(8.dp))
             Text(
-                "GBA EDITION • VERSION 0.7.4",
+                "GBA EDITION • VERSION 0.7.5",
                 Modifier.align(Alignment.CenterHorizontally),
                 color = theme.muted,
                 fontSize = 9.sp,
@@ -1305,6 +1315,46 @@ fun RetroAlertsApp() {
     }
 }
 
+
+private fun trimAvatarArtwork(source: Bitmap): Bitmap {
+    if (source.width < 2 || source.height < 2) return source
+    val background = source.getPixel(0, 0)
+    val bgR = android.graphics.Color.red(background)
+    val bgG = android.graphics.Color.green(background)
+    val bgB = android.graphics.Color.blue(background)
+    var left = source.width
+    var top = source.height
+    var right = -1
+    var bottom = -1
+
+    // The supplied portrait has a large flat dark area below the character.
+    // Find the actual artwork bounds so that empty canvas doesn't consume half the frame.
+    for (y in 0 until source.height) {
+        for (x in 0 until source.width) {
+            val pixel = source.getPixel(x, y)
+            val alpha = android.graphics.Color.alpha(pixel)
+            val delta = kotlin.math.abs(android.graphics.Color.red(pixel) - bgR) +
+                kotlin.math.abs(android.graphics.Color.green(pixel) - bgG) +
+                kotlin.math.abs(android.graphics.Color.blue(pixel) - bgB)
+            if (alpha > 24 && (alpha < 245 || delta > 28)) {
+                left = minOf(left, x)
+                top = minOf(top, y)
+                right = maxOf(right, x)
+                bottom = maxOf(bottom, y)
+            }
+        }
+    }
+    if (right < left || bottom < top) return source
+
+    val padX = (source.width * 0.035f).toInt()
+    val padY = (source.height * 0.035f).toInt()
+    val cropLeft = (left - padX).coerceAtLeast(0)
+    val cropTop = (top - padY).coerceAtLeast(0)
+    val cropRight = (right + padX + 1).coerceAtMost(source.width)
+    val cropBottom = (bottom + padY + 1).coerceAtMost(source.height)
+    if (cropRight - cropLeft < source.width / 4 || cropBottom - cropTop < source.height / 4) return source
+    return Bitmap.createBitmap(source, cropLeft, cropTop, cropRight - cropLeft, cropBottom - cropTop)
+}
 
 @Composable
 private fun PixelPlayerAvatar(modifier: Modifier = Modifier) {
