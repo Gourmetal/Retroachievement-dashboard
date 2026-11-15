@@ -589,7 +589,7 @@ private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
                     drawCircle(accent, radius = 2.5f + motionPulse * 7f,
                         center = androidx.compose.ui.geometry.Offset(px, py))
                 } else {
-                    drawCircle(accent.copy(alpha = pulse * 0.55f), radius = 1.8f,
+                    drawCircle(accent.copy(alpha = motionPulse * 0.55f), radius = 1.8f,
                         center = androidx.compose.ui.geometry.Offset(px, py))
                 }
             }
