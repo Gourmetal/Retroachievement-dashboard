@@ -13,7 +13,7 @@ val generateLauncherIcon by tasks.registering {
     inputs.file(iconFile)
     outputs.dir(outputDir)
     doLast {
-        val png = Base64.getDecoder().decode(iconFile.asFile.readText().trim())
+        val png = Base64.getDecoder().decode(iconFile.asFile.readText().filterNot { it.isWhitespace() })
         val target = outputDir.get().file("drawable-nodpi/gourmetal_icon.png").asFile
         target.parentFile.mkdirs()
         target.writeBytes(png)
