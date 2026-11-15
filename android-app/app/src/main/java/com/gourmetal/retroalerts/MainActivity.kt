@@ -43,6 +43,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -1465,8 +1466,7 @@ fun RetroAlertsApp() {
                         }
                     }
                 }
-            }
-            } else if (!settings) {
+            else if (!settings) {
                 if (recentAchievements.isEmpty()) {
                     Column(
                         Modifier.fillMaxWidth().heightIn(min = 150.dp)
