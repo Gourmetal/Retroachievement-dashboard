@@ -386,10 +386,14 @@ class AchievementWorker(
 
         return try {
             val achievements = getRecentAchievements(key)
-            // Backfill the inbox from the recent account feed. This does not send
-            // duplicate notifications; it only restores the in-app alert history.
-            achievements.asReversed().forEach { saveMessage(applicationContext, it) }
             val prefs = applicationContext.getSharedPreferences(PREFS, 0)
+            // On upgrade, treat the existing inbox as history; only new unlocks become unread.
+            if (!prefs.getBoolean("unread_initialized", false)) {
+                loadMessages(applicationContext).forEach { setMessageMeta(applicationContext, it.id, read = true) }
+                prefs.edit().putBoolean("unread_initialized", true).apply()
+            }
+            // Backfill the inbox from the recent account feed without duplicating entries.
+            achievements.asReversed().forEach { saveMessage(applicationContext, it) }
             val currentIds = achievements.map { it.id }.filter { it.isNotBlank() }.toSet()
             val previousIds = prefs.getStringSet("known_unlocks", null)
 
@@ -665,6 +669,10 @@ fun RetroAlertsApp() {
                 achievements = getAchievements(key)
                 // Build the inbox from the full account history so it still works if the
                 // separate recent-feed endpoint is unavailable. Keep the latest 100 alerts.
+                if (!prefs.getBoolean("unread_initialized", false)) {
+                    loadMessages(context).forEach { setMessageMeta(context, it.id, read = true) }
+                    prefs.edit().putBoolean("unread_initialized", true).apply()
+                }
                 val hadInboxHistory = loadMessages(context).isNotEmpty()
                 achievements.take(100).asReversed().forEach { item ->
                     saveMessage(context, item)
