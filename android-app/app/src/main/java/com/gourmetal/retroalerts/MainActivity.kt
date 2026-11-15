@@ -1475,7 +1475,6 @@ fun RetroAlertsApp() {
                     }
                     else -> { Text("Choose a section from Home.", color = theme.muted) }
                     }
-                }
             } else if (!settings) {
                 if (recentAchievements.isEmpty()) {
                     Column(
