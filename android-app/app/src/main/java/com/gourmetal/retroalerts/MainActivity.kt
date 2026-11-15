@@ -95,6 +95,47 @@ data class Achievement(
     val gameIcon: String = "",
     val trueRatio: Double = 0.0
 )
+data class RetroGame(
+    val id: String,
+    val title: String,
+    val console: String,
+    val total: Int,
+    val earned: Int,
+    val lastPlayed: String,
+    val image: String = ""
+) {
+    val progress: Int get() = if (total > 0) ((earned * 100f) / total).toInt().coerceIn(0, 100) else 0
+}
+data class GameAchievement(
+    val id: String,
+    val title: String,
+    val description: String,
+    val points: Int,
+    val earned: Boolean,
+    val hardcore: Boolean,
+    val badgeName: String,
+    val trueRatio: Double
+)
+data class GameRoadmap(val game: RetroGame, val achievements: List<GameAchievement>)
+private fun loadBacklog(context: Context): Map<String, String> {
+    val json = org.json.JSONObject(context.getSharedPreferences(PREFS, 0).getString("game_backlog", "{}") ?: "{}")
+    return json.keys().asSequence().associateWith { json.optString(it, "WANT TO PLAY") }
+}
+private fun saveBacklog(context: Context, id: String, status: String) {
+    val prefs = context.getSharedPreferences(PREFS, 0)
+    val json = org.json.JSONObject(prefs.getString("game_backlog", "{}") ?: "{}")
+    if (status == "NONE") json.remove(id) else json.put(id, status)
+    prefs.edit().putString("game_backlog", json.toString()).apply()
+}
+private fun loadMissableFlags(context: Context): Set<String> =
+    context.getSharedPreferences(PREFS, 0).getStringSet("missable_flags", emptySet())?.toSet() ?: emptySet()
+private fun saveMissableFlag(context: Context, id: String, flagged: Boolean) {
+    val prefs = context.getSharedPreferences(PREFS, 0)
+    val flags = prefs.getStringSet("missable_flags", emptySet())?.toMutableSet() ?: mutableSetOf()
+    if (flagged) flags.add(id) else flags.remove(id)
+    prefs.edit().putStringSet("missable_flags", flags).apply()
+}
+
 data class AppTheme(
     val name: String,
     val background: Color,
@@ -239,6 +280,61 @@ private suspend fun getRecentAchievements(apiKey: String): List<Achievement> =
             connection.disconnect()
         }
     }
+
+private suspend fun getCompletionGames(apiKey: String): List<RetroGame> = withContext(Dispatchers.IO) {
+    val encoded = URLEncoder.encode(apiKey, "UTF-8")
+    val url = URL("https://retroachievements.org/API/API_GetUserCompletionProgress.php?u=Gourmetal&c=500&o=0&y=$encoded")
+    val connection = url.openConnection() as HttpURLConnection
+    try {
+        connection.connectTimeout = 20000
+        connection.readTimeout = 30000
+        if (connection.responseCode !in 200..299) throw Exception("Game library error: ${connection.responseCode}")
+        val root = org.json.JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+        val rows = root.optJSONArray("Results") ?: JSONArray()
+        (0 until rows.length()).mapNotNull { index ->
+            val row = rows.optJSONObject(index) ?: return@mapNotNull null
+            val id = row.optString("GameID", row.optString("ID"))
+            if (id.isBlank()) return@mapNotNull null
+            RetroGame(
+                id, row.optString("Title", "Unknown game"), row.optString("ConsoleName", ""),
+                row.optInt("MaxPossible"), row.optInt("NumAwarded"),
+                row.optString("MostRecentAward", row.optString("LastPlayed", "")),
+                row.optString("ImageIcon", "")
+            )
+        }
+    } finally { connection.disconnect() }
+}
+private suspend fun getGameRoadmap(apiKey: String, game: RetroGame): GameRoadmap = withContext(Dispatchers.IO) {
+    val encoded = URLEncoder.encode(apiKey, "UTF-8")
+    val url = URL("https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?u=Gourmetal&g=${game.id}&y=$encoded")
+    val connection = url.openConnection() as HttpURLConnection
+    try {
+        connection.connectTimeout = 20000
+        connection.readTimeout = 30000
+        if (connection.responseCode !in 200..299) throw Exception("Game details error: ${connection.responseCode}")
+        val root = org.json.JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+        val raw = root.optJSONObject("Achievements") ?: org.json.JSONObject()
+        val items = mutableListOf<GameAchievement>()
+        val keys = raw.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            val a = raw.optJSONObject(key) ?: continue
+            val earnedDate = a.optString("DateEarned", "")
+            val hardcoreDate = a.optString("DateEarnedHardcore", "")
+            items.add(GameAchievement(
+                a.optString("ID", key), a.optString("Title", "Achievement"),
+                a.optString("Description", ""), a.optInt("Points"),
+                earnedDate.isNotBlank(), hardcoreDate.isNotBlank(),
+                a.optString("BadgeName", ""), a.optDouble("TrueRatio", a.optDouble("Rarity", 0.0))
+            ))
+        }
+        GameRoadmap(game, items.sortedWith(compareBy<GameAchievement> { it.earned }.thenByDescending { it.points }))
+    } finally { connection.disconnect() }
+}
+private fun possibleMissableHint(description: String): Boolean {
+    val d = description.lowercase()
+    return listOf("missable", "before you", "without taking", "no damage", "one chance", "never", "don't", "do not", "first time", "point of no return", "before defeating", "before leaving").any { it in d }
+}
 
 private fun createChannel(context: Context) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -669,6 +765,14 @@ fun RetroAlertsApp() {
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
     var recentAchievements by remember { mutableStateOf(emptyList<Achievement>()) }
+    var roadmapScreen by remember { mutableStateOf(false) }
+    var backlogScreen by remember { mutableStateOf(false) }
+    var gameLibrary by remember { mutableStateOf(emptyList<RetroGame>()) }
+    var selectedRoadmap by remember { mutableStateOf<GameRoadmap?>(null) }
+    var roadmapLoading by remember { mutableStateOf(false) }
+    var backlog by remember { mutableStateOf(loadBacklog(context)) }
+    var missableFlags by remember { mutableStateOf(loadMissableFlags(context)) }
+    var backlogFilter by remember { mutableStateOf("ALL") }
     var status by remember { mutableStateOf("READY, PLAYER?") }
     var loading by remember { mutableStateOf(false) }
     var notifications by remember { mutableStateOf(prefs.getBoolean("notifications", false)) }
@@ -711,6 +815,7 @@ fun RetroAlertsApp() {
             status = "CONNECTING..."
             try {
                 achievements = getAchievements(key)
+                gameLibrary = try { getCompletionGames(key) } catch (_: Exception) { emptyList() }
                 recentAchievements = try {
                     getRecentAchievements(key).ifEmpty { achievements.take(20) }
                 } catch (_: Exception) {
@@ -805,7 +910,7 @@ fun RetroAlertsApp() {
                     .padding(14.dp)
             ) {
                 Text(
-                    when { dashboard -> "DASHBOARD"; messagesScreen -> "MESSAGES"; playerScreen -> "PLAYER PROFILE"; settings -> "SETTINGS"; else -> "READY, PLAYER?" },
+                    when { roadmapScreen -> "ACHIEVEMENT ROADMAP"; backlogScreen -> "BACKLOG MANAGER"; dashboard -> "DASHBOARD"; messagesScreen -> "MESSAGES"; playerScreen -> "PLAYER PROFILE"; settings -> "SETTINGS"; else -> "READY, PLAYER?" },
                     color = theme.text,
                     fontSize = 21.sp,
                     fontWeight = FontWeight.Black
@@ -828,11 +933,11 @@ fun RetroAlertsApp() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    when { dashboard -> "RETROACHIEVEMENTS DASHBOARD"; messagesScreen -> "ALERT INBOX"; playerScreen -> "YOUR PLAYER PROFILE"; settings -> "PERSONALIZE YOUR APP"; else -> "RECENT UNLOCKS" },
+                    when { roadmapScreen -> "GAME ACHIEVEMENT ROADMAP"; backlogScreen -> "YOUR GAME BACKLOG"; dashboard -> "RETROACHIEVEMENTS DASHBOARD"; messagesScreen -> "ALERT INBOX"; playerScreen -> "YOUR PLAYER PROFILE"; settings -> "PERSONALIZE YOUR APP"; else -> "RECENT UNLOCKS" },
                     color = theme.text,
                     fontWeight = FontWeight.Bold
                 )
-                if (!settings && !dashboard && !messagesScreen && !playerScreen) {
+                if (!settings && !dashboard && !messagesScreen && !playerScreen && !roadmapScreen && !backlogScreen) {
                     IconButton(onClick = { refresh() }, enabled = !loading) {
                         Icon(Icons.Default.Refresh, "Refresh", tint = theme.accent)
                     }
@@ -844,7 +949,91 @@ fun RetroAlertsApp() {
                 Spacer(Modifier.height(8.dp))
             }
 
-            if (messagesScreen) {
+            if (roadmapScreen) {
+                Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                    Text("Choose a game to load its full achievement list and progress.", color = theme.muted, fontSize = 11.sp)
+                    if (gameLibrary.isEmpty()) {
+                        Text("Game library hasn't loaded yet. Refresh Home while connected.", color = theme.text, modifier = Modifier.padding(12.dp))
+                    } else {
+                        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                            items(gameLibrary, key = { it.id }) { game ->
+                                Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(10.dp)).border(1.dp, theme.accent.copy(alpha=.45f), RoundedCornerShape(10.dp)).clickable {
+                                    val key = KeyVault.load(context)
+                                    if (key != null) scope.launch {
+                                        roadmapLoading = true
+                                        selectedRoadmap = null
+                                        try { selectedRoadmap = getGameRoadmap(key, game) } catch (e: Exception) { status = "ROADMAP ERROR: ${e.message}" }
+                                        roadmapLoading = false
+                                    }
+                                }.padding(10.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(game.title, Modifier.weight(1f), color = theme.text, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                        Text("${game.earned}/${game.total}", color = theme.accent, fontSize = 10.sp)
+                                    }
+                                    LinearProgressIndicator(progress = { game.progress / 100f }, modifier = Modifier.fillMaxWidth().height(6.dp), color = theme.accent, trackColor = theme.background)
+                                    Text("${game.progress}% COMPLETE • ${game.console}", color = theme.muted, fontSize = 9.sp)
+                                }
+                            }
+                        }
+                    }
+                    if (roadmapLoading) LinearProgressIndicator(Modifier.fillMaxWidth(), color = theme.accent)
+                    selectedRoadmap?.let { roadmap ->
+                        Column(Modifier.fillMaxWidth().weight(1f, fill = false).background(theme.background, RoundedCornerShape(10.dp)).padding(10.dp)) {
+                            Text("${roadmap.game.title} • ${roadmap.game.progress}% COMPLETE", color = theme.accent, fontWeight = FontWeight.Black)
+                            Text("${roadmap.achievements.count { it.earned }} UNLOCKED • ${roadmap.achievements.count { !it.earned }} REMAINING", color = theme.muted, fontSize = 10.sp)
+                            LazyColumn(Modifier.heightIn(max = 260.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                items(roadmap.achievements, key = { it.id }) { a ->
+                                    val hinted = possibleMissableHint(a.description)
+                                    val manuallyFlagged = a.id in missableFlags
+                                    Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(7.dp)).padding(7.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text(if (a.earned) "✓ ${a.title}" else a.title, color = if (a.earned) theme.muted else theme.text, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                                            Text("${a.points} PTS • ${if (a.earned) "UNLOCKED" else "LOCKED"}", color = theme.muted, fontSize = 9.sp)
+                                            if (!a.earned && (hinted || manuallyFlagged)) Text(if (manuallyFlagged) "⚠ USER-FLAGGED • CHECK REQUIREMENTS" else "⚠ POSSIBLE SPECIAL CONDITION • VERIFY", color = theme.accent, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                                            if (!a.earned && a.description.isNotBlank()) Text(a.description, color = theme.muted, fontSize = 9.sp, maxLines = 3)
+                                        }
+                                        if (!a.earned) TextButton(onClick = {
+                                            saveMissableFlag(context, a.id, !manuallyFlagged)
+                                            missableFlags = loadMissableFlags(context)
+                                        }) { Text(if (manuallyFlagged) "UNFLAG" else "FLAG", color = theme.accent, fontSize = 9.sp) }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (backlogScreen) {
+                val filteredGames = gameLibrary.filter { game ->
+                    backlogFilter == "ALL" || (backlog[game.id] ?: "WANT TO PLAY") == backlogFilter
+                }
+                Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Organize games locally. Changes stay on this device.", color = theme.muted, fontSize = 10.sp)
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        listOf("ALL", "PLAYING", "WANT TO PLAY", "COMPLETED", "ABANDONED").forEach { f ->
+                            FilterChip(selected = backlogFilter == f, onClick = { backlogFilter = f }, label = { Text(f, fontSize = 9.sp) })
+                        }
+                    }
+                    Text("${filteredGames.size} GAMES • ${backlog.values.count { it == "PLAYING" }} PLAYING • ${backlog.values.count { it == "WANT TO PLAY" }} WANT TO PLAY", color = theme.accent, fontSize = 9.sp)
+                    if (gameLibrary.isEmpty()) Text("Refresh Home while connected to load your game library.", color = theme.text, modifier = Modifier.padding(12.dp))
+                    LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                        items(filteredGames, key = { it.id }) { game ->
+                            val state = backlog[game.id] ?: "WANT TO PLAY"
+                            Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(9.dp)).padding(9.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                Text(game.title, color = theme.text, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                Text("${game.progress}% COMPLETE • ${game.earned}/${game.total} • ${game.console}", color = theme.muted, fontSize = 9.sp)
+                                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    listOf("PLAYING", "WANT TO PLAY", "COMPLETED", "ABANDONED").forEach { option ->
+                                        FilterChip(selected = state == option, onClick = {
+                                            saveBacklog(context, game.id, option)
+                                            backlog = loadBacklog(context)
+                                        }, label = { Text(option, fontSize = 8.sp) })
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (messagesScreen) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                     Text(if (stickerAlbum) "${achievements.size} ACCOUNT UNLOCKS" else "${messages.size} SAVED ALERTS", color = theme.muted, fontSize = 10.sp)
                     if (!stickerAlbum) {
@@ -1334,7 +1523,7 @@ fun RetroAlertsApp() {
 
             Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                 Button(
-                    onClick = { playRetroSound(context); dashboard = false; messagesScreen = false; playerScreen = false; settings = false },
+                    onClick = { playRetroSound(context); dashboard = false; messagesScreen = false; playerScreen = false; roadmapScreen = false; backlogScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (!settings && !dashboard && !messagesScreen && !playerScreen) theme.accent else theme.card
@@ -1343,7 +1532,7 @@ fun RetroAlertsApp() {
                     Text("HOME", color = if (!settings && !dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
-                    onClick = { playRetroSound(context); messagesScreen = true; dashboard = false; playerScreen = false; settings = false },
+                    onClick = { playRetroSound(context); messagesScreen = true; dashboard = false; playerScreen = false; roadmapScreen = false; backlogScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (messagesScreen) theme.accent else theme.card
@@ -1359,12 +1548,18 @@ fun RetroAlertsApp() {
                     }
                 }
                 Button(
-                    onClick = { playRetroSound(context); playerScreen = true; dashboard = false; messagesScreen = false; settings = false },
+                    onClick = { playRetroSound(context); playerScreen = true; dashboard = false; messagesScreen = false; roadmapScreen = false; backlogScreen = false; settings = false },
                     modifier = Modifier.weight(0.85f),
                     colors = ButtonDefaults.buttonColors(containerColor = if (playerScreen) theme.accent else theme.card)
                 ) { Text("PLAYER", color = if (playerScreen) theme.background else theme.text, fontSize = 9.sp, maxLines = 1, softWrap = false) }
+                Button(onClick = { playRetroSound(context); roadmapScreen = true; backlogScreen = false; dashboard = false; messagesScreen = false; playerScreen = false; settings = false }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = if (roadmapScreen) theme.accent else theme.card)) {
+                    Text("ROADMAP", color = if (roadmapScreen) theme.background else theme.text, fontSize = 9.sp, maxLines = 1, softWrap = false)
+                }
+                Button(onClick = { playRetroSound(context); backlogScreen = true; roadmapScreen = false; dashboard = false; messagesScreen = false; playerScreen = false; settings = false }, modifier = Modifier.weight(1f), colors = ButtonDefaults.buttonColors(containerColor = if (backlogScreen) theme.accent else theme.card)) {
+                    Text("BACKLOG", color = if (backlogScreen) theme.background else theme.text, fontSize = 9.sp, maxLines = 1, softWrap = false)
+                }
                 Button(
-                    onClick = { playRetroSound(context); dashboard = true; messagesScreen = false; playerScreen = false; settings = false },
+                    onClick = { playRetroSound(context); dashboard = true; messagesScreen = false; playerScreen = false; roadmapScreen = false; backlogScreen = false; settings = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (dashboard) theme.accent else theme.card
@@ -1373,7 +1568,7 @@ fun RetroAlertsApp() {
                     Text("DASHBOARD", color = if (dashboard) theme.background else theme.text, fontSize = 10.sp, maxLines = 1, softWrap = false)
                 }
                 Button(
-                    onClick = { playRetroSound(context); settings = true; dashboard = false; messagesScreen = false; playerScreen = false },
+                    onClick = { playRetroSound(context); settings = true; dashboard = false; messagesScreen = false; playerScreen = false; roadmapScreen = false; backlogScreen = false },
                     modifier = Modifier.weight(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (settings) theme.accent else theme.card
