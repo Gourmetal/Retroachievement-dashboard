@@ -1416,8 +1416,6 @@ private fun trimAvatarArtwork(source: Bitmap): Bitmap {
     val cropBottom = (bottom + padY + 1).coerceAtMost(source.height)
     if (cropRight - cropLeft < source.width / 4 || cropBottom - cropTop < source.height / 4) return source
     return Bitmap.createBitmap(source, cropLeft, cropTop, cropRight - cropLeft, cropBottom - cropTop)
-        }
-
 }
 
 @Composable
@@ -1540,7 +1538,7 @@ private fun GameCartridgeCard(
 ) {
     var artwork by remember(game, unlocks.firstOrNull()?.gameIcon) { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(game, unlocks.firstOrNull()?.gameIcon) {
-        artwork = loadRemoteBitmap(gameArtworkUrl(unlocks.firstOrNull()?.gameIcon))
+        artwork = loadRemoteBitmap(gameArtworkUrl(unlocks.firstOrNull()?.gameIcon ?: ""))
     }
     val points = unlocks.sumOf { it.points }
     val hardcore = unlocks.count { it.hardcore }
