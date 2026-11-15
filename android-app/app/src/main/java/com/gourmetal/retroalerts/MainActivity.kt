@@ -1497,9 +1497,9 @@ fun RetroAlertsApp() {
                 }
             } else {
                 Column(
-                    Modifier.fillMaxWidth().heightIn(max = 470.dp)
+                    Modifier.weight(1f).fillMaxWidth()
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                    verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.Bottom)
                 ) {
                     Text("APPEARANCE", color = theme.accent, fontWeight = FontWeight.Black)
                     themes.forEachIndexed { index, option ->
