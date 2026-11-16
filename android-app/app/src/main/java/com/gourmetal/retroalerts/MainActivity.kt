@@ -786,6 +786,7 @@ fun RetroAlertsApp() {
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
     var recentAchievements by remember { mutableStateOf(emptyList<Achievement>()) }
     var roadmapScreen by remember { mutableStateOf(false) }
+    var achievementRadarScreen by remember { mutableStateOf(false) }
     var backlogScreen by remember { mutableStateOf(false) }
     var gameLibrary by remember { mutableStateOf(emptyList<RetroGame>()) }
     var selectedRoadmap by remember { mutableStateOf<GameRoadmap?>(null) }
@@ -922,6 +923,7 @@ fun RetroAlertsApp() {
                         messagesScreen = false
                         playerScreen = false
                         roadmapScreen = false
+                        achievementRadarScreen = false
                         backlogScreen = false
                         selectedRoadmap = null
                         selectedAchievementDetail = null
@@ -973,6 +975,7 @@ fun RetroAlertsApp() {
                     val hubItems = listOf(
                         Triple("HOME", "Recent unlocks and live account stats", "home"),
                         Triple("GAME LIBRARY", "Browse games, search and filter your collection", "library"),
+                        Triple("ACHIEVEMENT RADAR", "Find your closest games to 100% completion", "radar"),
                         Triple("TROPHY ROOM", "Achievement showcase and your trophy wall", "trophies"),
                         Triple("HUNTING ASSISTANT", "Roadmaps, unlock conditions and missable flags", "roadmap"),
                         Triple("SAVE POINT JOURNAL", "Record save points, progress and personal notes", "journal"),
@@ -995,10 +998,11 @@ fun RetroAlertsApp() {
                                             librarySearch = ""
                                             playerScreen = item.third == "player"
                                             roadmapScreen = item.third == "roadmap"
+                                            achievementRadarScreen = item.third == "radar"
                                             backlogScreen = item.third == "backlog"
                                             if (item.third == "home") {
                                                 dashboard = false; playerScreen = false
-                                                roadmapScreen = false; backlogScreen = false
+                                                roadmapScreen = false; achievementRadarScreen = false; backlogScreen = false
                                             }
                                             if (dashboard) status = "GOURME HUB • IN-APP EDITION"
                                         }
@@ -1031,7 +1035,7 @@ fun RetroAlertsApp() {
                     .padding(14.dp)
             ) {
                 Text(
-                    when { roadmapScreen -> "ACHIEVEMENT ROADMAP"; backlogScreen -> "BACKLOG MANAGER"; dashboard -> "DASHBOARD"; messagesScreen -> "MESSAGES"; playerScreen -> "PLAYER PROFILE"; settings -> "SETTINGS"; else -> "READY, PLAYER?" },
+                    when { achievementRadarScreen -> "ACHIEVEMENT RADAR"; roadmapScreen -> "ACHIEVEMENT ROADMAP"; backlogScreen -> "BACKLOG MANAGER"; dashboard -> "DASHBOARD"; messagesScreen -> "MESSAGES"; playerScreen -> "PLAYER PROFILE"; settings -> "SETTINGS"; else -> "READY, PLAYER?" },
                     color = theme.text,
                     fontSize = 21.sp,
                     fontWeight = FontWeight.Black
@@ -1058,7 +1062,7 @@ fun RetroAlertsApp() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    when { roadmapScreen -> "GAME ACHIEVEMENT ROADMAP"; backlogScreen -> "YOUR GAME BACKLOG"; dashboard -> "RETROACHIEVEMENTS DASHBOARD"; messagesScreen -> "ALERT INBOX"; playerScreen -> "YOUR PLAYER PROFILE"; settings -> "PERSONALIZE YOUR APP"; else -> "RECENT UNLOCKS" },
+                    when { achievementRadarScreen -> "YOUR NEXT COMPLETION TARGETS"; roadmapScreen -> "GAME ACHIEVEMENT ROADMAP"; backlogScreen -> "YOUR GAME BACKLOG"; dashboard -> "RETROACHIEVEMENTS DASHBOARD"; messagesScreen -> "ALERT INBOX"; playerScreen -> "YOUR PLAYER PROFILE"; settings -> "PERSONALIZE YOUR APP"; else -> "RECENT UNLOCKS" },
                     color = theme.text,
                     fontWeight = FontWeight.Bold
                 )
@@ -1103,7 +1107,92 @@ fun RetroAlertsApp() {
                 )
             }
 
-            if (roadmapScreen) {
+            if (achievementRadarScreen) {
+                val radarGames = gameLibrary
+                    .filter { it.total > 0 && it.earned < it.total }
+                    .sortedWith(compareBy<RetroGame> { it.total - it.earned }.thenByDescending { it.progress })
+                    .take(30)
+                val nearlyComplete = radarGames.count { it.progress >= 75 }
+                Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text("SCAN YOUR GAME COLLECTION", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                            Text("Ranked by fewest achievements remaining", color = theme.muted, fontSize = 10.sp)
+                        }
+                        Text("◉ RADAR", color = theme.accent, fontSize = 10.sp, fontWeight = FontWeight.Black)
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        Stat("ACTIVE GAMES", radarGames.size.toString(), Modifier.weight(1f), theme)
+                        Stat("NEAR FINISH", nearlyComplete.toString(), Modifier.weight(1f), theme)
+                        Stat("READY TO HUNT", radarGames.count { it.progress >= 90 }.toString(), Modifier.weight(1f), theme)
+                    }
+                    if (gameLibrary.isEmpty()) {
+                        Text("Connect your RetroAchievements account and refresh Home to scan your games.", color = theme.text, modifier = Modifier.padding(12.dp))
+                    } else if (radarGames.isEmpty()) {
+                        Text("Radar is clear! No unfinished games were found in the loaded library.", color = theme.accent, modifier = Modifier.padding(12.dp))
+                    } else {
+                        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(radarGames, key = { it.id }) { game ->
+                                val remaining = (game.total - game.earned).coerceAtLeast(0)
+                                val tier = when {
+                                    game.progress >= 90 -> "FINAL STRETCH"
+                                    game.progress >= 75 -> "NEAR COMPLETION"
+                                    game.progress >= 40 -> "ACTIVE HUNT"
+                                    else -> "EARLY PROGRESS"
+                                }
+                                Column(
+                                    Modifier.fillMaxWidth()
+                                        .background(theme.card, RoundedCornerShape(10.dp))
+                                        .border(1.dp, theme.accent.copy(alpha = if (game.progress >= 75) 0.9f else 0.4f), RoundedCornerShape(10.dp))
+                                        .padding(11.dp),
+                                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text(game.title, color = theme.text, fontWeight = FontWeight.Black, fontSize = 12.sp, maxLines = 2)
+                                            Text(game.console, color = theme.muted, fontSize = 9.sp)
+                                        }
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            Text("${game.progress}%", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 18.sp)
+                                            Text(tier, color = theme.muted, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                    LinearProgressIndicator(
+                                        progress = { game.progress / 100f },
+                                        modifier = Modifier.fillMaxWidth().height(7.dp),
+                                        color = theme.accent,
+                                        trackColor = theme.background
+                                    )
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("${game.earned}/${game.total} UNLOCKED  •  $remaining LEFT", color = theme.muted, fontSize = 9.sp, modifier = Modifier.weight(1f))
+                                        TextButton(onClick = {
+                                            val key = KeyVault.load(context)
+                                            if (key != null) scope.launch {
+                                                roadmapLoading = true
+                                                selectedRoadmap = null
+                                                roadmapScreen = true
+                                                achievementRadarScreen = false
+                                                status = "SCANNING ${game.title.uppercase()}..."
+                                                try {
+                                                    selectedRoadmap = getGameRoadmap(key, game)
+                                                    status = "HUNT READY"
+                                                } catch (e: Exception) {
+                                                    status = "RADAR ERROR: ${e.message}"
+                                                }
+                                                roadmapLoading = false
+                                            } else {
+                                                status = "ADD YOUR API KEY IN SETTINGS"
+                                            }
+                                        }) {
+                                            Text("VIEW HUNT  ›", color = theme.accent, fontSize = 9.sp, fontWeight = FontWeight.Black)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (roadmapScreen) {
                 Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(9.dp)) {
                     Text("Choose a game to load its full achievement list and progress.", color = theme.muted, fontSize = 11.sp)
                     if (gameLibrary.isEmpty()) {
