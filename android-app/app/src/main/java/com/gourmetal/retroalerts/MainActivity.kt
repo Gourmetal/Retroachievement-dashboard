@@ -658,7 +658,7 @@ private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
         targetValue = 1f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 14000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
+            repeatMode = RepeatMode.Restart
         ),
         label = "background_drift"
     )
@@ -735,11 +735,10 @@ private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
                     end = androidx.compose.ui.geometry.Offset(baseX - 5f, baseY + 15f),
                     strokeWidth = 1.5f
                 )
-                "leaves" -> drawOval(
-                    color = theme.accent.copy(alpha = 0.22f),
-                    topLeft = androidx.compose.ui.geometry.Offset(baseX - 3f, baseY - 5f),
-                    size = androidx.compose.ui.geometry.Size(6f, 10f)
-                )
+                "leaves" -> {
+                    drawRect(color = theme.accent.copy(alpha = 0.24f), topLeft = androidx.compose.ui.geometry.Offset(baseX - 3f, baseY - 3f), size = androidx.compose.ui.geometry.Size(6f, 6f))
+                    drawRect(color = theme.accent.copy(alpha = 0.13f), topLeft = androidx.compose.ui.geometry.Offset(baseX + 3f, baseY + 3f), size = androidx.compose.ui.geometry.Size(3f, 3f))
+                }
                 else -> {
                     val twinkle = if ((i % 3) == 0) 3.2f else 1.8f
                     drawCircle(theme.accent.copy(alpha = 0.18f + motionPulse * 0.3f), twinkle, point)
@@ -1081,14 +1080,18 @@ fun RetroAlertsApp() {
             selectedAchievementDetail?.let { a ->
                 val hinted = possibleMissableHint(a.description)
                 val manuallyFlagged = a.id in missableFlags
+                var detailBadge by remember(a.id, a.badgeName) { mutableStateOf<Bitmap?>(null) }
+                LaunchedEffect(a.id, a.badgeName) { detailBadge = loadBadgeBitmap(a.badgeName) }
                 AlertDialog(
                     onDismissRequest = { selectedAchievementDetail = null },
                     containerColor = theme.card,
                     title = { Text(a.title, color = theme.accent, fontWeight = FontWeight.Black) },
                     text = {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(selectedRoadmap?.game?.title ?: "RETROACHIEVEMENTS", color = theme.accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                            detailBadge?.let { badge -> Image(bitmap = badge.asImageBitmap(), contentDescription = "${a.title} badge", modifier = Modifier.size(64.dp)) }
                             Text("${a.points} POINTS • ${if (a.earned) "UNLOCKED" else "LOCKED"}", color = theme.muted, fontSize = 10.sp)
-                            Text("UNLOCK CONDITION", color = theme.accent, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                            Text(if (a.earned) "UNLOCKED ACHIEVEMENT" else "WHAT YOU NEED TO DO", color = theme.accent, fontWeight = FontWeight.Bold, fontSize = 11.sp)
                             Text(a.description.ifBlank { "No unlock condition was supplied by RetroAchievements for this achievement." }, color = theme.text, fontSize = 13.sp)
                             if (!a.earned && (hinted || manuallyFlagged)) {
                                 Text(if (manuallyFlagged) "⚠ YOU FLAGGED THIS AS NEEDING SPECIAL ATTENTION." else "⚠ THIS DESCRIPTION MAY CONTAIN A SPECIAL OR MISSABLE CONDITION. PLEASE VERIFY IT.", color = theme.accent, fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -1101,6 +1104,9 @@ fun RetroAlertsApp() {
                                 saveMissableFlag(context, a.id, !manuallyFlagged)
                                 missableFlags = loadMissableFlags(context)
                             }) { Text(if (manuallyFlagged) "REMOVE FLAG" else "FLAG IT", color = theme.accent) }
+                            TextButton(onClick = {
+                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://retroachievements.org/achievement/${a.id}")))
+                            }) { Text("OPEN RA PAGE", color = theme.accent) }
                             TextButton(onClick = { selectedAchievementDetail = null }) { Text("CLOSE", color = theme.accent) }
                         }
                     }
@@ -1184,7 +1190,7 @@ fun RetroAlertsApp() {
                                                 status = "ADD YOUR API KEY IN SETTINGS"
                                             }
                                         }) {
-                                            Text("VIEW HUNT  ›", color = theme.accent, fontSize = 9.sp, fontWeight = FontWeight.Black)
+                                            Text("VIEW TARGETS  ›", color = theme.accent, fontSize = 9.sp, fontWeight = FontWeight.Black)
                                         }
                                     }
                                 }
@@ -1194,7 +1200,7 @@ fun RetroAlertsApp() {
                 }
             } else if (roadmapScreen) {
                 Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-                    Text("Choose a game to load its full achievement list and progress.", color = theme.muted, fontSize = 11.sp)
+                    Text("Choose a game to see every remaining achievement. Tap any locked target to read exactly what its RetroAchievements description says you need to do.", color = theme.muted, fontSize = 11.sp)
                     if (gameLibrary.isEmpty()) {
                         Text("Game library hasn't loaded yet. Refresh Home while connected.", color = theme.text, modifier = Modifier.padding(12.dp))
                     } else {
@@ -1225,13 +1231,13 @@ fun RetroAlertsApp() {
                             Text("${roadmap.game.title} • ${roadmap.game.progress}% COMPLETE", color = theme.accent, fontWeight = FontWeight.Black)
                             Text("${roadmap.achievements.count { it.earned }} UNLOCKED • ${roadmap.achievements.count { !it.earned }} REMAINING", color = theme.muted, fontSize = 10.sp)
                             LazyColumn(Modifier.heightIn(max = 260.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                                items(roadmap.achievements, key = { it.id }) { a ->
+                                items(roadmap.achievements.sortedWith(compareBy<GameAchievement> { it.earned }.thenBy { if (it.trueRatio > 0.0) it.trueRatio else Double.MAX_VALUE }.thenBy { it.points }), key = { it.id }) { a ->
                                     val hinted = possibleMissableHint(a.description)
                                     val manuallyFlagged = a.id in missableFlags
                                     Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(7.dp)).clickable { selectedAchievementDetail = a }.padding(7.dp), verticalAlignment = Alignment.CenterVertically) {
                                         Column(Modifier.weight(1f)) {
                                             Text(if (a.earned) "✓ ${a.title}" else a.title, color = if (a.earned) theme.muted else theme.text, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                                            Text("${a.points} PTS • ${if (a.earned) "UNLOCKED" else "LOCKED"} • TAP FOR CONDITION", color = theme.muted, fontSize = 9.sp)
+                                            Text("${a.points} PTS • ${if (a.earned) "UNLOCKED" else "LOCKED"} • TAP FOR REQUIREMENTS", color = theme.muted, fontSize = 9.sp)
                                             if (!a.earned && (hinted || manuallyFlagged)) Text(if (manuallyFlagged) "⚠ USER-FLAGGED • CHECK REQUIREMENTS" else "⚠ POSSIBLE SPECIAL CONDITION • VERIFY", color = theme.accent, fontSize = 8.sp, fontWeight = FontWeight.Bold)
                                         }
                                         if (!a.earned) TextButton(onClick = {
