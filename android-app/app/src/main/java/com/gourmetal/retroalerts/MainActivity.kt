@@ -651,7 +651,12 @@ private fun BootSplash(onFinished: () -> Unit) {
 }
 
 @Composable
-private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
+private fun ThemeBackdrop(
+    theme: AppTheme,
+    animated: Boolean,
+    wallpaper: String,
+    crtEffects: Boolean
+) {
     val motion = rememberInfiniteTransition(label = "theme_background")
     val drift by motion.animateFloat(
         initialValue = 0f,
@@ -677,73 +682,122 @@ private fun ThemeBackdrop(theme: AppTheme, animated: Boolean) {
         val w = size.width
         val h = size.height
         val accent = theme.accent.copy(alpha = motionPulse)
-        val isGameBoy = theme.name == "DMG • Classic Green"
-        val isNeon = theme.name == "GBA • Neon Purple"
-        val spacing = if (isGameBoy) 34f else 46f
-        for (x in 0..(w / spacing).toInt()) {
-            for (y in 0..(h / spacing).toInt()) {
-                val offset = if ((x + y) % 2 == 0) motionDrift * spacing else -motionDrift * spacing
-                val px = x * spacing + offset
-                val py = y * spacing
-                if (isGameBoy) {
-                    drawRect(
-                        color = accent.copy(alpha = if (animated) 0.32f else 0.16f),
-                        topLeft = androidx.compose.ui.geometry.Offset(px, py),
-                        size = androidx.compose.ui.geometry.Size(3f, 3f)
-                    )
-                } else if (isNeon) {
-                    drawCircle(accent.copy(alpha = if (animated) 0.34f else 0.18f), radius = 3.5f + motionPulse * 8f,
-                        center = androidx.compose.ui.geometry.Offset(px, py))
-                } else {
-                    drawCircle(accent.copy(alpha = if (animated) 0.30f else 0.14f), radius = 2.5f,
-                        center = androidx.compose.ui.geometry.Offset(px, py))
+        when (wallpaper) {
+            "SUNSET" -> {
+                drawRect(brush = Brush.verticalGradient(listOf(Color(0xFF24152F), Color(0xFF713B48), Color(0xFFDE854D), theme.background)))
+                drawCircle(Color(0xFFFFB36B).copy(alpha = 0.30f), radius = w * 0.15f, center = androidx.compose.ui.geometry.Offset(w * 0.76f, h * 0.34f))
+                for (i in 0..7) {
+                    val y = h * (0.69f + i * 0.035f)
+                    drawRect(Color(0xFFFFB36B).copy(alpha = 0.10f), androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Size(w, 2f))
+                }
+                for (i in 0..15) {
+                    val bw = 18f + (i % 4) * 11f
+                    val bh = 35f + ((i * 29) % 75).toFloat()
+                    val x = i * (w / 15f) - bw / 2f
+                    drawRect(Color(0xFF171323).copy(alpha = 0.62f), androidx.compose.ui.geometry.Offset(x, h - bh), androidx.compose.ui.geometry.Size(bw, bh))
+                }
+            }
+            "PIXEL FOREST" -> {
+                drawRect(brush = Brush.verticalGradient(listOf(Color(0xFF102B2A), Color(0xFF17483A), theme.background)))
+                for (i in 0..18) {
+                    val x = i * (w / 18f) - 12f
+                    val height = 45f + ((i * 37) % 95).toFloat()
+                    val top = h - height
+                    val green = if (i % 2 == 0) Color(0xFF245D43) else Color(0xFF1B4938)
+                    drawRect(green.copy(alpha = 0.42f), androidx.compose.ui.geometry.Offset(x, top), androidx.compose.ui.geometry.Size(24f, height))
+                    drawRect(green.copy(alpha = 0.48f), androidx.compose.ui.geometry.Offset(x - 10f, top + 12f), androidx.compose.ui.geometry.Size(44f, 20f))
+                    drawRect(Color(0xFF091B19).copy(alpha = 0.55f), androidx.compose.ui.geometry.Offset(x + 8f, top + 28f), androidx.compose.ui.geometry.Size(7f, height - 28f))
+                }
+                for (i in 0..20) {
+                    val x = (i * 71f + motionDrift * 42f) % w
+                    val y = (i * 53f + motionDrift * 120f) % (h * 0.72f)
+                    drawRect(theme.accent.copy(alpha = 0.16f), androidx.compose.ui.geometry.Offset(x, y), androidx.compose.ui.geometry.Size(3f, 3f))
+                }
+            }
+            "CYBER CITY" -> {
+                drawRect(brush = Brush.verticalGradient(listOf(Color(0xFF10152E), Color(0xFF241B45), theme.background)))
+                for (i in 0..17) {
+                    val bw = 20f + (i % 3) * 12f
+                    val bh = 55f + ((i * 31) % 115).toFloat()
+                    val x = i * (w / 17f) - 8f
+                    val top = h - bh
+                    drawRect(Color(0xFF11182D).copy(alpha = 0.76f), androidx.compose.ui.geometry.Offset(x, top), androidx.compose.ui.geometry.Size(bw, bh))
+                    for (window in 0..2) {
+                        val wy = top + 10f + window * 15f
+                        drawRect(theme.accent.copy(alpha = 0.18f), androidx.compose.ui.geometry.Offset(x + 5f, wy), androidx.compose.ui.geometry.Size(4f, 5f))
+                    }
+                }
+                for (i in 0..10) {
+                    val y = h * (0.35f + i * 0.045f)
+                    drawLine(theme.accent.copy(alpha = 0.08f), androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(w, y), 1f)
+                }
+            }
+            "STARFIELD" -> {
+                drawRect(Color(0xFF080D20).copy(alpha = 0.72f))
+                for (i in 0..64) {
+                    val x = (i * 97f + motionDrift * (20f + (i % 4) * 18f)) % w
+                    val y = (i * 59f) % h
+                    val radius = if (i % 7 == 0) 2.8f else 1.4f
+                    drawRect(theme.accent.copy(alpha = 0.12f + motionPulse * 0.38f), androidx.compose.ui.geometry.Offset(x, y), androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f))
+                }
+            }
+            "RAINY WINDOW" -> {
+                drawRect(brush = Brush.verticalGradient(listOf(Color(0xFF101D31), Color(0xFF182A3B), theme.background)))
+                for (i in 0..54) {
+                    val x = (i * 43f + motionDrift * 105f) % w
+                    val y = (i * 71f + motionDrift * 210f) % h
+                    drawLine(theme.accent.copy(alpha = 0.18f), androidx.compose.ui.geometry.Offset(x, y), androidx.compose.ui.geometry.Offset(x - 3f, y + 13f), 1.5f)
+                }
+                drawRect(Color(0xFF9AC7E8).copy(alpha = 0.035f), androidx.compose.ui.geometry.Offset(w * 0.49f, 0f), androidx.compose.ui.geometry.Size(2f, h))
+            }
+            else -> {
+                val isGameBoy = theme.name == "DMG • Classic Green"
+                val isNeon = theme.name == "GBA • Neon Purple"
+                val spacing = if (isGameBoy) 34f else 46f
+                for (x in 0..(w / spacing).toInt()) {
+                    for (y in 0..(h / spacing).toInt()) {
+                        val offset = if ((x + y) % 2 == 0) motionDrift * spacing else -motionDrift * spacing
+                        val px = x * spacing + offset
+                        val py = y * spacing
+                        if (isGameBoy) {
+                            drawRect(accent.copy(alpha = if (animated) 0.32f else 0.16f), androidx.compose.ui.geometry.Offset(px, py), androidx.compose.ui.geometry.Size(3f, 3f))
+                        } else if (isNeon) {
+                            drawCircle(accent.copy(alpha = if (animated) 0.34f else 0.18f), radius = 3.5f + motionPulse * 8f, center = androidx.compose.ui.geometry.Offset(px, py))
+                        } else {
+                            drawCircle(accent.copy(alpha = if (animated) 0.30f else 0.14f), radius = 2.5f, center = androidx.compose.ui.geometry.Offset(px, py))
+                        }
+                    }
+                }
+                val bandY = h * motionDrift
+                drawLine(theme.accent.copy(alpha = if (animated) 0.10f else 0.045f), androidx.compose.ui.geometry.Offset(0f, bandY), androidx.compose.ui.geometry.Offset(w, bandY), if (isGameBoy) 18f else 30f)
+                if (!isGameBoy) {
+                    for (line in 0..(h / 7f).toInt()) {
+                        val y = line * 7f
+                        drawLine(theme.accent.copy(alpha = if (animated) 0.055f else 0.025f), androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(w, y), 1f)
+                    }
+                }
+                val weather = when (theme.name) {
+                    "GBA • Classic Orange", "GBA • Emerald", "DMG • Classic Green" -> "leaves"
+                    else -> "stars"
+                }
+                for (i in 0..22) {
+                    val baseX = ((i * 83f + motionDrift * 42f) % (w + 30f))
+                    val baseY = ((i * 67f + motionDrift * 230f) % (h + 30f))
+                    if (weather == "leaves") {
+                        drawRect(theme.accent.copy(alpha = 0.24f), androidx.compose.ui.geometry.Offset(baseX - 3f, baseY - 3f), androidx.compose.ui.geometry.Size(6f, 6f))
+                        drawRect(theme.accent.copy(alpha = 0.13f), androidx.compose.ui.geometry.Offset(baseX + 3f, baseY + 3f), androidx.compose.ui.geometry.Size(3f, 3f))
+                    } else {
+                        drawCircle(theme.accent.copy(alpha = 0.18f + motionPulse * 0.3f), if (i % 3 == 0) 3.2f else 1.8f, androidx.compose.ui.geometry.Offset(baseX, baseY))
+                    }
                 }
             }
         }
-        val bandY = (h * motionDrift)
-        drawLine(
-            color = theme.accent.copy(alpha = if (animated) 0.10f else 0.045f),
-            start = androidx.compose.ui.geometry.Offset(0f, bandY),
-            end = androidx.compose.ui.geometry.Offset(w, bandY),
-            strokeWidth = if (isGameBoy) 18f else 30f
-        )
-        if (!isGameBoy) {
-            for (line in 0..(h / 7f).toInt()) {
-                val y = line * 7f
-                drawLine(
-                    color = theme.accent.copy(alpha = if (animated) 0.055f else 0.025f),
-                    start = androidx.compose.ui.geometry.Offset(0f, y),
-                    end = androidx.compose.ui.geometry.Offset(w, y),
-                    strokeWidth = 1f
-                )
+        if (crtEffects) {
+            for (line in 0..(h / 4f).toInt()) {
+                val y = line * 4f
+                drawLine(Color.Black.copy(alpha = 0.13f), androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(w, y), 1f)
             }
-        }
-        // Theme-specific pixel weather: falling leaves, rain, and drifting stars.
-        val weather = when (theme.name) {
-            "GBA • Classic Orange", "GBA • Emerald", "DMG • Classic Green" -> "leaves"
-            "GBA • Midnight Black", "GBA • Neon Purple", "GBA • Glacier Purple" -> "stars"
-            else -> "rain"
-        }
-        for (i in 0..22) {
-            val baseX = ((i * 83f + motionDrift * (if (weather == "rain") 95f else 42f)) % (w + 30f))
-            val baseY = ((i * 67f + motionDrift * 230f) % (h + 30f))
-            val point = androidx.compose.ui.geometry.Offset(baseX, baseY)
-            when (weather) {
-                "rain" -> drawLine(
-                    color = theme.accent.copy(alpha = 0.20f),
-                    start = point,
-                    end = androidx.compose.ui.geometry.Offset(baseX - 5f, baseY + 15f),
-                    strokeWidth = 1.5f
-                )
-                "leaves" -> {
-                    drawRect(color = theme.accent.copy(alpha = 0.24f), topLeft = androidx.compose.ui.geometry.Offset(baseX - 3f, baseY - 3f), size = androidx.compose.ui.geometry.Size(6f, 6f))
-                    drawRect(color = theme.accent.copy(alpha = 0.13f), topLeft = androidx.compose.ui.geometry.Offset(baseX + 3f, baseY + 3f), size = androidx.compose.ui.geometry.Size(3f, 3f))
-                }
-                else -> {
-                    val twinkle = if ((i % 3) == 0) 3.2f else 1.8f
-                    drawCircle(theme.accent.copy(alpha = 0.18f + motionPulse * 0.3f), twinkle, point)
-                }
-            }
+            drawLine(theme.accent.copy(alpha = 0.055f), androidx.compose.ui.geometry.Offset(0f, h * motionDrift), androidx.compose.ui.geometry.Offset(w, h * motionDrift), 7f)
         }
     }
 }
@@ -803,7 +857,12 @@ fun RetroAlertsApp() {
     var animatedBackground by remember { mutableStateOf(prefs.getBoolean("animated_background", true)) }
     var pixelBorders by remember { mutableStateOf(prefs.getBoolean("pixel_borders", true)) }
     var pixelFont by remember { mutableStateOf(prefs.getBoolean("pixel_font", false)) }
+    var crtEffects by remember { mutableStateOf(prefs.getBoolean("crt_effects", false)) }
+    var wallpaperStyle by remember { mutableStateOf(prefs.getString("wallpaper_style", "PIXEL WEATHER") ?: "PIXEL WEATHER") }
+    var cartridgeStyle by remember { mutableStateOf(prefs.getString("cartridge_style", "GBA SHELL") ?: "GBA SHELL") }
 
+    val wallpaperOptions = listOf("PIXEL WEATHER", "STARFIELD", "SUNSET", "PIXEL FOREST", "CYBER CITY", "RAINY WINDOW")
+    val cartridgeOptions = listOf("GBA SHELL", "MIDNIGHT", "NEON", "ARCADE")
     val theme = themes[selectedTheme]
     LaunchedEffect(customFontUri) { customFontFamily = try { val u = customFontUri?.let { Uri.parse(it) }; if (u == null) null else context.contentResolver.openFileDescriptor(u, "r")?.use { FontFamily(Typeface.Builder(it.fileDescriptor).build()) } } catch (_: Exception) { null } }
     val fontPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { u -> if (u != null) try { context.contentResolver.takePersistableUriPermission(u, Intent.FLAG_GRANT_READ_URI_PERMISSION); customFontUri = u.toString(); prefs.edit().putString("custom_font_uri", u.toString()).apply(); status = "CUSTOM FONT LOADED" } catch (_: Exception) { status = "COULD NOT LOAD FONT" } }
@@ -884,7 +943,7 @@ fun RetroAlertsApp() {
         Modifier.fillMaxSize().background(theme.background),
         contentAlignment = Alignment.TopStart
     ) {
-        ThemeBackdrop(theme, animatedBackground)
+        ThemeBackdrop(theme, animatedBackground, wallpaperStyle, crtEffects)
         val baseDensity = LocalDensity.current
         val adjustedDensity = Density(
             density = baseDensity.density,
@@ -1475,8 +1534,21 @@ fun RetroAlertsApp() {
                     ) {
                         Text("GAME CARTRIDGES", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 16.sp)
                         Text("YOUR UNLOCK COLLECTION BY GAME", color = theme.muted, fontSize = 9.sp)
+                        Text("CARTRIDGE SHELL STYLE", color = theme.muted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            cartridgeOptions.forEach { option ->
+                                FilterChip(
+                                    selected = cartridgeStyle == option,
+                                    onClick = {
+                                        cartridgeStyle = option
+                                        prefs.edit().putString("cartridge_style", option).apply()
+                                    },
+                                    label = { Text(option) }
+                                )
+                            }
+                        }
                         achievements.groupBy { it.game }.entries.sortedByDescending { it.value.size }.forEach { entry ->
-                            GameCartridgeCard(entry.key, entry.value, theme, pixelBorders)
+                            GameCartridgeCard(entry.key, entry.value, theme, pixelBorders, cartridgeStyle)
                         }
                     }
                     Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(14.dp)).padding(14.dp)) {
@@ -1687,6 +1759,37 @@ fun RetroAlertsApp() {
                             prefs.edit().putBoolean("animated_background", it).apply()
                         })
                     }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("CRT display effects", color = theme.text, fontWeight = FontWeight.Bold)
+                            Text("Subtle scanlines and a soft moving screen glow", color = theme.muted, fontSize = 10.sp)
+                        }
+                        Switch(checked = crtEffects, onCheckedChange = {
+                            crtEffects = it
+                            prefs.edit().putBoolean("crt_effects", it).apply()
+                        })
+                    }
+                    HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
+                    Text("WALLPAPER GALLERY", color = theme.accent, fontWeight = FontWeight.Black)
+                    Text("Choose an animated scene for the app background.", color = theme.muted, fontSize = 10.sp)
+                    wallpaperOptions.chunked(2).forEach { pair ->
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            pair.forEach { option ->
+                                FilterChip(
+                                    selected = wallpaperStyle == option,
+                                    onClick = {
+                                        wallpaperStyle = option
+                                        prefs.edit().putString("wallpaper_style", option).apply()
+                                        status = "$option WALLPAPER SELECTED"
+                                    },
+                                    label = { Text(option.replace("PIXEL ", "").replace("RAINY ", "")) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                            if (pair.size == 1) Spacer(Modifier.weight(1f))
+                        }
+                    }
+                    HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text("Pixel-cut borders", color = theme.text, fontWeight = FontWeight.Bold)
@@ -2013,7 +2116,8 @@ private fun GameCartridgeCard(
     game: String,
     unlocks: List<Achievement>,
     theme: AppTheme,
-    pixelBorders: Boolean
+    pixelBorders: Boolean,
+    cartridgeStyle: String
 ) {
     var artwork by remember(game, unlocks.firstOrNull()?.gameIcon) { mutableStateOf<Bitmap?>(null) }
     LaunchedEffect(game, unlocks.firstOrNull()?.gameIcon) {
@@ -2021,8 +2125,19 @@ private fun GameCartridgeCard(
     }
     val points = unlocks.sumOf { it.points }
     val hardcore = unlocks.count { it.hardcore }
-    val shellColor = Color(franchiseColor(game))
-    val shellShape = if (pixelBorders) RoundedCornerShape(5.dp) else RoundedCornerShape(16.dp)
+    val shellColor = when (cartridgeStyle) {
+        "MIDNIGHT" -> Color(0xFF596579)
+        "NEON" -> Color(0xFF9B55D4)
+        "ARCADE" -> Color(0xFF36A68A)
+        else -> Color(franchiseColor(game))
+    }
+    val shellShape = if (cartridgeStyle == "ARCADE") RoundedCornerShape(16.dp) else if (pixelBorders) RoundedCornerShape(5.dp) else RoundedCornerShape(16.dp)
+    val cartridgeLabel = when (cartridgeStyle) {
+        "MIDNIGHT" -> "MIDNIGHT EDITION"
+        "NEON" -> "NEON CARTRIDGE"
+        "ARCADE" -> "ARCADE COLLECTION"
+        else -> "GAME BOY ADVANCE"
+    }
 
     Column(
         Modifier.fillMaxWidth()
@@ -2058,7 +2173,7 @@ private fun GameCartridgeCard(
                 } else Text("🎮", fontSize = 28.sp)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("GAME BOY ADVANCE", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 8.sp, letterSpacing = 1.sp)
+                Text(cartridgeLabel, color = theme.accent, fontWeight = FontWeight.Black, fontSize = 8.sp, letterSpacing = 1.sp)
                 Text(game, color = theme.text, fontWeight = FontWeight.Black, fontSize = 12.sp, maxLines = 2)
                 Text("${unlocks.size} UNLOCKS  •  $points PTS", color = theme.accent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                 Text("$hardcore HARDCORE  •  ${unlocks.size - hardcore} SOFTCORE", color = theme.muted, fontSize = 8.sp)
