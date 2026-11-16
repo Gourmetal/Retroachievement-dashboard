@@ -654,8 +654,7 @@ private fun BootSplash(onFinished: () -> Unit) {
 private fun ThemeBackdrop(
     theme: AppTheme,
     animated: Boolean,
-    wallpaper: String,
-    crtEffects: Boolean
+    wallpaper: String
 ) {
     val motion = rememberInfiniteTransition(label = "theme_background")
     val drift by motion.animateFloat(
@@ -792,13 +791,59 @@ private fun ThemeBackdrop(
                 }
             }
         }
-        if (crtEffects) {
-            for (line in 0..(h / 4f).toInt()) {
-                val y = line * 4f
-                drawLine(Color.Black.copy(alpha = 0.13f), androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(w, y), 1f)
-            }
-            drawLine(theme.accent.copy(alpha = 0.055f), androidx.compose.ui.geometry.Offset(0f, h * motionDrift), androidx.compose.ui.geometry.Offset(w, h * motionDrift), 7f)
+    }
+}
+
+
+@Composable
+private fun CrtOverlay(theme: AppTheme, animated: Boolean) {
+    val motion = rememberInfiniteTransition(label = "crt_scan_motion")
+    val scanPosition by motion.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 5200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "crt_scan_position"
+    )
+    Canvas(Modifier.fillMaxSize()) {
+        val w = size.width
+        val h = size.height
+        val lineGap = 5.dp.toPx()
+        val lineHeight = 1.25.dp.toPx()
+        var y = 0f
+        while (y < h) {
+            drawRect(
+                color = Color.Black.copy(alpha = 0.19f),
+                topLeft = androidx.compose.ui.geometry.Offset(0f, y),
+                size = androidx.compose.ui.geometry.Size(w, lineHeight)
+            )
+            y += lineGap
         }
+        val bandY = h * (if (animated) scanPosition else 0.5f)
+        val bandHeight = 18.dp.toPx()
+        drawRect(
+            brush = Brush.verticalGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    theme.accent.copy(alpha = 0.10f),
+                    Color.Transparent
+                ),
+                startY = (bandY - bandHeight).coerceAtLeast(0f),
+                endY = (bandY + bandHeight).coerceAtMost(h)
+            ),
+            topLeft = androidx.compose.ui.geometry.Offset(0f, (bandY - bandHeight).coerceAtLeast(0f)),
+            size = androidx.compose.ui.geometry.Size(w, (bandHeight * 2f).coerceAtMost(h))
+        )
+        drawRect(
+            brush = Brush.radialGradient(
+                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.22f)),
+                center = androidx.compose.ui.geometry.Offset(w / 2f, h / 2f),
+                radius = maxOf(w, h) * 0.78f
+            ),
+            size = size
+        )
     }
 }
 
@@ -943,7 +988,7 @@ fun RetroAlertsApp() {
         Modifier.fillMaxSize().background(theme.background),
         contentAlignment = Alignment.TopStart
     ) {
-        ThemeBackdrop(theme, animatedBackground, wallpaperStyle, crtEffects)
+        ThemeBackdrop(theme, animatedBackground, wallpaperStyle)
         val baseDensity = LocalDensity.current
         val adjustedDensity = Density(
             density = baseDensity.density,
@@ -1956,6 +2001,9 @@ fun RetroAlertsApp() {
                 letterSpacing = 1.sp
             )
         }
+        }
+        if (crtEffects) {
+            CrtOverlay(theme, animatedBackground)
         }
     }
 }
