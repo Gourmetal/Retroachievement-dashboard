@@ -886,6 +886,8 @@ fun RetroAlertsApp() {
     var roadmapScreen by remember { mutableStateOf(false) }
     var achievementRadarScreen by remember { mutableStateOf(false) }
     var backlogScreen by remember { mutableStateOf(false) }
+    var achievementWorldMapScreen by remember { mutableStateOf(false) }
+    var collectionShowcaseScreen by remember { mutableStateOf(false) }
     var gameLibrary by remember { mutableStateOf(emptyList<RetroGame>()) }
     var selectedRoadmap by remember { mutableStateOf<GameRoadmap?>(null) }
     var selectedAchievementDetail by remember { mutableStateOf<GameAchievement?>(null) }
@@ -905,7 +907,7 @@ fun RetroAlertsApp() {
     var crtEffects by remember { mutableStateOf(prefs.getBoolean("crt_effects", false)) }
     var wallpaperStyle by remember { mutableStateOf(prefs.getString("wallpaper_style", "PIXEL WEATHER") ?: "PIXEL WEATHER") }
     var cartridgeStyle by remember { mutableStateOf(prefs.getString("cartridge_style", "GBA SHELL") ?: "GBA SHELL") }
-    var retroHqEnabled by remember { mutableStateOf(prefs.getBoolean("retro_hq_enabled", true)) }
+    var retroHqEnabled by remember { mutableStateOf(false) }
 
     val wallpaperOptions = listOf("PIXEL WEATHER", "STARFIELD", "SUNSET", "PIXEL FOREST", "CYBER CITY", "RAINY WINDOW")
     val cartridgeOptions = listOf("GBA SHELL", "MIDNIGHT", "NEON", "ARCADE")
@@ -1107,7 +1109,9 @@ fun RetroAlertsApp() {
                         Triple("HUNTING ASSISTANT", "Roadmaps, unlock conditions and missable flags", "roadmap"),
                         Triple("SAVE POINT JOURNAL", "Record save points, progress and personal notes", "journal"),
                         Triple("PLAYER PROFILE", "Your player card, stats and collections", "player"),
-                        Triple("BACKLOG MANAGER", "Track games you want to play or finish", "backlog")
+                        Triple("BACKLOG MANAGER", "Track games you want to play or finish", "backlog"),
+                        Triple("ACHIEVEMENT WORLD MAP", "Explore your progress across four game-world regions", "worldmap"),
+                        Triple("GAME COLLECTION SHOWCASE", "A display shelf for your complete game collection", "showcase")
                     )
                     hubItems.chunked(2).forEach { pair ->
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1127,9 +1131,12 @@ fun RetroAlertsApp() {
                                             roadmapScreen = item.third == "roadmap"
                                             achievementRadarScreen = item.third == "radar"
                                             backlogScreen = item.third == "backlog"
+                                            achievementWorldMapScreen = item.third == "worldmap"
+                                            collectionShowcaseScreen = item.third == "showcase"
                                             if (item.third == "home") {
                                                 dashboard = false; playerScreen = false
                                                 roadmapScreen = false; achievementRadarScreen = false; backlogScreen = false
+                                                achievementWorldMapScreen = false; collectionShowcaseScreen = false
                                             }
                                             if (dashboard) status = "GOURME HUB • IN-APP EDITION"
                                         }
@@ -1148,11 +1155,6 @@ fun RetroAlertsApp() {
                         color = theme.accent, fontSize = 10.sp,
                         modifier = Modifier.align(Alignment.CenterHorizontally))
                     OutlinedButton(
-                        onClick = { retroHqEnabled = true; prefs.edit().putBoolean("retro_hq_enabled", true).apply() },
-                        modifier = Modifier.fillMaxWidth(),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, theme.accent)
-                    ) { Text("↩ RETURN TO RETRO HQ", color = theme.accent, fontWeight = FontWeight.Bold) }
-                    OutlinedButton(
                         onClick = { settings = true; hubScreen = false },
                         modifier = Modifier.fillMaxWidth(),
                         border = androidx.compose.foundation.BorderStroke(1.dp, theme.accent)
@@ -1168,7 +1170,7 @@ fun RetroAlertsApp() {
                     .padding(14.dp)
             ) {
                 Text(
-                    when { achievementRadarScreen -> "ACHIEVEMENT RADAR"; roadmapScreen -> "ACHIEVEMENT ROADMAP"; backlogScreen -> "BACKLOG MANAGER"; dashboard -> "DASHBOARD"; messagesScreen -> "MESSAGES"; playerScreen -> "PLAYER PROFILE"; settings -> "SETTINGS"; else -> "READY, PLAYER?" },
+                    when { achievementWorldMapScreen -> "ACHIEVEMENT WORLD MAP"; collectionShowcaseScreen -> "GAME COLLECTION SHOWCASE"; achievementRadarScreen -> "ACHIEVEMENT RADAR"; roadmapScreen -> "ACHIEVEMENT ROADMAP"; backlogScreen -> "BACKLOG MANAGER"; dashboard -> "DASHBOARD"; messagesScreen -> "MESSAGES"; playerScreen -> "PLAYER PROFILE"; settings -> "SETTINGS"; else -> "READY, PLAYER?" },
                     color = theme.text,
                     fontSize = 21.sp,
                     fontWeight = FontWeight.Black
@@ -1195,11 +1197,11 @@ fun RetroAlertsApp() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    when { achievementRadarScreen -> "YOUR NEXT COMPLETION TARGETS"; roadmapScreen -> "GAME ACHIEVEMENT ROADMAP"; backlogScreen -> "YOUR GAME BACKLOG"; dashboard -> "RETROACHIEVEMENTS DASHBOARD"; messagesScreen -> "ALERT INBOX"; playerScreen -> "YOUR PLAYER PROFILE"; settings -> "PERSONALIZE YOUR APP"; else -> "RECENT UNLOCKS" },
+                    when { achievementWorldMapScreen -> "YOUR ACHIEVEMENT JOURNEY"; collectionShowcaseScreen -> "YOUR GAME SHELF"; achievementRadarScreen -> "YOUR NEXT COMPLETION TARGETS"; roadmapScreen -> "GAME ACHIEVEMENT ROADMAP"; backlogScreen -> "YOUR GAME BACKLOG"; dashboard -> "RETROACHIEVEMENTS DASHBOARD"; messagesScreen -> "ALERT INBOX"; playerScreen -> "YOUR PLAYER PROFILE"; settings -> "PERSONALIZE YOUR APP"; else -> "RECENT UNLOCKS" },
                     color = theme.text,
                     fontWeight = FontWeight.Bold
                 )
-                if (!settings && !dashboard && !messagesScreen && !playerScreen && !roadmapScreen && !backlogScreen) {
+                if (!settings && !dashboard && !messagesScreen && !playerScreen && !roadmapScreen && !backlogScreen && !achievementWorldMapScreen && !collectionShowcaseScreen) {
                     IconButton(onClick = { refresh() }, enabled = !loading) {
                         Icon(Icons.Default.Refresh, "Refresh", tint = theme.accent)
                     }
@@ -1247,7 +1249,84 @@ fun RetroAlertsApp() {
                 )
             }
 
-            if (achievementRadarScreen) {
+            if (achievementWorldMapScreen) {
+                val regions = listOf(
+                    Triple("STARTER PLAINS", "0–24% • BEGIN YOUR QUEST", gameLibrary.filter { it.progress < 25 }),
+                    Triple("ADVENTURE FOREST", "25–74% • BUILD MOMENTUM", gameLibrary.filter { it.progress in 25..74 }),
+                    Triple("CHAMPION PEAKS", "75–99% • CLOSE TO THE TOP", gameLibrary.filter { it.progress in 75..99 }),
+                    Triple("100% LEGENDS ISLE", "100% • COMPLETED WORLDS", gameLibrary.filter { it.progress >= 100 })
+                )
+                Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("YOUR PROGRESS, MAPPED INTO FOUR GAME WORLDS", color = theme.muted, fontSize = 10.sp)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        Stat("WORLDS", regions.count { it.third.isNotEmpty() }.toString(), Modifier.weight(1f), theme)
+                        Stat("GAMES", gameLibrary.size.toString(), Modifier.weight(1f), theme)
+                        Stat("UNLOCKS", achievements.size.toString(), Modifier.weight(1f), theme)
+                    }
+                    if (gameLibrary.isEmpty()) {
+                        Text("Connect your RetroAchievements account and refresh Home to reveal your world map.", color = theme.text, modifier = Modifier.padding(12.dp))
+                    } else {
+                        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                            items(regions, key = { it.first }) { region ->
+                                Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(12.dp)).border(1.5.dp, theme.accent.copy(alpha = if (region.third.isNotEmpty()) 0.9f else 0.25f), RoundedCornerShape(12.dp)).padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text(region.first, color = theme.accent, fontWeight = FontWeight.Black, fontSize = 12.sp)
+                                            Text(region.second, color = theme.muted, fontSize = 8.sp)
+                                        }
+                                        Text("${region.third.size} GAMES", color = theme.text, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                                    }
+                                    if (region.third.isEmpty()) Text("No games in this region yet", color = theme.muted, fontSize = 9.sp)
+                                    else region.third.take(3).forEach { game ->
+                                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Text("◆", color = theme.accent, fontSize = 12.sp)
+                                            Column(Modifier.weight(1f)) {
+                                                Text(game.title, color = theme.text, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                                Text(game.console, color = theme.muted, fontSize = 8.sp)
+                                            }
+                                            Text("${game.progress}%", color = theme.accent, fontWeight = FontWeight.Black, fontSize = 11.sp)
+                                        }
+                                    }
+                                    if (region.third.size > 3) Text("+ ${region.third.size - 3} MORE GAMES", color = theme.muted, fontSize = 8.sp)
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (collectionShowcaseScreen) {
+                val showcaseGames = gameLibrary.sortedWith(compareByDescending<RetroGame> { it.progress }.thenBy { it.title })
+                Column(Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("YOUR PERSONAL RETRO GAME DISPLAY • ${showcaseGames.size} CARTRIDGES", color = theme.muted, fontSize = 10.sp)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        Stat("COLLECTED", showcaseGames.size.toString(), Modifier.weight(1f), theme)
+                        Stat("100% CLUB", showcaseGames.count { it.progress == 100 }.toString(), Modifier.weight(1f), theme)
+                        Stat("POINTS", achievements.sumOf { it.points }.toString(), Modifier.weight(1f), theme)
+                    }
+                    if (showcaseGames.isEmpty()) {
+                        Text("Your showcase is waiting. Connect your account and refresh Home to load your games.", color = theme.text, modifier = Modifier.padding(12.dp))
+                    } else {
+                        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                            items(showcaseGames, key = { it.id }) { game ->
+                                Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(11.dp)).border(1.5.dp, theme.accent.copy(alpha = 0.65f), RoundedCornerShape(11.dp)).padding(11.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        Box(Modifier.size(width = 54.dp, height = 66.dp).background(theme.background, RoundedCornerShape(topStart = 5.dp, bottomStart = 5.dp)).border(2.dp, theme.accent, RoundedCornerShape(5.dp)), contentAlignment = Alignment.Center) {
+                                            Text("🎮", fontSize = 25.sp)
+                                        }
+                                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                            Text(game.title, color = theme.text, fontWeight = FontWeight.Black, fontSize = 12.sp, maxLines = 2)
+                                            Text(game.console.uppercase(), color = theme.accent, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                            Text("${game.earned} / ${game.total} ACHIEVEMENTS", color = theme.muted, fontSize = 9.sp)
+                                            Text(if (game.progress == 100) "★ COMPLETED" else "LAST PLAYED: ${game.lastPlayed}", color = theme.muted, fontSize = 8.sp)
+                                        }
+                                        Text("${game.progress}%", color = theme.accent, fontSize = 17.sp, fontWeight = FontWeight.Black)
+                                    }
+                                    LinearProgressIndicator(progress = { game.progress / 100f }, modifier = Modifier.fillMaxWidth().height(6.dp), color = theme.accent, trackColor = theme.background)
+                                }
+                            }
+                        }
+                    }
+                }
+            } else if (achievementRadarScreen) {
                 val radarGames = gameLibrary
                     .filter { it.total > 0 && it.earned < it.total }
                     .sortedWith(compareBy<RetroGame> { it.total - it.earned }.thenByDescending { it.progress })
