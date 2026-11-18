@@ -905,6 +905,7 @@ fun RetroAlertsApp() {
     var crtEffects by remember { mutableStateOf(prefs.getBoolean("crt_effects", false)) }
     var wallpaperStyle by remember { mutableStateOf(prefs.getString("wallpaper_style", "PIXEL WEATHER") ?: "PIXEL WEATHER") }
     var cartridgeStyle by remember { mutableStateOf(prefs.getString("cartridge_style", "GBA SHELL") ?: "GBA SHELL") }
+    var retroHqEnabled by remember { mutableStateOf(prefs.getBoolean("retro_hq_enabled", true)) }
 
     val wallpaperOptions = listOf("PIXEL WEATHER", "STARFIELD", "SUNSET", "PIXEL FOREST", "CYBER CITY", "RAINY WINDOW")
     val cartridgeOptions = listOf("GBA SHELL", "MIDNIGHT", "NEON", "ARCADE")
@@ -1055,6 +1056,29 @@ fun RetroAlertsApp() {
             }
 
             if (hubScreen) {
+                if (retroHqEnabled) {
+                    Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Column { Text("RETRO HQ", color = theme.accent, fontSize = 24.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp); Text("YOUR PERSONAL GAMING ROOM", color = theme.muted, fontSize = 9.sp) }
+                            OutlinedButton(onClick = { retroHqEnabled = false; prefs.edit().putBoolean("retro_hq_enabled", false).apply() }) { Text("CLASSIC HUB", color = theme.accent, fontSize = 10.sp) }
+                        }
+                        Column(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(12.dp)).border(2.dp, theme.accent, RoundedCornerShape(12.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text("▶ PLAYER ONE", color = theme.accent, fontSize = 10.sp, fontWeight = FontWeight.Black); Text(if (connected) "● ONLINE" else "○ OFFLINE", color = theme.muted, fontSize = 9.sp) }
+                            Box(Modifier.fillMaxWidth().height(142.dp).background(Color(0xFF080B10), RoundedCornerShape(10.dp)).border(3.dp, theme.accent, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) { Text("GOURMETAL", color = theme.accent, fontSize = 23.sp, fontWeight = FontWeight.Black, letterSpacing = 3.sp); Text("ACHIEVEMENT COMMAND CENTER", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold); Text(if (loading) "SCANNING..." else "${achievements.size} UNLOCKS • ${gameLibrary.size} GAMES", color = Color(0xFFB9C7C0), fontSize = 10.sp) }
+                            }
+                            Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) { Stat("UNLOCKS", achievements.size.toString(), Modifier.weight(1f), theme); Stat("POINTS", achievements.sumOf { it.points }.toString(), Modifier.weight(1f), theme); Stat("GAMES", gameLibrary.size.toString(), Modifier.weight(1f), theme) }
+                            OutlinedButton(onClick = { refresh() }, enabled = !loading, modifier = Modifier.fillMaxWidth()) { Text(if (loading) "REFRESHING..." else "↻ SCAN MY COLLECTION", color = theme.accent) }
+                        }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) { Text("CARTRIDGE SHELF", color = theme.text, fontWeight = FontWeight.Black, fontSize = 14.sp); TextButton(onClick = { hubScreen = false; dashboard = true; dashboardSection = "library"; settings = false }) { Text("VIEW ALL ›", color = theme.accent, fontSize = 10.sp) } }
+                        if (gameLibrary.isEmpty()) Text("Connect your account and scan your collection to fill this shelf.", color = theme.muted, fontSize = 11.sp)
+                        else gameLibrary.take(4).forEach { game -> Row(Modifier.fillMaxWidth().background(theme.card, RoundedCornerShape(8.dp)).border(1.dp, theme.accent.copy(alpha = 0.55f), RoundedCornerShape(8.dp)).padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) { Box(Modifier.size(42.dp).background(theme.background, RoundedCornerShape(6.dp)).border(2.dp, theme.accent, RoundedCornerShape(6.dp)), contentAlignment = Alignment.Center) { Text("🎮", fontSize = 22.sp) }; Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) { Text(game.title, color = theme.text, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1); Text("${game.console} • ${game.progress}% COMPLETE", color = theme.muted, fontSize = 9.sp); LinearProgressIndicator(progress = { game.progress / 100f }, modifier = Modifier.fillMaxWidth().height(5.dp), color = theme.accent, trackColor = theme.background) } } }
+                        Text("ROOM CONSOLES", color = theme.text, fontWeight = FontWeight.Black, fontSize = 14.sp)
+                        val roomItems = listOf(Triple("ACHIEVEMENT RADAR", "Find your next completion target", "radar"), Triple("TROPHY ROOM", "Show off your unlocked achievements", "trophies"), Triple("HUNTING ASSISTANT", "Roadmaps and missable targets", "roadmap"), Triple("SAVE POINT JOURNAL", "Your notes and save points", "journal"), Triple("PLAYER PROFILE", "Your stats and collections", "player"), Triple("BACKLOG MANAGER", "Plan what to play next", "backlog"), Triple("MESSAGES", "Your achievement alert inbox", "messages"))
+                        roomItems.chunked(2).forEach { pair -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) { pair.forEach { item -> Column(Modifier.weight(1f).heightIn(min = 82.dp).background(theme.card, RoundedCornerShape(8.dp)).border(1.dp, theme.accent.copy(alpha = 0.65f), RoundedCornerShape(8.dp)).clickable { hubScreen = false; settings = false; messagesScreen = item.third == "messages"; dashboard = item.third == "trophies" || item.third == "journal"; dashboardSection = item.third; playerScreen = item.third == "player"; roadmapScreen = item.third == "roadmap"; achievementRadarScreen = item.third == "radar"; backlogScreen = item.third == "backlog"; if (item.third == "messages") messages = loadMessages(context) }.padding(10.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) { Text("▣ " + item.first, color = theme.accent, fontSize = 10.sp, fontWeight = FontWeight.Black); Text(item.second, color = theme.muted, fontSize = 9.sp) } }; if (pair.size == 1) Spacer(Modifier.weight(1f)) } }
+                        OutlinedButton(onClick = { settings = true; hubScreen = false }, modifier = Modifier.fillMaxWidth()) { Text("⚙ SETTINGS & ACCOUNT", color = theme.accent) }
+                    }
+                } else {
                 Column(
                     Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -1128,6 +1152,7 @@ fun RetroAlertsApp() {
                         modifier = Modifier.fillMaxWidth(),
                         border = androidx.compose.foundation.BorderStroke(1.dp, theme.accent)
                     ) { Text("SETTINGS & ACCOUNT CONNECTION", color = theme.accent) }
+                }
                 }
             } else {
             Spacer(Modifier.height(14.dp))
