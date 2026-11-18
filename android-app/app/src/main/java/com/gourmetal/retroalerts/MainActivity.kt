@@ -1148,6 +1148,11 @@ fun RetroAlertsApp() {
                         color = theme.accent, fontSize = 10.sp,
                         modifier = Modifier.align(Alignment.CenterHorizontally))
                     OutlinedButton(
+                        onClick = { retroHqEnabled = true; prefs.edit().putBoolean("retro_hq_enabled", true).apply() },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, theme.accent)
+                    ) { Text("↩ RETURN TO RETRO HQ", color = theme.accent, fontWeight = FontWeight.Bold) }
+                    OutlinedButton(
                         onClick = { settings = true; hubScreen = false },
                         modifier = Modifier.fillMaxWidth(),
                         border = androidx.compose.foundation.BorderStroke(1.dp, theme.accent)
