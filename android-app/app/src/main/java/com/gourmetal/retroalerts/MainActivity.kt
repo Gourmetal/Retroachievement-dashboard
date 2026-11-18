@@ -1031,6 +1031,8 @@ fun RetroAlertsApp() {
                         roadmapScreen = false
                         achievementRadarScreen = false
                         backlogScreen = false
+                        achievementWorldMapScreen = false
+                        collectionShowcaseScreen = false
                         selectedRoadmap = null
                         selectedAchievementDetail = null
                     }) {
