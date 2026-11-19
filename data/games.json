@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 173513,
+    "totalRanked": 173553,
     "hardcorePoints": 1,
     "softcorePoints": 912,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-18T15:21:09.502516+00:00",
+  "lastUpdated": "2026-11-19T00:01:56.018044+00:00",
   "games": [
     {
       "gameId": 744,
@@ -886,7 +886,7 @@
         {
           "id": 296336,
           "badgeName": "328926",
-          "title": "Bones without a Soul",
+          "title": "Bones Without a Soul",
           "description": "Defeat the Creaking Skull in the Castle Corridor in NOSOUL mode.",
           "points": 3,
           "earned": false,
@@ -963,7 +963,7 @@
         {
           "id": 296338,
           "badgeName": "328928",
-          "title": "Corpse without a Soul",
+          "title": "Corpse Without a Soul",
           "description": "Defeat Death in the Clock Tower in NOSOUL mode.",
           "points": 10,
           "earned": false,
