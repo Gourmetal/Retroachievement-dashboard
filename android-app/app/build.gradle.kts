@@ -29,6 +29,17 @@ android {
         applicationId = "com.gourmetal.retroalerts"
         minSdk = 26
         targetSdk = 35
+        ndkVersion = "27.0.12077973"
+
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+        }
+
+        externalNativeBuild {
+            cmake {
+                cppFlags += listOf("-std=c++17")
+            }
+        }
         versionCode = 19
         versionName = "0.8.0"
     }
@@ -44,6 +55,13 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 }
 
