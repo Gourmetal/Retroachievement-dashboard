@@ -582,7 +582,7 @@ private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): Strin
             if (match != null) {
                 val state = match.groupValues[1].uppercase()
                 val system = match.groupValues[2].trim()
-                val fileName = match.groupValues[3].substringAfterLast('/').substringAfterLast('\\\\')
+                val fileName = match.groupValues[3].substringAfterLast('/').substringAfterLast('\\')
                 val title = fileName.substringBeforeLast('.', fileName).replace('_', ' ').replace('-', ' ').trim()
                 "$state • $title • $system • CRC ${match.groupValues[4].uppercase()}"
             } else {
@@ -910,7 +910,7 @@ fun RetroAlertsApp() {
     var quietStart by remember { mutableStateOf(prefs.getString("quiet_start", "22:00") ?: "22:00") }
     var quietEnd by remember { mutableStateOf(prefs.getString("quiet_end", "08:00") ?: "08:00") }
     var apiKey by remember { mutableStateOf("") }
-    var discordApplicationId by remember { mutableStateOf(prefs.getString("discord_application_id", "") ?: "") }
+    var discordApplicationId by remember { mutableStateOf(prefs.getString("discord_application_id", "1574859797902266368") ?: "1574859797902266368") }
     var retroArchTarget by remember { mutableStateOf(prefs.getString("discord_retroarch_target", "PHONE") ?: "PHONE") }
     var retroArchHost by remember { mutableStateOf(prefs.getString("discord_retroarch_host", "") ?: "") }
     var retroArchTestStatus by remember { mutableStateOf("NOT TESTED") }
