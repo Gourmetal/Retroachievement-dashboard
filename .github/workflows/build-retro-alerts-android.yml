@@ -55,7 +55,7 @@ jobs:
     steps:
       - name: Download Discord SDK release assets
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.DISCORD_SDK_READ_TOKEN }}
         run: |
           gh api -H "Accept: application/octet-stream" /repos/Gourmetal/Retroachievement-dashboard/releases/assets/788554031 > discord-sdk-support.zip
           gh api -H "Accept: application/octet-stream" /repos/Gourmetal/Retroachievement-dashboard/releases/assets/788525034 > discord_partner_sdk.aar
