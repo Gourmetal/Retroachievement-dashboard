@@ -56,6 +56,9 @@ import androidx.work.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import java.net.HttpURLConnection
+import java.net.DatagramSocket
+import java.net.DatagramPacket
+import java.net.InetAddress
 import java.net.URL
 import java.net.URLEncoder
 import java.security.KeyStore
@@ -562,6 +565,33 @@ class AchievementWorker(
         }
     }
 }
+private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): String = withContext(Dispatchers.IO) {
+    val address = InetAddress.getByName(host.trim())
+    DatagramSocket().use { socket ->
+        socket.soTimeout = 1800
+        val request = "GET_STATUS".toByteArray(Charsets.UTF_8)
+        socket.send(DatagramPacket(request, request.size, address, port))
+        val buffer = ByteArray(4096)
+        val response = DatagramPacket(buffer, buffer.size)
+        socket.receive(response)
+        val raw = String(response.data, 0, response.length, Charsets.UTF_8).trim()
+        if (raw.contains("CONTENTLESS", ignoreCase = true)) {
+            "CONNECTED • NO GAME LOADED"
+        } else {
+            val match = Regex("GET_STATUS\\s+(PLAYING|PAUSED)\\s+([^,]+),([^,]+),crc32=([0-9A-Fa-f]+)", RegexOption.IGNORE_CASE).find(raw)
+            if (match != null) {
+                val state = match.groupValues[1].uppercase()
+                val system = match.groupValues[2].trim()
+                val fileName = match.groupValues[3].substringAfterLast('/').substringAfterLast('\\\\')
+                val title = fileName.substringBeforeLast('.', fileName).replace('_', ' ').replace('-', ' ').trim()
+                "$state • $title • $system • CRC ${match.groupValues[4].uppercase()}"
+            } else {
+                "CONNECTED • ${raw.take(180)}"
+            }
+        }
+    }
+}
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -880,6 +910,11 @@ fun RetroAlertsApp() {
     var quietStart by remember { mutableStateOf(prefs.getString("quiet_start", "22:00") ?: "22:00") }
     var quietEnd by remember { mutableStateOf(prefs.getString("quiet_end", "08:00") ?: "08:00") }
     var apiKey by remember { mutableStateOf("") }
+    var discordApplicationId by remember { mutableStateOf(prefs.getString("discord_application_id", "") ?: "") }
+    var retroArchTarget by remember { mutableStateOf(prefs.getString("discord_retroarch_target", "PHONE") ?: "PHONE") }
+    var retroArchHost by remember { mutableStateOf(prefs.getString("discord_retroarch_host", "") ?: "") }
+    var retroArchTestStatus by remember { mutableStateOf("NOT TESTED") }
+    var retroArchTesting by remember { mutableStateOf(false) }
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
     var recentAchievements by remember { mutableStateOf(emptyList<Achievement>()) }
@@ -2044,6 +2079,107 @@ fun RetroAlertsApp() {
                         fontSize = 10.sp
                     )
 
+                    HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
+
+                    Text("DISCORD RICH PRESENCE", color = theme.accent, fontWeight = FontWeight.Black)
+                    Text(
+                        "Set up the Discord application and choose where RetroArch is running. This preview adds the RetroArch connection test; live Discord publishing is the next integration step and requires Discord's official Android SDK package.",
+                        color = theme.muted,
+                        fontSize = 11.sp
+                    )
+                    OutlinedTextField(
+                        value = discordApplicationId,
+                        onValueChange = {
+                            discordApplicationId = it.filter { ch -> ch.isDigit() }.take(24)
+                            prefs.edit().putString("discord_application_id", discordApplicationId).apply()
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Discord Application ID") },
+                        singleLine = true
+                    )
+                    OutlinedButton(
+                        onClick = {
+                            runCatching {
+                                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://discord.com/developers/applications")))
+                            }.onFailure { status = "COULD NOT OPEN DISCORD DEVELOPER PORTAL" }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("OPEN DISCORD DEVELOPER PORTAL", color = theme.text)
+                    }
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = {
+                                retroArchTarget = "PHONE"
+                                prefs.edit().putString("discord_retroarch_target", "PHONE").apply()
+                                retroArchTestStatus = "PHONE SELECTED"
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (retroArchTarget == "PHONE") theme.accent else theme.card
+                            )
+                        ) { Text("THIS PHONE", color = if (retroArchTarget == "PHONE") theme.background else theme.text) }
+                        Button(
+                            onClick = {
+                                retroArchTarget = "MECOOL"
+                                prefs.edit().putString("discord_retroarch_target", "MECOOL").apply()
+                                retroArchTestStatus = "MECOOL SELECTED"
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (retroArchTarget == "MECOOL") theme.accent else theme.card
+                            )
+                        ) { Text("MECOOL BB2", color = if (retroArchTarget == "MECOOL") theme.background else theme.text) }
+                    }
+                    if (retroArchTarget == "MECOOL") {
+                        OutlinedTextField(
+                            value = retroArchHost,
+                            onValueChange = {
+                                retroArchHost = it
+                                prefs.edit().putString("discord_retroarch_host", it).apply()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("MECOOL IP address") },
+                            placeholder = { Text("Example: 192.168.1.50") },
+                            singleLine = true
+                        )
+                    } else {
+                        Text("Phone mode checks RetroArch on this phone at 127.0.0.1.", color = theme.muted, fontSize = 10.sp)
+                    }
+                    OutlinedButton(
+                        enabled = !retroArchTesting && (retroArchTarget == "PHONE" || retroArchHost.isNotBlank()),
+                        onClick = {
+                            scope.launch {
+                                retroArchTesting = true
+                                retroArchTestStatus = "CHECKING RETROARCH..."
+                                try {
+                                    val host = if (retroArchTarget == "PHONE") "127.0.0.1" else retroArchHost.trim()
+                                    retroArchTestStatus = queryRetroArchStatus(host)
+                                } catch (_: Exception) {
+                                    retroArchTestStatus = if (retroArchTarget == "PHONE") {
+                                        "NO RESPONSE • ENABLE NETWORK COMMANDS IN PHONE RETROARCH"
+                                    } else {
+                                        "NO RESPONSE • CHECK BB2 IP, WI-FI AND NETWORK COMMANDS"
+                                    }
+                                } finally {
+                                    retroArchTesting = false
+                                }
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(if (retroArchTesting) "CHECKING..." else "TEST RETROARCH CONNECTION", color = theme.text)
+                    }
+                    Text(
+                        retroArchTestStatus,
+                        color = if (retroArchTestStatus.startsWith("PLAYING") || retroArchTestStatus.startsWith("PAUSED") || retroArchTestStatus.startsWith("CONNECTED")) theme.accent else theme.muted,
+                        fontSize = 10.sp
+                    )
+                    Text(
+                        "On RetroArch, enable Settings → Network → Network Commands (UDP port 55355). For the BB2, use its local Wi-Fi IP address. Keep this port on your trusted home network only; do not forward it to the internet.",
+                        color = theme.muted,
+                        fontSize = 10.sp
+                    )
                     HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
 
                     Text("RETROACHIEVEMENTS ACCOUNT", color = theme.accent, fontWeight = FontWeight.Black)
