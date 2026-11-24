@@ -1,0 +1,79 @@
+name: Inspect Discord SDK Package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-sdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Download draft release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p sdk-inspection
+          gh api \
+            -H "Accept: application/octet-stream" \
+            /repos/Gourmetal/Retroachievement-dashboard/releases/assets/788554031 \
+            > sdk-inspection/discord-sdk-support.zip
+          gh api \
+            -H "Accept: application/octet-stream" \
+            /repos/Gourmetal/Retroachievement-dashboard/releases/assets/788525034 \
+            > sdk-inspection/discord_partner_sdk.aar
+          ls -lh sdk-inspection
+
+      - name: Inspect archive contents without executing files
+        run: |
+          python3 - <<'PY'
+          import zipfile
+          from pathlib import PurePosixPath
+          from collections import Counter
+          from pathlib import Path
+
+          root = Path("sdk-inspection")
+          report = ["# Discord SDK package inspection", "",
+                    "Archives were listed only; no SDK binaries or scripts were executed.", ""]
+
+          def inspect_zip(path, label, limit=300):
+              report.extend([f"## {label}", "", f"- File size: {path.stat().st_size:,} bytes"])
+              with zipfile.ZipFile(path) as z:
+                  infos = z.infolist()
+                  files = [i for i in infos if not i.is_dir()]
+                  report.append(f"- Entries: {len(infos)} total, {len(files)} files")
+                  roots = Counter(PurePosixPath(i.filename).parts[0] for i in infos if i.filename)
+                  report.append("- Top-level entries: " + ", ".join(f"`{k}` ({v})" for k,v in roots.most_common(40)))
+                  important = []
+                  for i in files:
+                      n = i.filename.lower()
+                      if (any(x in n for x in ("include/", "jni/", "arm64", "prefab/", "meta-inf/", "manifest", "classes.jar", "consumer-rules", "proguard", "readme", "license"))
+                          or n.endswith((".h", ".hpp", ".aar", ".so", ".jar", ".pom", ".gradle", ".mk"))):
+                          important.append(i)
+                  report.append("")
+                  report.append("### Relevant files")
+                  for i in important[:limit]:
+                      report.append(f"- `{i.filename}` ({i.file_size:,} bytes)")
+                  if len(important) > limit:
+                      report.append(f"- … plus {len(important)-limit} additional relevant entries")
+                  report.append("")
+                  return infos
+
+          support = root / "discord-sdk-support.zip"
+          aar = root / "discord_partner_sdk.aar"
+          inspect_zip(support, "Support ZIP")
+          inspect_zip(aar, "Android AAR")
+          Path("sdk-inspection-report.md").write_text("\n".join(report), encoding="utf-8")
+          print("\n".join(report))
+          PY
+
+      - name: Publish inspection report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: discord-sdk-inspection-report
+          path: sdk-inspection-report.md
+          if-no-files-found: warn
