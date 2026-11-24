@@ -31,6 +31,37 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - name: Set up Android SDK, NDK, and CMake
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "ndk;27.0.12077973 cmake;3.22.1"
+      - name: Extract Discord native libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import zipfile
+          from pathlib import Path
+
+          root = Path("android-app/app")
+          mapping = {
+              "arm64": "arm64-v8a",
+              "armeabi": "armeabi-v7a",
+              "x86": "x86",
+              "x86_64": "x86_64",
+          }
+          for archive_arch, android_abi in mapping.items():
+              archive_path = root / f"discord-native-{archive_arch}.zip"
+              with zipfile.ZipFile(archive_path) as archive:
+                  entries = [name for name in archive.namelist()
+                             if name.endswith(".so") and not name.startswith("/")]
+                  if len(entries) != 1:
+                      raise SystemExit(f"Expected one .so in {archive_path}, found {entries}")
+                  destination = root / "src/main/jniLibs" / android_abi / "libdiscord_partner_sdk.so"
+                  destination.parent.mkdir(parents=True, exist_ok=True)
+                  destination.write_bytes(archive.read(entries[0]))
+                  print(f"Extracted {android_abi}: {destination.stat().st_size} bytes")
+          PY
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
       - name: Build debug APK
