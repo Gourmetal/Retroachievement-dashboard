@@ -53,32 +53,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download Discord SDK release assets
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-
-          # Use the workflow's built-in, read-only repository token.
-          gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \\
-            /repos/Gourmetal/Retroachievement-dashboard/releases/assets/788554031 > support-asset.json
-          gh api -H "Accept: application/vnd.github+json" -H "X-GitHub-Api-Version: 2022-11-28" \\
-            /repos/Gourmetal/Retroachievement-dashboard/releases/assets/788525034 > aar-asset.json
-
-          support_url="$(python3 -c 'import json; print(json.load(open("support-asset.json"))["browser_download_url"])')"
-          aar_url="$(python3 -c 'import json; print(json.load(open("aar-asset.json"))["browser_download_url"])')"
-
-          curl --fail --location --retry 3 --retry-delay 2 \\
-            -H "Authorization: Bearer $GH_TOKEN" \\
-            -H "Accept: application/octet-stream" \\
-            "$support_url" --output discord-sdk-support.zip
-          curl --fail --location --retry 3 --retry-delay 2 \\
-            -H "Authorization: Bearer $GH_TOKEN" \\
-            -H "Accept: application/octet-stream" \\
-            "$aar_url" --output discord_partner_sdk.aar
-
-          test -s discord-sdk-support.zip
-          test -s discord_partner_sdk.aar
+      - name: Check out repository
+        uses: actions/checkout@v4
 
       - name: Inspect SDK package contents
         run: |
@@ -87,9 +63,9 @@ jobs:
           from pathlib import Path
 
           output = ["# Discord SDK package inspection", ""]
-          for filename in ("discord-sdk-support.zip", "discord_partner_sdk.aar"):
+          for filename in ("android-app/app/discord_partner_sdk.zip", "android-app/app/libwebrtc.zip", "android-app/app/discord-native-arm64.zip", "android-app/app/discord-native-armeabi.zip", "android-app/app/discord-native-x86.zip", "android-app/app/discord-native-x86_64.zip"):
               path = Path(filename)
-              output += [f"## {filename}", "", f"- Downloaded size: {path.stat().st_size:,} bytes"]
+              output += [f"## {path.name}", "", f"- Downloaded size: {path.stat().st_size:,} bytes"]
               if not zipfile.is_zipfile(path):
                   output += ["- **ERROR:** File is not a valid ZIP-compatible archive.", ""]
                   continue
@@ -98,7 +74,7 @@ jobs:
                   output += [f"- Entries: {len(entries)}", "", "### Contents"]
                   for entry in entries:
                       output.append(f"- `{entry.filename}` ({entry.file_size:,} bytes)")
-                  if filename.endswith(".aar"):
+                  if path.name == "discord_partner_sdk.zip":
                       names = [entry.filename for entry in entries]
                       output += ["", "### Android packaging signals"]
                       for candidate in ("AndroidManifest.xml", "classes.jar", "jni/"):
