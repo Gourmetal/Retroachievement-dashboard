@@ -24,13 +24,12 @@ android {
     sourceSets.getByName("main").res.srcDir(layout.buildDirectory.dir("generated/launcher-res"))
     namespace = "com.gourmetal.retroalerts"
     compileSdk = 35
+    ndkVersion = "27.0.12077973"
 
     defaultConfig {
         applicationId = "com.gourmetal.retroalerts"
         minSdk = 26
         targetSdk = 35
-        ndkVersion = "27.0.12077973"
-
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
         }
