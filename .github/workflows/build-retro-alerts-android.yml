@@ -23,24 +23,19 @@ jobs:
   build:
     if: github.event_name == 'push' || inputs.task == 'build'
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
-
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
-
       - name: Build debug APK
         working-directory: android-app
         run: gradle assembleDebug
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
@@ -49,44 +44,73 @@ jobs:
           if-no-files-found: error
 
   inspect-sdk:
-    if: github.event_name == 'workflow_dispatch' && inputs.task == 'inspect-sdk'
+    if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.task == 'inspect-sdk')
     runs-on: ubuntu-latest
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-
-      - name: Inspect SDK package contents
+      - name: Inspect Java API and native exports
+        shell: bash
         run: |
+          set -euo pipefail
           python3 - <<'PY'
-          import zipfile
+          import zipfile, tempfile, subprocess
           from pathlib import Path
 
-          output = ["# Discord SDK package inspection", ""]
-          for filename in ("android-app/app/discord_partner_sdk.zip", "android-app/app/libwebrtc.zip", "android-app/app/discord-native-arm64.zip", "android-app/app/discord-native-armeabi.zip", "android-app/app/discord-native-x86.zip", "android-app/app/discord-native-x86_64.zip"):
-              path = Path(filename)
-              output += [f"## {path.name}", "", f"- Downloaded size: {path.stat().st_size:,} bytes"]
-              if not zipfile.is_zipfile(path):
-                  output += ["- **ERROR:** File is not a valid ZIP-compatible archive.", ""]
-                  continue
-              with zipfile.ZipFile(path) as archive:
-                  entries = archive.infolist()
-                  output += [f"- Entries: {len(entries)}", "", "### Contents"]
-                  for entry in entries:
-                      output.append(f"- `{entry.filename}` ({entry.file_size:,} bytes)")
-                  if path.name == "discord_partner_sdk.zip":
-                      names = [entry.filename for entry in entries]
-                      output += ["", "### Android packaging signals"]
-                      for candidate in ("AndroidManifest.xml", "classes.jar", "jni/"):
-                          found = [name for name in names if name == candidate or name.startswith(candidate)]
-                          output.append(f"- {candidate}: " + (", ".join(found) if found else "not found"))
-              output.append("")
-          Path("sdk-inspection-report.md").write_text("\\n".join(output), encoding="utf-8")
-          PY
+          root = Path("android-app/app")
+          report = ["# Discord SDK deep inspection", ""]
+          jar_zip = root / "discord_partner_sdk.zip"
+          with zipfile.ZipFile(jar_zip) as archive:
+              jar_entry = next((n for n in archive.namelist() if n.endswith(".jar")), None)
+              if not jar_entry:
+                  raise SystemExit("No JAR found in discord_partner_sdk.zip")
+              with tempfile.TemporaryDirectory() as temp:
+                  temp = Path(temp)
+                  jar = temp / "discord_partner_sdk.jar"
+                  jar.write_bytes(archive.read(jar_entry))
+                  listing = subprocess.check_output(["jar", "tf", str(jar)], text=True)
+                  classes = [n[:-6].replace("/", ".") for n in listing.splitlines()
+                             if n.endswith(".class") and "$" not in n and n != "module-info.class"]
+                  report += ["## Java archive", f"- Embedded JAR: {jar_entry}", f"- Class count: {len(classes)}", "", "### Classes"]
+                  report += [f"- `{name}`" for name in classes]
+                  report += ["", "### Public Java API"]
+                  for name in classes:
+                      result = subprocess.run(["javap", "-classpath", str(jar), "-public", name],
+                                               text=True, capture_output=True)
+                      if result.returncode == 0 and result.stdout.strip():
+                          report += ["", f"#### `{name}`", "```java", result.stdout.strip(), "```"]
+                  manifest = subprocess.run(["unzip", "-p", str(jar), "META-INF/MANIFEST.MF"],
+                                             text=True, capture_output=True)
+                  if manifest.stdout.strip():
+                      report += ["", "### JAR manifest", "```", manifest.stdout.strip(), "```"]
 
-      - name: Upload SDK inspection report
+          report += ["", "## Native library exports"]
+          for arch in ("arm64", "armeabi", "x86", "x86_64"):
+              archive_path = root / f"discord-native-{arch}.zip"
+              with zipfile.ZipFile(archive_path) as archive:
+                  so_name = next(n for n in archive.namelist() if n.endswith(".so"))
+                  with tempfile.TemporaryDirectory() as temp:
+                      so = Path(temp) / "libdiscord_partner_sdk.so"
+                      so.write_bytes(archive.read(so_name))
+                      symbols = subprocess.run(["nm", "-D", "--defined-only", str(so)],
+                                               text=True, capture_output=True)
+                      lines = [line for line in symbols.stdout.splitlines()
+                               if "discord" in line.lower() or "presence" in line.lower()
+                               or "rpc" in line.lower()]
+                      report += ["", f"### {arch}", f"- Native file: `{so_name}`",
+                                 f"- Matching exported symbols: {len(lines)}"]
+                      report += [f"- `{line.strip()}`" for line in lines[:150]]
+                      dynamic = subprocess.run(["readelf", "-d", str(so)],
+                                               text=True, capture_output=True)
+                      needed = [line.strip() for line in dynamic.stdout.splitlines()
+                                if "(NEEDED)" in line]
+                      report += ["- Dynamic dependencies: " + (", ".join(needed) if needed else "not reported")]
+
+          Path("discord-sdk-deep-inspection.md").write_text("\\n".join(report), encoding="utf-8")
+          PY
+      - name: Upload deep SDK inspection report
         uses: actions/upload-artifact@v4
         with:
-          name: discord-sdk-inspection-report
-          path: sdk-inspection-report.md
+          name: discord-sdk-deep-inspection
+          path: discord-sdk-deep-inspection.md
           if-no-files-found: error
