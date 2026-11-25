@@ -87,6 +87,20 @@ jobs:
           if [ ! -s "$keystore" ]; then
             keytool -genkeypair -v -keystore "$keystore" -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
           fi
+          # Remove Gradle's existing JAR signature metadata before applying v1 signing.
+          python3 - "$apk" <<'PY'
+          import sys, zipfile
+          from pathlib import Path
+          apk = Path(sys.argv[1])
+          temp = apk.with_suffix(".unsigned.apk")
+          with zipfile.ZipFile(apk, "r") as source, zipfile.ZipFile(temp, "w") as target:
+              for item in source.infolist():
+                  name = item.filename.upper()
+                  if name == "META-INF/MANIFEST.MF" or (name.startswith("META-INF/") and name.endswith((".SF", ".RSA", ".DSA", ".EC"))):
+                      continue
+                  target.writestr(item, source.read(item.filename))
+          temp.replace(apk)
+          PY
           jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
             -keystore "$keystore" -storepass android -keypass android \
             -signedjar "$apk.signed" "$apk" androiddebugkey
