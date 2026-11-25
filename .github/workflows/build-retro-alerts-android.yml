@@ -86,13 +86,7 @@ jobs:
           keystore="$HOME/.android/debug.keystore"
           mkdir -p "$(dirname "$keystore")"
           if [ ! -s "$keystore" ]; then
-            keytool -genkeypair -v \\
-              -keystore "$keystore" \\
-              -storepass android \\
-              -alias androiddebugkey \\
-              -keypass android \\
-              -dname "CN=Android Debug,O=Android,C=US" \\
-              -keyalg RSA -keysize 2048 -validity 10000
+            keytool -genkeypair -v -keystore "$keystore" -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
           fi
           "$build_tools/apksigner" sign \
             --ks "$keystore" \
