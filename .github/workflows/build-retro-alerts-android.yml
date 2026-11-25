@@ -77,6 +77,23 @@ jobs:
       - name: Build debug APK
         working-directory: android-app
         run: gradle assembleDebug
+      - name: Verify APK package, signature, and metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk="android-app/app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$apk"
+          echo "APK size:"
+          stat -c '%s bytes' "$apk"
+          echo "Checking ZIP/APK structure..."
+          unzip -t "$apk"
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)"
+          echo "Checking APK signature..."
+          "$build_tools/apksigner" verify --verbose --print-certs "$apk"
+          echo "Reading package metadata..."
+          "$build_tools/aapt" dump badging "$apk" | head -n 8
+          echo "SHA-256:"
+          sha256sum "$apk"
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
