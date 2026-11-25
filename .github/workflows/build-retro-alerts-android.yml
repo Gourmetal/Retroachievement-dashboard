@@ -88,10 +88,10 @@ jobs:
             keytool -genkeypair -v -keystore "$keystore" -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
           fi
           build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)"
-          "$build_tools/apksigner" sign \\
-            --ks "$keystore" --ks-key-alias androiddebugkey \\
-            --ks-pass pass:android --key-pass pass:android \\
-            --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \\
+          "$build_tools/apksigner" sign \
+            --ks "$keystore" --ks-key-alias androiddebugkey \
+            --ks-pass pass:android --key-pass pass:android \
+            --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \
             --out "$apk.signed" "$apk"
           mv "$apk.signed" "$apk"
       - name: Verify APK package, signature, and metadata
