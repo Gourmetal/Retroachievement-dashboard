@@ -619,21 +619,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun publishDiscordTestPresence(applicationId: Long) {
-        try {
-            if (applicationId <= 0L) throw IllegalArgumentException("Invalid Discord Application ID")
-            System.loadLibrary("retroalerts_discord")
-            nativeInitialize(applicationId)
-            nativeUpdatePresence("Testing Retro Alerts", "Discord connection test")
-            discordCallbacks.removeCallbacks(discordCallbackPump)
-            discordCallbacks.post(discordCallbackPump)
-            discordCallbacks.postDelayed({
-                discordCallbacks.removeCallbacks(discordCallbackPump)
-            }, 8000)
-        } catch (error: Throwable) {
-            android.util.Log.e("RetroAlertsDiscord", "Discord test failed", error)
-            throw error
-        }
+    fun initializeDiscordSdkForTest(applicationId: Long) {
+        if (applicationId <= 0L) throw IllegalArgumentException("Invalid Discord Application ID")
+        android.util.Log.i("RetroAlertsDiscord", "Loading Discord SDK library")
+        System.loadLibrary("retroalerts_discord")
+        android.util.Log.i("RetroAlertsDiscord", "Discord SDK library loaded; creating client")
+        nativeInitialize(applicationId)
+        android.util.Log.i("RetroAlertsDiscord", "Discord SDK client initialized")
     }
 
     override fun onDestroy() {
@@ -2148,19 +2140,20 @@ fun RetroAlertsApp() {
                         enabled = !discordTesting && discordApplicationId.isNotBlank(),
                         onClick = {
                             discordTesting = true
-                            discordTestStatus = "SENDING TEST PRESENCE..."
+                            discordTestStatus = "INITIALIZING DISCORD SDK..."
                             try {
-                                (context as? MainActivity)?.publishDiscordTestPresence(discordApplicationId.toLong())
-                                discordTestStatus = "TEST SENT • CHECK YOUR DISCORD PROFILE"
-                            } catch (_: Throwable) {
-                                discordTestStatus = "TEST FAILED • CHECK DISCORD APP AND APPLICATION ID"
+                                (context as? MainActivity)?.initializeDiscordSdkForTest(discordApplicationId.toLong())
+                                discordTestStatus = "SDK INITIALIZED • APP STAYED OPEN"
+                            } catch (error: Throwable) {
+                                android.util.Log.e("RetroAlertsDiscord", "SDK initialization test failed", error)
+                                discordTestStatus = "SDK INITIALIZATION FAILED • CHECK LOG"
                             } finally {
                                 discordTesting = false
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (discordTesting) "SENDING..." else "SEND DISCORD TEST PRESENCE", color = theme.text)
+                        Text(if (discordTesting) "INITIALIZING..." else "TEST DISCORD SDK INITIALIZATION", color = theme.text)
                     }
                     Text(discordTestStatus, color = if (discordTestStatus.startsWith("TEST SENT")) theme.accent else theme.muted, fontSize = 10.sp)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
