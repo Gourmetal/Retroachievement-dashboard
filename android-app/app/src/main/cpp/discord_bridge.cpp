@@ -10,7 +10,6 @@ namespace {
 constexpr const char* kTag = "RetroAlertsDiscord";
 constexpr uint64_t kApplicationId = 1574859797902266368ULL;
 std::unique_ptr<discordpp::Client> gClient;
-bool gReady = false;
 
 std::string fromJava(JNIEnv* env, jstring value) {
     if (value == nullptr) return {};
@@ -37,26 +36,19 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeInitialize(JNIEnv*, jobject, j
         gClient->SetApplicationId(applicationId > 0
             ? static_cast<uint64_t>(applicationId)
             : kApplicationId);
-        gClient->SetStatusChangedCallback([](discordpp::Client::Status status,
-                                             discordpp::Client::Error error,
-                                             int32_t errorDetail) {
-            gReady = status == discordpp::Client::Status::Ready;
-            __android_log_print(ANDROID_LOG_INFO, kTag,
-                "Discord SDK status=%d error=%d detail=%d",
-                static_cast<int>(status), static_cast<int>(error), errorDetail);
-        });
     }
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gourmetal_retroalerts_MainActivity_nativeConnect(JNIEnv*, jobject) {
-    if (gClient) gClient->Connect();
+    // Android Rich Presence uses the SDK's unauthenticated RPC transport.
+    // Do not call Connect(): that starts the authenticated gateway flow.
 }
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gourmetal_retroalerts_MainActivity_nativeUpdatePresence(
     JNIEnv* env, jobject, jstring details, jstring state) {
-    if (!gClient || !gReady) return;
+    if (!gClient) return;
     discordpp::Activity activity{};
     const std::string detailsText = fromJava(env, details);
     const std::string stateText = fromJava(env, state);
@@ -78,6 +70,5 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_gourmetal_retroalerts_MainActivity_nativeDisconnect(JNIEnv*, jobject) {
     if (gClient) {
         gClient->Disconnect();
-        gReady = false;
     }
 }
