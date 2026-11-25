@@ -2,7 +2,6 @@
 package com.gourmetal.retroalerts
 
 import android.Manifest
-import com.discord.socialsdk.DiscordSocialSdkInit
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -594,32 +593,8 @@ private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): Strin
 }
 
 class MainActivity : ComponentActivity() {
-    private val discordCallbackHandler = Handler(Looper.getMainLooper())
-    private val discordCallbackPump = object : Runnable {
-        override fun run() {
-            nativeRunCallbacks()
-            discordCallbackHandler.postDelayed(this, 16L)
-        }
-    }
-
-    private external fun nativeInitialize(applicationId: Long)
-    private external fun nativeConnect()
-    private external fun nativeUpdatePresence(details: String, state: String)
-    private external fun nativeRunCallbacks()
-    private external fun nativeDisconnect()
-
-    companion object {
-        init {
-            System.loadLibrary("retroalerts_discord")
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        DiscordSocialSdkInit.setEngineActivity(this)
-        nativeInitialize(1574859797902266368L)
-        nativeConnect()
-        discordCallbackHandler.post(discordCallbackPump)
         createChannel(this)
         setContent {
             var splashFinished by remember { mutableStateOf(false) }
@@ -629,12 +604,6 @@ class MainActivity : ComponentActivity() {
                 BootSplash { splashFinished = true }
             }
         }
-    }
-
-    override fun onDestroy() {
-        discordCallbackHandler.removeCallbacks(discordCallbackPump)
-        nativeDisconnect()
-        super.onDestroy()
     }
 }
 
