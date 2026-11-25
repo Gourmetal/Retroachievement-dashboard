@@ -31,11 +31,14 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gourmetal_retroalerts_MainActivity_nativeInitialize(JNIEnv*, jobject, jlong applicationId) {
+    __android_log_print(ANDROID_LOG_INFO, kTag, "nativeInitialize entered; appId=%lld",
+        static_cast<long long>(applicationId));
     if (!gClient) {
+        __android_log_print(ANDROID_LOG_INFO, kTag, "Stage 1: creating SDK Client");
         gClient = std::make_unique<discordpp::Client>();
-        gClient->SetApplicationId(applicationId > 0
-            ? static_cast<uint64_t>(applicationId)
-            : kApplicationId);
+        __android_log_print(ANDROID_LOG_INFO, kTag, "Stage 1 passed: SDK Client constructed");
+        // Diagnostic build: intentionally defer SetApplicationId until the
+        // constructor has been verified independently on the Android device.
     }
 }
 
