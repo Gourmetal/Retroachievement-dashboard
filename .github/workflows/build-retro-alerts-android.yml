@@ -111,12 +111,21 @@ jobs:
                       if result.returncode == 0 and result.stdout.strip():
                           report += ["", f"#### `{name}`", "```java", result.stdout.strip(), "```"]
                   report += ["", "### RPC implementation bytecode"]
-                  for name in (
+                  rpc_classes = (
                       "com.discord.socialsdk.DiscordRpcClient",
+                      "com.discord.socialsdk.DiscordRpcClient$1",
+                      "com.discord.socialsdk.DiscordRpcClient$2",
                       "com.discord.socialsdk.DiscordSocialSdkInit",
                       "com.discord.socialsdk.rpc.IDiscordRpcService",
+                      "com.discord.socialsdk.rpc.IDiscordRpcService$Stub",
+                      "com.discord.socialsdk.rpc.IDiscordRpcService$Stub$Proxy",
+                      "com.discord.socialsdk.rpc.IDiscordRpcConnection",
+                      "com.discord.socialsdk.rpc.IDiscordRpcConnection$Stub",
+                      "com.discord.socialsdk.rpc.IDiscordRpcConnection$Stub$Proxy",
                       "com.discord.socialsdk.rpc.IDiscordRpcCallback",
-                  ):
+                      "com.discord.socialsdk.rpc.IDiscordRpcCallback$Stub",
+                  )
+                  for name in rpc_classes:
                       result = subprocess.run(["javap", "-classpath", str(jar), "-c", "-p", name],
                                                text=True, capture_output=True)
                       if result.returncode == 0 and result.stdout.strip():
