@@ -107,8 +107,11 @@ jobs:
           echo "Checking Android APK signature schemes..."
           build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)"
           echo "Checking Android APK signature compatibility..."
-          "$build_tools/apksigner" verify --verbose --min-sdk-version 26 "$apk" | tee signature-verification.txt
-          grep -q 'Verified using v1 scheme (JAR signing): true' signature-verification.txt
+          "$build_tools/apksigner" verify --verbose --min-sdk-version 23 "$apk" | tee signature-verification-legacy.txt
+          grep -q 'Verified using v1 scheme (JAR signing): true' signature-verification-legacy.txt
+          "$build_tools/apksigner" verify --verbose --min-sdk-version 26 "$apk" | tee signature-verification-modern.txt
+          grep -q 'Verified using v2 scheme (APK Signature Scheme v2): true' signature-verification-modern.txt
+          grep -q 'Verified using v3 scheme (APK Signature Scheme v3): true' signature-verification-modern.txt
           echo "Reading package metadata..."
           "$build_tools/aapt" dump badging "$apk" | head -n 8
           echo "SHA-256:"
