@@ -77,7 +77,7 @@ jobs:
       - name: Build debug APK
         working-directory: android-app
         run: gradle assembleDebug
-      - name: Re-sign APK with JAR-compatible v1 signature
+      - name: Sign APK with Android APK Signature Schemes
         shell: bash
         run: |
           set -euo pipefail
@@ -87,23 +87,12 @@ jobs:
           if [ ! -s "$keystore" ]; then
             keytool -genkeypair -v -keystore "$keystore" -storepass android -alias androiddebugkey -keypass android -dname "CN=Android Debug,O=Android,C=US" -keyalg RSA -keysize 2048 -validity 10000
           fi
-          # Remove Gradle's existing JAR signature metadata before applying v1 signing.
-          python3 - "$apk" <<'PY'
-          import sys, zipfile
-          from pathlib import Path
-          apk = Path(sys.argv[1])
-          temp = apk.with_suffix(".unsigned.apk")
-          with zipfile.ZipFile(apk, "r") as source, zipfile.ZipFile(temp, "w") as target:
-              for item in source.infolist():
-                  name = item.filename.upper()
-                  if name == "META-INF/MANIFEST.MF" or (name.startswith("META-INF/") and name.endswith((".SF", ".RSA", ".DSA", ".EC"))):
-                      continue
-                  target.writestr(item, source.read(item.filename))
-          temp.replace(apk)
-          PY
-          jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 \
-            -keystore "$keystore" -storepass android -keypass android \
-            -signedjar "$apk.signed" "$apk" androiddebugkey
+          build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)"
+          "$build_tools/apksigner" sign \\
+            --ks "$keystore" --ks-key-alias androiddebugkey \\
+            --ks-pass pass:android --key-pass pass:android \\
+            --v1-signing-enabled true --v2-signing-enabled true --v3-signing-enabled true \\
+            --out "$apk.signed" "$apk"
           mv "$apk.signed" "$apk"
       - name: Verify APK package, signature, and metadata
         shell: bash
@@ -115,10 +104,7 @@ jobs:
           stat -c '%s bytes' "$apk"
           echo "Checking ZIP/APK structure..."
           unzip -t "$apk"
-          echo "Checking JAR v1 signature..."
-          # jarsigner exits non-zero when Android library META-INF resources remain unsigned;
-          # apksigner below is the authoritative APK signature compatibility check.
-          jarsigner -verify -verbose -certs "$apk" || echo "JAR verifier reported unsigned META-INF resources; continuing to Android APK verification."
+          echo "Checking Android APK signature schemes..."
           build_tools="$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -n1)"
           echo "Checking Android APK signature compatibility..."
           "$build_tools/apksigner" verify --verbose --min-sdk-version 26 "$apk" | tee signature-verification.txt
