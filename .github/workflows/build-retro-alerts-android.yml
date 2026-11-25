@@ -93,8 +93,10 @@ jobs:
             --ks-key-alias androiddebugkey \
             --ks-pass pass:android \
             --key-pass pass:android \
+            --min-sdk-version 1 \
             --v1-signing-enabled true \
             --v2-signing-enabled true \
+            --v3-signing-enabled true \
             --out "$apk.resigned" \
             "$apk"
           mv "$apk.resigned" "$apk"
