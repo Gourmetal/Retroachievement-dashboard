@@ -61,6 +61,16 @@ jobs:
                   destination.parent.mkdir(parents=True, exist_ok=True)
                   destination.write_bytes(archive.read(entries[0]))
                   print(f"Extracted {android_abi}: {destination.stat().st_size} bytes")
+
+          jar_archive = root / "discord_partner_sdk.zip"
+          with zipfile.ZipFile(jar_archive) as archive:
+              jars = [name for name in archive.namelist() if name.endswith(".jar")]
+              if len(jars) != 1:
+                  raise SystemExit(f"Expected one SDK JAR in {jar_archive}, found {jars}")
+              jar_destination = root / "libs" / "discord_partner_sdk.jar"
+              jar_destination.parent.mkdir(parents=True, exist_ok=True)
+              jar_destination.write_bytes(archive.read(jars[0]))
+              print(f"Extracted Discord Android Java bindings: {jar_destination.stat().st_size} bytes")
           PY
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
