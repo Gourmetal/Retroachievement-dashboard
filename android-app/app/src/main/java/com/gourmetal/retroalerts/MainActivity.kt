@@ -593,6 +593,19 @@ private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): Strin
 }
 
 class MainActivity : ComponentActivity() {
+    private val discordCallbacks = Handler(Looper.getMainLooper())
+    private val discordCallbackPump = object : Runnable {
+        override fun run() {
+            runCatching { nativeRunCallbacks() }
+            discordCallbacks.postDelayed(this, 16)
+        }
+    }
+
+    private external fun nativeInitialize(applicationId: Long)
+    private external fun nativeUpdatePresence(details: String, state: String)
+    private external fun nativeRunCallbacks()
+    private external fun nativeDisconnect()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         createChannel(this)
@@ -604,6 +617,28 @@ class MainActivity : ComponentActivity() {
                 BootSplash { splashFinished = true }
             }
         }
+    }
+
+    fun publishDiscordTestPresence(applicationId: Long) {
+        try {
+            if (applicationId <= 0L) throw IllegalArgumentException("Invalid Discord Application ID")
+            System.loadLibrary("retroalerts_discord")
+            nativeInitialize(applicationId)
+            nativeUpdatePresence("Testing Retro Alerts", "Discord connection test")
+            discordCallbacks.removeCallbacks(discordCallbackPump)
+            discordCallbacks.post(discordCallbackPump)
+            discordCallbacks.postDelayed({
+                discordCallbacks.removeCallbacks(discordCallbackPump)
+            }, 8000)
+        } catch (error: Throwable) {
+            android.util.Log.e("RetroAlertsDiscord", "Discord test failed", error)
+            throw error
+        }
+    }
+
+    override fun onDestroy() {
+        discordCallbacks.removeCallbacks(discordCallbackPump)
+        super.onDestroy()
     }
 }
 
@@ -915,6 +950,8 @@ fun RetroAlertsApp() {
     var retroArchHost by remember { mutableStateOf(prefs.getString("discord_retroarch_host", "") ?: "") }
     var retroArchTestStatus by remember { mutableStateOf("NOT TESTED") }
     var retroArchTesting by remember { mutableStateOf(false) }
+    var discordTestStatus by remember { mutableStateOf("NOT TESTED") }
+    var discordTesting by remember { mutableStateOf(false) }
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
     var recentAchievements by remember { mutableStateOf(emptyList<Achievement>()) }
@@ -2083,7 +2120,7 @@ fun RetroAlertsApp() {
 
                     Text("DISCORD RICH PRESENCE", color = theme.accent, fontWeight = FontWeight.Black)
                     Text(
-                        "Set up the Discord application and choose where RetroArch is running. This preview adds the RetroArch connection test; live Discord publishing is the next integration step and requires Discord's official Android SDK package.",
+                        "Send a one-time test activity to the Discord app on this phone. Discord must be installed, signed in, and activity sharing enabled.",
                         color = theme.muted,
                         fontSize = 11.sp
                     )
@@ -2107,6 +2144,25 @@ fun RetroAlertsApp() {
                     ) {
                         Text("OPEN DISCORD DEVELOPER PORTAL", color = theme.text)
                     }
+                    OutlinedButton(
+                        enabled = !discordTesting && discordApplicationId.isNotBlank(),
+                        onClick = {
+                            discordTesting = true
+                            discordTestStatus = "SENDING TEST PRESENCE..."
+                            try {
+                                (context as? MainActivity)?.publishDiscordTestPresence(discordApplicationId.toLong())
+                                discordTestStatus = "TEST SENT • CHECK YOUR DISCORD PROFILE"
+                            } catch (_: Throwable) {
+                                discordTestStatus = "TEST FAILED • CHECK DISCORD APP AND APPLICATION ID"
+                            } finally {
+                                discordTesting = false
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(if (discordTesting) "SENDING..." else "SEND DISCORD TEST PRESENCE", color = theme.text)
+                    }
+                    Text(discordTestStatus, color = if (discordTestStatus.startsWith("TEST SENT")) theme.accent else theme.muted, fontSize = 10.sp)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = {
