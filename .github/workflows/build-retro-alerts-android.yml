@@ -110,6 +110,20 @@ jobs:
                                                text=True, capture_output=True)
                       if result.returncode == 0 and result.stdout.strip():
                           report += ["", f"#### `{name}`", "```java", result.stdout.strip(), "```"]
+                  report += ["", "### RPC implementation bytecode"]
+                  for name in (
+                      "com.discord.socialsdk.DiscordRpcClient",
+                      "com.discord.socialsdk.DiscordSocialSdkInit",
+                      "com.discord.socialsdk.rpc.IDiscordRpcService",
+                      "com.discord.socialsdk.rpc.IDiscordRpcCallback",
+                  ):
+                      result = subprocess.run(["javap", "-classpath", str(jar), "-c", "-p", name],
+                                               text=True, capture_output=True)
+                      if result.returncode == 0 and result.stdout.strip():
+                          report += ["", f"#### `{name}`", "```java", result.stdout.strip(), "```"]
+                      else:
+                          report += ["", f"#### `{name}`", f"Bytecode unavailable: {result.stderr.strip()}"]
+
                   manifest = subprocess.run(["unzip", "-p", str(jar), "META-INF/MANIFEST.MF"],
                                              text=True, capture_output=True)
                   if manifest.stdout.strip():
