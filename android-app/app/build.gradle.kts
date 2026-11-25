@@ -1,4 +1,3 @@
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -25,6 +24,15 @@ android {
     namespace = "com.gourmetal.retroalerts"
     compileSdk = 35
     ndkVersion = "27.0.12077973"
+
+    // Sign debug APKs with both legacy v1 and modern v2 schemes. This
+    // improves compatibility with package installers that mishandle v2-only APKs.
+    signingConfigs {
+        getByName("debug") {
+            enableV1Signing = true
+            enableV2Signing = true
+        }
+    }
 
     defaultConfig {
         applicationId = "com.gourmetal.retroalerts"
