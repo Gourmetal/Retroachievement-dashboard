@@ -619,13 +619,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun initializeDiscordSdkForTest(applicationId: Long) {
+    fun testDiscordSdkLibraryLoad(applicationId: Long) {
         if (applicationId <= 0L) throw IllegalArgumentException("Invalid Discord Application ID")
-        android.util.Log.i("RetroAlertsDiscord", "Loading Discord SDK library")
+        android.util.Log.i("RetroAlertsDiscord", "Library-load-only diagnostic started")
         System.loadLibrary("retroalerts_discord")
-        android.util.Log.i("RetroAlertsDiscord", "Discord SDK library loaded; creating client")
-        nativeInitialize(applicationId)
-        android.util.Log.i("RetroAlertsDiscord", "Discord SDK client initialized")
+        android.util.Log.i("RetroAlertsDiscord", "Library loaded successfully; native client was NOT created")
     }
 
     override fun onDestroy() {
@@ -2140,20 +2138,20 @@ fun RetroAlertsApp() {
                         enabled = !discordTesting && discordApplicationId.isNotBlank(),
                         onClick = {
                             discordTesting = true
-                            discordTestStatus = "INITIALIZING DISCORD SDK..."
+                            discordTestStatus = "CHECKING DISCORD SDK LIBRARY..."
                             try {
-                                (context as? MainActivity)?.initializeDiscordSdkForTest(discordApplicationId.toLong())
-                                discordTestStatus = "SDK INITIALIZED • APP STAYED OPEN"
+                                (context as? MainActivity)?.testDiscordSdkLibraryLoad(discordApplicationId.toLong())
+                                discordTestStatus = "SDK LIBRARY LOADED • APP STAYED OPEN"
                             } catch (error: Throwable) {
                                 android.util.Log.e("RetroAlertsDiscord", "SDK initialization test failed", error)
-                                discordTestStatus = "SDK INITIALIZATION FAILED • CHECK LOG"
+                                discordTestStatus = "SDK LIBRARY LOAD FAILED • CHECK LOG"
                             } finally {
                                 discordTesting = false
                             }
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (discordTesting) "INITIALIZING..." else "TEST DISCORD SDK INITIALIZATION", color = theme.text)
+                        Text(if (discordTesting) "INITIALIZING..." else "TEST DISCORD SDK LIBRARY LOAD", color = theme.text)
                     }
                     Text(discordTestStatus, color = if (discordTestStatus.startsWith("TEST SENT")) theme.accent else theme.muted, fontSize = 10.sp)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
