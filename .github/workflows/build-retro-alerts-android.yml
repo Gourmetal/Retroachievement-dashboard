@@ -151,7 +151,7 @@ jobs:
                                 if "(NEEDED)" in line]
                       report += ["- Dynamic dependencies: " + (", ".join(needed) if needed else "not reported")]
 
-          Path("discord-sdk-deep-inspection.md").write_text("\\n".join(report), encoding="utf-8")
+          Path("discord-sdk-deep-inspection.md").write_text("\n".join(report), encoding="utf-8")
           PY
       - name: Upload deep SDK inspection report
         uses: actions/upload-artifact@v4
