@@ -44,6 +44,26 @@ void installNativeCrashDiagnostics() {
         "Native crash diagnostics installed (SIGSEGV/SIGABRT/SIGBUS/SIGILL/SIGFPE)");
 }
 
+void recordJavaCheckpoint(JNIEnv* env, jobject activity, const char* stage) {
+    if (env == nullptr || activity == nullptr) return;
+    jclass activityClass = env->GetObjectClass(activity);
+    if (activityClass == nullptr) return;
+    jmethodID method = env->GetMethodID(
+        activityClass, "recordDiscordCheckpoint", "(Ljava/lang/String;)V");
+    if (method == nullptr) {
+        if (env->ExceptionCheck()) env->ExceptionClear();
+        env->DeleteLocalRef(activityClass);
+        return;
+    }
+    jstring message = env->NewStringUTF(stage);
+    if (message != nullptr) {
+        env->CallVoidMethod(activity, method, message);
+        env->DeleteLocalRef(message);
+    }
+    if (env->ExceptionCheck()) env->ExceptionClear();
+    env->DeleteLocalRef(activityClass);
+}
+
 std::string fromJava(JNIEnv* env, jstring value) {
     if (value == nullptr) return {};
     const char* chars = env->GetStringUTFChars(value, nullptr);
@@ -63,17 +83,24 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_gourmetal_retroalerts_MainActivity_nativeInitialize(JNIEnv*, jobject, jlong applicationId) {
+Java_com_gourmetal_retroalerts_MainActivity_nativeInitialize(JNIEnv* env, jobject activity, jlong applicationId) {
     installNativeCrashDiagnostics();
+    recordJavaCheckpoint(env, activity, "NATIVE: nativeInitialize entered");
     __android_log_print(ANDROID_LOG_INFO, kTag, "nativeInitialize entered; appId=%lld",
         static_cast<long long>(applicationId));
     if (!gClient) {
+        recordJavaCheckpoint(env, activity, "NATIVE: entering discordpp::Client constructor");
         __android_log_print(ANDROID_LOG_INFO, kTag, "Stage 1: creating SDK Client");
         gClient = std::make_unique<discordpp::Client>();
+        recordJavaCheckpoint(env, activity, "NATIVE: discordpp::Client constructor returned");
         __android_log_print(ANDROID_LOG_INFO, kTag, "Stage 1 passed: SDK Client constructed");
+        recordJavaCheckpoint(env, activity, "NATIVE: entering Client::SetApplicationId");
         __android_log_print(ANDROID_LOG_INFO, kTag, "Stage 2: setting Discord application ID");
         gClient->SetApplicationId(static_cast<uint64_t>(applicationId));
+        recordJavaCheckpoint(env, activity, "NATIVE: Client::SetApplicationId returned");
         __android_log_print(ANDROID_LOG_INFO, kTag, "Stage 2 passed: Discord application ID configured");
+    } else {
+        recordJavaCheckpoint(env, activity, "NATIVE: existing SDK Client reused");
     }
 }
 
