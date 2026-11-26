@@ -665,7 +665,7 @@ class MainActivity : ComponentActivity() {
         recordDiscordCheckpoint("KOTLIN: nativeInitialize returned")
         recordDiscordCheckpoint("KOTLIN: entering nativeConnect")
         nativeConnect()
-        recordDiscordCheckpoint("KOTLIN: nativeConnect returned; waiting for Discord READY")
+        recordDiscordCheckpoint("KOTLIN: Discord RPC connection started; presence will publish at READY")
         recordDiscordCheckpoint("KOTLIN: entering nativeUpdatePresence")
         nativeUpdatePresence("Testing Gourmetal Retro Alerts", "Discord SDK presence test")
         recordDiscordCheckpoint("KOTLIN: nativeUpdatePresence returned")
