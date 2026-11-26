@@ -610,16 +610,25 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Keep Discord SDK initialization out of app startup. Build #243 closed
-        // immediately after launch, so first verify the main app can boot independently.
+        // Discord's Android SDK requires its host Activity to be registered during onCreate.
+        // The official AAR/Prefab integration is used by this build.
         discordContextReady = false
         val savedDiscordCheckpoint = getSharedPreferences(PREFS, MODE_PRIVATE)
             .getString("discord_checkpoint", null)
         if (savedDiscordCheckpoint.isNullOrBlank()) {
-            recordDiscordCheckpoint("KOTLIN: app startup reached; Discord SDK initialization deferred until manual test")
+            recordDiscordCheckpoint("KOTLIN: app startup reached")
         } else {
-            // Preserve the last test checkpoint so a crash is still visible after relaunch.
-            android.util.Log.i("RetroAlertsDiscord", "Preserving previous checkpoint: $savedDiscordCheckpoint")
+            android.util.Log.i("RetroAlertsDiscord", "Previous Discord checkpoint: $savedDiscordCheckpoint")
+        }
+        try {
+            recordDiscordCheckpoint("KOTLIN: registering Discord Android Activity")
+            DiscordSocialSdkInit.setEngineActivity(this)
+            discordContextReady = true
+            recordDiscordCheckpoint("KOTLIN: Discord Android Activity registered")
+        } catch (error: Throwable) {
+            val failure = "KOTLIN SDK INIT ERROR: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
+            recordDiscordCheckpoint(failure)
+            android.util.Log.e("RetroAlertsDiscord", "Discord Android Activity registration failed", error)
         }
         createChannel(this)
         setContent {
@@ -645,10 +654,7 @@ class MainActivity : ComponentActivity() {
         if (applicationId <= 0L) throw IllegalArgumentException("Invalid Discord Application ID")
         recordDiscordCheckpoint("KOTLIN: client test entered")
         if (!discordContextReady) {
-            recordDiscordCheckpoint("KOTLIN: initializing Discord Android context from manual test")
-            DiscordSocialSdkInit.setEngineActivity(this)
-            discordContextReady = true
-            recordDiscordCheckpoint("KOTLIN: Discord Android context initialized from manual test")
+            throw IllegalStateException("Discord Android Activity initialization failed during app startup")
         }
         android.util.Log.i("RetroAlertsDiscord", "Loading native bridge library")
         System.loadLibrary("retroalerts_discord")
