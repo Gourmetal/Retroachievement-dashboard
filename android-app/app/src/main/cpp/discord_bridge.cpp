@@ -71,8 +71,9 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeInitialize(JNIEnv*, jobject, j
         __android_log_print(ANDROID_LOG_INFO, kTag, "Stage 1: creating SDK Client");
         gClient = std::make_unique<discordpp::Client>();
         __android_log_print(ANDROID_LOG_INFO, kTag, "Stage 1 passed: SDK Client constructed");
-        // Diagnostic build: intentionally defer SetApplicationId until the
-        // constructor has been verified independently on the Android device.
+        __android_log_print(ANDROID_LOG_INFO, kTag, "Stage 2: setting Discord application ID");
+        gClient->SetApplicationId(static_cast<uint64_t>(applicationId));
+        __android_log_print(ANDROID_LOG_INFO, kTag, "Stage 2 passed: Discord application ID configured");
     }
 }
 
