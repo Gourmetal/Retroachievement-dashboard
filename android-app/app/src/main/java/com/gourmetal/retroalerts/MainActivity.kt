@@ -2171,14 +2171,23 @@ fun RetroAlertsApp() {
                         enabled = !discordTesting && discordApplicationId.isNotBlank(),
                         onClick = {
                             discordTesting = true
-                            discordTestStatus = "CREATING DISCORD SDK CLIENT..."
+                            val activity = context as? MainActivity
+                            // Persist from the UI handler before entering any Discord SDK code.
+                            activity?.recordDiscordCheckpoint("UI: Discord test button tapped")
+                            discordTestStatus = "UI: DISCORD TEST BUTTON TAPPED"
                             try {
-                                (context as? MainActivity)?.testDiscordSdkClientCreation(discordApplicationId.toLong())
+                                val appId = discordApplicationId.toLong()
+                                activity?.recordDiscordCheckpoint("UI: application ID parsed; entering Activity test method")
+                                discordTestStatus = "KOTLIN: ENTERING DISCORD TEST"
+                                if (activity == null) {
+                                    throw IllegalStateException("MainActivity context unavailable")
+                                }
+                                activity.testDiscordSdkClientCreation(appId)
                                 discordTestStatus = "TEST PRESENCE QUEUED • APP STAYED OPEN"
                             } catch (error: Throwable) {
                                 android.util.Log.e("RetroAlertsDiscord", "SDK initialization test failed", error)
                                 val failure = "KOTLIN ERROR: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
-                                (context as? MainActivity)?.recordDiscordCheckpoint(failure)
+                                activity?.recordDiscordCheckpoint(failure)
                                 discordTestStatus = failure
                             } finally {
                                 discordTesting = false
