@@ -610,18 +610,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        recordDiscordCheckpoint("KOTLIN: Activity onCreate entered; initializing Discord SDK context")
-        try {
-            // Discord's Android standalone C++ setup requires this during Activity.onCreate,
-            // before constructing the native discordpp::Client.
-            DiscordSocialSdkInit.setEngineActivity(this)
-            discordContextReady = true
-            recordDiscordCheckpoint("KOTLIN: DiscordSocialSdkInit initialized successfully in onCreate")
-        } catch (error: Throwable) {
-            val failure = "ON_CREATE ERROR: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
-            recordDiscordCheckpoint(failure)
-            android.util.Log.e("RetroAlertsDiscord", "Discord Android context initialization failed", error)
-        }
+        // Keep Discord SDK initialization out of app startup. Build #243 closed
+        // immediately after launch, so first verify the main app can boot independently.
+        discordContextReady = false
+        recordDiscordCheckpoint("KOTLIN: app startup reached; Discord SDK initialization deferred until manual test")
         createChannel(this)
         setContent {
             var splashFinished by remember { mutableStateOf(false) }
@@ -646,7 +638,10 @@ class MainActivity : ComponentActivity() {
         if (applicationId <= 0L) throw IllegalArgumentException("Invalid Discord Application ID")
         recordDiscordCheckpoint("KOTLIN: client test entered")
         if (!discordContextReady) {
-            throw IllegalStateException("Discord Android context did not initialize in Activity.onCreate")
+            recordDiscordCheckpoint("KOTLIN: initializing Discord Android context from manual test")
+            DiscordSocialSdkInit.setEngineActivity(this)
+            discordContextReady = true
+            recordDiscordCheckpoint("KOTLIN: Discord Android context initialized from manual test")
         }
         android.util.Log.i("RetroAlertsDiscord", "Loading native bridge library")
         System.loadLibrary("retroalerts_discord")
