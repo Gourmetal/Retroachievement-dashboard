@@ -1045,8 +1045,8 @@ fun RetroAlertsApp() {
         }
     }
 
-    LaunchedEffect(settings, retroArchTarget, retroArchHost, discordApplicationId) {
-        if (settings && retroArchTarget == "MECOOL" && retroArchHost.isNotBlank()) {
+    LaunchedEffect(retroArchTarget, retroArchHost, discordApplicationId) {
+        if (retroArchTarget == "MECOOL" && retroArchHost.isNotBlank()) {
             while (true) {
                 val activity = context as? MainActivity
                 if (activity != null && activity.isDiscordClientInitialized()) {
@@ -2274,7 +2274,7 @@ fun RetroAlertsApp() {
                                     throw IllegalStateException("MainActivity context unavailable")
                                 }
                                 activity.testDiscordSdkClientCreation(appId)
-                                discordTestStatus = "DISCORD AUTHORIZATION STARTED • APPROVE ACCESS"
+                                discordTestStatus = "DISCORD PRESENCE INITIALIZED • WATCHING FOR GAME"
                             } catch (error: Throwable) {
                                 android.util.Log.e("RetroAlertsDiscord", "SDK initialization test failed", error)
                                 val failure = "KOTLIN ERROR: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
