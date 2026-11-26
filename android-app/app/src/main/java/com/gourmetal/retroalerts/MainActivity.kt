@@ -607,7 +607,10 @@ class MainActivity : ComponentActivity() {
     private external fun nativeAuthorize(applicationId: Long)
     private external fun nativeUpdatePresence(details: String, state: String)
     private external fun nativeRunCallbacks()
+    private external fun nativeGetDiscordDiagnostic(): String
     private external fun nativeDisconnect()
+
+    fun readDiscordNativeDiagnostic(): String = nativeGetDiscordDiagnostic()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -991,7 +994,21 @@ fun RetroAlertsApp() {
     var retroArchTestStatus by remember { mutableStateOf("NOT TESTED") }
     var retroArchTesting by remember { mutableStateOf(false) }
     var discordTestStatus by remember { mutableStateOf(prefs.getString("discord_checkpoint", "NOT TESTED") ?: "NOT TESTED") }
+    var discordNativeStatus by remember { mutableStateOf("Native diagnostic: not started") }
     var discordTesting by remember { mutableStateOf(false) }
+
+    LaunchedEffect(settings) {
+        if (settings) {
+            while (true) {
+                val activity = context as? MainActivity
+                if (activity != null) {
+                    discordNativeStatus = runCatching { activity.readDiscordNativeDiagnostic() }
+                        .getOrElse { "Native diagnostic unavailable: ${it.javaClass.simpleName}: ${it.message ?: "no message"}" }
+                }
+                delay(750)
+            }
+        }
+    }
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
     var recentAchievements by remember { mutableStateOf(emptyList<Achievement>()) }
@@ -2215,6 +2232,7 @@ fun RetroAlertsApp() {
                         Text(if (discordTesting) "INITIALIZING..." else "TEST DISCORD RICH PRESENCE", color = theme.text)
                     }
                     Text("LAST DISCORD CHECKPOINT • $discordTestStatus", color = if (discordTestStatus.contains("returned") || discordTestStatus.contains("CREATED")) theme.accent else theme.muted, fontSize = 10.sp)
+                    Text("LIVE DISCORD SDK • $discordNativeStatus", color = if (discordNativeStatus.contains("SUCCEEDED") || discordNativeStatus.contains("READY")) theme.accent else theme.muted, fontSize = 10.sp)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = {
