@@ -103,8 +103,10 @@ std::string gPendingState;
 bool gPresencePending = false;
 
 void publishPendingPresence() {
-    if (!gClient || !gPresencePending ||
-        gClient->GetStatus() != discordpp::Client::Status::Ready) {
+    // Android Rich Presence uses Discord's local RPC service. Unlike
+    // authenticated Social SDK features, this path must not wait for READY
+    // or call Client::Connect().
+    if (!gClient || !gPresencePending) {
         return;
     }
 
@@ -114,7 +116,7 @@ void publishPendingPresence() {
     if (!gPendingState.empty()) presence.SetState(gPendingState);
 
     gPresencePending = false;
-    setDiscordDiagnostic("Discord SDK READY; submitting Rich Presence");
+    setDiscordDiagnostic("Submitting Rich Presence through unauthenticated Android RPC");
     gClient->UpdateRichPresence(std::move(presence), [](discordpp::ClientResult result) {
         setDiscordDiagnostic(std::string("Rich Presence update ") +
             (result.Successful() ? "SUCCEEDED: " : "FAILED: ") + result.ToString());
