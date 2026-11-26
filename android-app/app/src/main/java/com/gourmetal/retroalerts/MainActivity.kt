@@ -620,14 +620,29 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    fun recordDiscordCheckpoint(stage: String) {
+        val safeStage = stage.take(180)
+        getSharedPreferences(PREFS, MODE_PRIVATE).edit()
+            .putString("discord_checkpoint", safeStage)
+            .putLong("discord_checkpoint_time", System.currentTimeMillis())
+            .commit()
+        android.util.Log.i("RetroAlertsDiscord", safeStage)
+    }
+
     fun testDiscordSdkClientCreation(applicationId: Long) {
         if (applicationId <= 0L) throw IllegalArgumentException("Invalid Discord Application ID")
+        recordDiscordCheckpoint("KOTLIN: test entered")
         android.util.Log.i("RetroAlertsDiscord", "Loading Discord SDK native library")
         System.loadLibrary("retroalerts_discord")
+        recordDiscordCheckpoint("KOTLIN: retroalerts_discord loaded")
         android.util.Log.i("RetroAlertsDiscord", "Initializing Discord Android activity/context")
+        recordDiscordCheckpoint("KOTLIN: entering DiscordSocialSdkInit.setEngineActivity")
         DiscordSocialSdkInit.setEngineActivity(this)
+        recordDiscordCheckpoint("KOTLIN: DiscordSocialSdkInit.setEngineActivity returned")
         android.util.Log.i("RetroAlertsDiscord", "Discord Android context initialized; creating native client")
+        recordDiscordCheckpoint("KOTLIN: entering nativeInitialize")
         nativeInitialize(applicationId)
+        recordDiscordCheckpoint("KOTLIN: nativeInitialize returned")
         android.util.Log.i("RetroAlertsDiscord", "Native Discord client created successfully")
     }
 
@@ -945,7 +960,7 @@ fun RetroAlertsApp() {
     var retroArchHost by remember { mutableStateOf(prefs.getString("discord_retroarch_host", "") ?: "") }
     var retroArchTestStatus by remember { mutableStateOf("NOT TESTED") }
     var retroArchTesting by remember { mutableStateOf(false) }
-    var discordTestStatus by remember { mutableStateOf("NOT TESTED") }
+    var discordTestStatus by remember { mutableStateOf(prefs.getString("discord_checkpoint", "NOT TESTED") ?: "NOT TESTED") }
     var discordTesting by remember { mutableStateOf(false) }
     var connected by remember { mutableStateOf(KeyVault.load(context) != null) }
     var achievements by remember { mutableStateOf(emptyList<Achievement>()) }
@@ -2149,7 +2164,9 @@ fun RetroAlertsApp() {
                                 discordTestStatus = "SDK CLIENT CREATED • APP STAYED OPEN"
                             } catch (error: Throwable) {
                                 android.util.Log.e("RetroAlertsDiscord", "SDK initialization test failed", error)
-                                discordTestStatus = "SDK CLIENT CREATION FAILED • CHECK LOG"
+                                val failure = "KOTLIN ERROR: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
+                                (context as? MainActivity)?.recordDiscordCheckpoint(failure)
+                                discordTestStatus = failure
                             } finally {
                                 discordTesting = false
                             }
@@ -2158,7 +2175,7 @@ fun RetroAlertsApp() {
                     ) {
                         Text(if (discordTesting) "INITIALIZING..." else "TEST DISCORD SDK CLIENT CREATION", color = theme.text)
                     }
-                    Text(discordTestStatus, color = if (discordTestStatus.startsWith("TEST SENT")) theme.accent else theme.muted, fontSize = 10.sp)
+                    Text("LAST DISCORD CHECKPOINT • $discordTestStatus", color = if (discordTestStatus.contains("returned") || discordTestStatus.contains("CREATED")) theme.accent else theme.muted, fontSize = 10.sp)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = {
