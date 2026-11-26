@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <utility>
+#include <optional>
 
 namespace {
 constexpr const char* kTag = "RetroAlertsDiscord";
@@ -169,20 +170,82 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeInitialize(JNIEnv* env, jobjec
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_gourmetal_retroalerts_MainActivity_nativeConnect(JNIEnv* env, jobject activity) {
+Java_com_gourmetal_retroalerts_MainActivity_nativeAuthorize(JNIEnv* env, jobject activity, jlong applicationId) {
     try {
         if (!gClient) throw std::runtime_error("Discord SDK client has not been initialized");
-        recordJavaCheckpoint(env, activity, "NATIVE: starting Discord RPC connection");
-        gClient->Connect();
+        if (applicationId <= 0) throw std::invalid_argument("Discord Application ID must be positive");
+
+        recordJavaCheckpoint(env, activity, "NATIVE: starting Discord OAuth authorization");
         __android_log_print(ANDROID_LOG_INFO, kTag,
-            "Discord SDK Connect() invoked; waiting for Status::Ready");
+            "Starting Discord OAuth authorization for application %lld",
+            static_cast<long long>(applicationId));
+
+        auto verifier = gClient->CreateAuthorizationCodeVerifier();
+        discordpp::AuthorizationArgs args{};
+        args.SetClientId(static_cast<uint64_t>(applicationId));
+        args.SetScopes(discordpp::Client::GetDefaultPresenceScopes());
+        args.SetCodeChallenge(verifier.Challenge());
+
+        gClient->Authorize(std::move(args),
+            [applicationId, verifier = std::move(verifier)](
+                discordpp::ClientResult result, std::string code, std::string redirectUri) mutable {
+                if (!result.Successful()) {
+                    __android_log_print(ANDROID_LOG_ERROR, kTag,
+                        "Discord OAuth authorization failed: %s", result.ToString().c_str());
+                    return;
+                }
+                if (code.empty() || redirectUri.empty()) {
+                    __android_log_print(ANDROID_LOG_ERROR, kTag,
+                        "Discord OAuth returned an empty authorization code or redirect URI");
+                    return;
+                }
+
+                __android_log_print(ANDROID_LOG_INFO, kTag,
+                    "Discord OAuth authorization completed; exchanging code for access token");
+
+                if (!gClient) {
+                    __android_log_print(ANDROID_LOG_ERROR, kTag,
+                        "Discord client disappeared before token exchange");
+                    return;
+                }
+
+                gClient->GetToken(static_cast<uint64_t>(applicationId), code,
+                    verifier.Verifier(), redirectUri,
+                    [](discordpp::ClientResult tokenResult, std::string accessToken,
+                       std::string refreshToken, discordpp::AuthorizationTokenType tokenType,
+                       int32_t expiresIn, std::string scopes) {
+                        if (!tokenResult.Successful() || accessToken.empty()) {
+                            __android_log_print(ANDROID_LOG_ERROR, kTag,
+                                "Discord token exchange failed: %s", tokenResult.ToString().c_str());
+                            return;
+                        }
+
+                        __android_log_print(ANDROID_LOG_INFO, kTag,
+                            "Discord OAuth token received; expiresIn=%d scopes=%s",
+                            expiresIn, scopes.c_str());
+
+                        if (!gClient) return;
+                        gClient->UpdateToken(tokenType, accessToken,
+                            [](discordpp::ClientResult updateResult) {
+                                if (!updateResult.Successful()) {
+                                    __android_log_print(ANDROID_LOG_ERROR, kTag,
+                                        "Discord SDK token update failed: %s",
+                                        updateResult.ToString().c_str());
+                                    return;
+                                }
+                                __android_log_print(ANDROID_LOG_INFO, kTag,
+                                    "Discord SDK token installed; now connecting");
+                                if (gClient) gClient->Connect();
+                            });
+                    });
+            });
     } catch (const std::exception& error) {
-        const auto message = exceptionMessage("nativeConnect failed", error.what());
+        const auto message = exceptionMessage("nativeAuthorize failed", error.what());
         recordJavaCheckpoint(env, activity, message.c_str());
         __android_log_print(ANDROID_LOG_ERROR, kTag, "%s", message.c_str());
         throwJavaException(env, message);
     } catch (...) {
-        throwJavaException(env, "nativeConnect failed: unknown C++ exception");
+        throwJavaException(env, "nativeAuthorize failed: unknown C++ exception");
     }
 }
 
