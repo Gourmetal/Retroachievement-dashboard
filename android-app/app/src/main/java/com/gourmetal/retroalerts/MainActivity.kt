@@ -594,6 +594,7 @@ private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): Strin
 }
 
 class MainActivity : ComponentActivity() {
+    private var discordContextReady = false
     private val discordCallbacks = Handler(Looper.getMainLooper())
     private val discordCallbackPump = object : Runnable {
         override fun run() {
@@ -609,6 +610,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        recordDiscordCheckpoint("KOTLIN: Activity onCreate entered; initializing Discord SDK context")
+        try {
+            // Discord's Android standalone C++ setup requires this during Activity.onCreate,
+            // before constructing the native discordpp::Client.
+            DiscordSocialSdkInit.setEngineActivity(this)
+            discordContextReady = true
+            recordDiscordCheckpoint("KOTLIN: DiscordSocialSdkInit initialized successfully in onCreate")
+        } catch (error: Throwable) {
+            val failure = "ON_CREATE ERROR: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
+            recordDiscordCheckpoint(failure)
+            android.util.Log.e("RetroAlertsDiscord", "Discord Android context initialization failed", error)
+        }
         createChannel(this)
         setContent {
             var splashFinished by remember { mutableStateOf(false) }
@@ -631,15 +644,14 @@ class MainActivity : ComponentActivity() {
 
     fun testDiscordSdkClientCreation(applicationId: Long) {
         if (applicationId <= 0L) throw IllegalArgumentException("Invalid Discord Application ID")
-        recordDiscordCheckpoint("KOTLIN: test entered")
-        android.util.Log.i("RetroAlertsDiscord", "Loading Discord SDK native library")
+        recordDiscordCheckpoint("KOTLIN: client test entered")
+        if (!discordContextReady) {
+            throw IllegalStateException("Discord Android context did not initialize in Activity.onCreate")
+        }
+        android.util.Log.i("RetroAlertsDiscord", "Loading native bridge library")
         System.loadLibrary("retroalerts_discord")
-        recordDiscordCheckpoint("KOTLIN: retroalerts_discord loaded")
-        android.util.Log.i("RetroAlertsDiscord", "Initializing Discord Android activity/context")
-        recordDiscordCheckpoint("KOTLIN: entering DiscordSocialSdkInit.setEngineActivity")
-        DiscordSocialSdkInit.setEngineActivity(this)
-        recordDiscordCheckpoint("KOTLIN: DiscordSocialSdkInit.setEngineActivity returned")
-        android.util.Log.i("RetroAlertsDiscord", "Discord Android context initialized; creating native client")
+        recordDiscordCheckpoint("KOTLIN: retroalerts_discord bridge loaded; Android context ready")
+        android.util.Log.i("RetroAlertsDiscord", "Creating native Discord client")
         recordDiscordCheckpoint("KOTLIN: entering nativeInitialize")
         nativeInitialize(applicationId)
         recordDiscordCheckpoint("KOTLIN: nativeInitialize returned")
