@@ -115,6 +115,7 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeUpdatePresence(
     JNIEnv* env, jobject, jstring details, jstring state) {
     if (!gClient) return;
     discordpp::Activity activity{};
+    activity.SetType(discordpp::ActivityTypes::Playing);
     const std::string detailsText = fromJava(env, details);
     const std::string stateText = fromJava(env, state);
     if (!detailsText.empty()) activity.SetDetails(detailsText);
