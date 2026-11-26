@@ -596,6 +596,7 @@ private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): Strin
 class MainActivity : ComponentActivity() {
     private var discordContextReady = false
     private var nativeBridgeLoaded = false
+    private var discordClientInitialized = false
     private val discordCallbacks = Handler(Looper.getMainLooper())
     private val discordCallbackPump = object : Runnable {
         override fun run() {
@@ -669,31 +670,49 @@ class MainActivity : ComponentActivity() {
         android.util.Log.i("RetroAlertsDiscord", safeStage)
     }
 
-    fun testDiscordSdkClientCreation(applicationId: Long) {
+    private fun ensureDiscordClient(applicationId: Long) {
         if (applicationId <= 0L) throw IllegalArgumentException("Invalid Discord Application ID")
-        recordDiscordCheckpoint("KOTLIN: client test entered")
         if (!discordContextReady) {
             throw IllegalStateException("Discord Android Activity initialization failed during app startup")
         }
-        android.util.Log.i("RetroAlertsDiscord", "Loading native bridge library")
         if (!nativeBridgeLoaded) {
             System.loadLibrary("retroalerts_discord")
             nativeBridgeLoaded = true
         }
-        recordDiscordCheckpoint("KOTLIN: retroalerts_discord bridge loaded; Android context ready")
-        android.util.Log.i("RetroAlertsDiscord", "Creating native Discord client")
-        recordDiscordCheckpoint("KOTLIN: entering nativeInitialize")
-        nativeInitialize(applicationId)
-        recordDiscordCheckpoint("KOTLIN: nativeInitialize returned")
-        recordDiscordCheckpoint("KOTLIN: using direct Android RPC; OAuth is not required")
-        recordDiscordCheckpoint("KOTLIN: entering nativeUpdatePresence")
-        nativeUpdatePresence("Testing Gourmetal Retro Alerts", "Discord SDK presence test")
-        recordDiscordCheckpoint("KOTLIN: nativeUpdatePresence returned")
+        if (!discordClientInitialized) {
+            recordDiscordCheckpoint("KOTLIN: entering nativeInitialize")
+            nativeInitialize(applicationId)
+            discordClientInitialized = true
+            recordDiscordCheckpoint("KOTLIN: native Discord client initialized")
+            recordDiscordCheckpoint("KOTLIN: using direct Android RPC; OAuth is not required")
+        }
         discordCallbacks.removeCallbacks(discordCallbackPump)
         discordCallbacks.post(discordCallbackPump)
+    }
+
+    fun updateDiscordGamePresence(applicationId: Long, gameStatus: String) {
+        ensureDiscordClient(applicationId)
+        val parts = gameStatus.split(" • ")
+        val state = parts.firstOrNull()?.takeIf { it == "PLAYING" || it == "PAUSED" }
+            ?: return
+        val title = parts.getOrNull(1)?.takeIf { it.isNotBlank() } ?: "Unknown game"
+        val system = parts.getOrNull(2)?.takeIf { it.isNotBlank() } ?: "RetroArch"
+        val activityState = if (state == "PAUSED") "Paused • MECOOL BB2 • $system" else "Playing on MECOOL BB2 • $system"
+        nativeUpdatePresence(title, activityState)
+        recordDiscordCheckpoint("KOTLIN: Discord activity updated • $title")
+    }
+
+    fun testDiscordSdkClientCreation(applicationId: Long) {
+        recordDiscordCheckpoint("KOTLIN: client test entered")
+        ensureDiscordClient(applicationId)
+        recordDiscordCheckpoint("KOTLIN: entering nativeUpdatePresence")
+        nativeUpdatePresence("RetroArch", "Connected • MECOOL BB2")
+        recordDiscordCheckpoint("KOTLIN: nativeUpdatePresence returned")
         recordDiscordCheckpoint("KOTLIN: callback pump running; test presence queued")
         android.util.Log.i("RetroAlertsDiscord", "Native Discord client created and test presence queued")
     }
+
+    fun isDiscordClientInitialized(): Boolean = discordClientInitialized
 
     override fun onDestroy() {
         discordCallbacks.removeCallbacks(discordCallbackPump)
@@ -1022,6 +1041,28 @@ fun RetroAlertsApp() {
                         .getOrElse { "Native diagnostic unavailable: ${it.javaClass.simpleName}: ${it.message ?: "no message"}" }
                 }
                 delay(750)
+            }
+        }
+    }
+
+    LaunchedEffect(settings, retroArchTarget, retroArchHost, discordApplicationId) {
+        if (settings && retroArchTarget == "MECOOL" && retroArchHost.isNotBlank()) {
+            while (true) {
+                val activity = context as? MainActivity
+                if (activity != null && activity.isDiscordClientInitialized()) {
+                    try {
+                        val gameStatus = queryRetroArchStatus(retroArchHost.trim())
+                        if (gameStatus.startsWith("PLAYING") || gameStatus.startsWith("PAUSED")) {
+                            activity.updateDiscordGamePresence(discordApplicationId.toLong(), gameStatus)
+                            retroArchTestStatus = gameStatus
+                        } else if (gameStatus.startsWith("CONNECTED")) {
+                            retroArchTestStatus = gameStatus
+                        }
+                    } catch (error: Exception) {
+                        android.util.Log.w("RetroAlertsDiscord", "RetroArch presence polling failed: ${error.message}")
+                    }
+                }
+                delay(15000)
             }
         }
     }
