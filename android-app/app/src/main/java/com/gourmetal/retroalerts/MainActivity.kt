@@ -613,7 +613,14 @@ class MainActivity : ComponentActivity() {
         // Keep Discord SDK initialization out of app startup. Build #243 closed
         // immediately after launch, so first verify the main app can boot independently.
         discordContextReady = false
-        recordDiscordCheckpoint("KOTLIN: app startup reached; Discord SDK initialization deferred until manual test")
+        val savedDiscordCheckpoint = getSharedPreferences(PREFS, MODE_PRIVATE)
+            .getString("discord_checkpoint", null)
+        if (savedDiscordCheckpoint.isNullOrBlank()) {
+            recordDiscordCheckpoint("KOTLIN: app startup reached; Discord SDK initialization deferred until manual test")
+        } else {
+            // Preserve the last test checkpoint so a crash is still visible after relaunch.
+            android.util.Log.i("RetroAlertsDiscord", "Preserving previous checkpoint: $savedDiscordCheckpoint")
+        }
         createChannel(this)
         setContent {
             var splashFinished by remember { mutableStateOf(false) }
