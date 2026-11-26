@@ -7,6 +7,7 @@
 #include <string>
 #include <csignal>
 #include <exception>
+#include <stdexcept>
 #include <cstdlib>
 #include <unistd.h>
 #include <utility>
