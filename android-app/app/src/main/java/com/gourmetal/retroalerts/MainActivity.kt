@@ -604,6 +604,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private external fun nativeInitialize(applicationId: Long)
+    private external fun nativeConnect()
     private external fun nativeUpdatePresence(details: String, state: String)
     private external fun nativeRunCallbacks()
     private external fun nativeDisconnect()
