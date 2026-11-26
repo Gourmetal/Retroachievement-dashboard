@@ -24,6 +24,7 @@ import android.view.View
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import com.discord.socialsdk.DiscordSocialSdkInit
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -621,9 +622,11 @@ class MainActivity : ComponentActivity() {
 
     fun testDiscordSdkClientCreation(applicationId: Long) {
         if (applicationId <= 0L) throw IllegalArgumentException("Invalid Discord Application ID")
-        android.util.Log.i("RetroAlertsDiscord", "Loading Discord SDK library")
+        android.util.Log.i("RetroAlertsDiscord", "Loading Discord SDK native library")
         System.loadLibrary("retroalerts_discord")
-        android.util.Log.i("RetroAlertsDiscord", "Library loaded; creating native Discord client")
+        android.util.Log.i("RetroAlertsDiscord", "Initializing Discord Android activity/context")
+        DiscordSocialSdkInit.setEngineActivity(this)
+        android.util.Log.i("RetroAlertsDiscord", "Discord Android context initialized; creating native client")
         nativeInitialize(applicationId)
         android.util.Log.i("RetroAlertsDiscord", "Native Discord client created successfully")
     }
