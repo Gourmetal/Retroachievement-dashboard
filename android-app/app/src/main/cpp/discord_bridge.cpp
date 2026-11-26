@@ -5,11 +5,42 @@
 #include <android/log.h>
 #include <memory>
 #include <string>
+#include <csignal>
+#include <exception>
+#include <unistd.h>
 
 namespace {
 constexpr const char* kTag = "RetroAlertsDiscord";
 constexpr uint64_t kApplicationId = 1574859797902266368ULL;
 std::unique_ptr<discordpp::Client> gClient;
+
+// Log a short marker, then let Android's debuggerd handle the fatal signal.
+// debuggerd writes the full native tombstone, including registers and backtrace.
+void nativeCrashSignalHandler(int signalNumber, siginfo_t*, void*) {
+    const char* message = "RetroAlertsDiscord: fatal native signal; Android tombstone contains registers and backtrace\\n";
+    (void)write(STDERR_FILENO, message, 98);
+    (void)kill(getpid(), signalNumber);
+}
+
+void nativeTerminateHandler() {
+    const char* message = "RetroAlertsDiscord: C++ std::terminate called; aborting for native tombstone\\n";
+    (void)write(STDERR_FILENO, message, 78);
+    abort();
+}
+
+void installNativeCrashDiagnostics() {
+    struct sigaction action {};
+    action.sa_sigaction = nativeCrashSignalHandler;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = SA_SIGINFO | SA_RESETHAND;
+    const int signals[] = {SIGSEGV, SIGABRT, SIGBUS, SIGILL, SIGFPE};
+    for (int signalNumber : signals) {
+        sigaction(signalNumber, &action, nullptr);
+    }
+    std::set_terminate(nativeTerminateHandler);
+    __android_log_print(ANDROID_LOG_INFO, kTag,
+        "Native crash diagnostics installed (SIGSEGV/SIGABRT/SIGBUS/SIGILL/SIGFPE)");
+}
 
 std::string fromJava(JNIEnv* env, jstring value) {
     if (value == nullptr) return {};
@@ -31,6 +62,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gourmetal_retroalerts_MainActivity_nativeInitialize(JNIEnv*, jobject, jlong applicationId) {
+    installNativeCrashDiagnostics();
     __android_log_print(ANDROID_LOG_INFO, kTag, "nativeInitialize entered; appId=%lld",
         static_cast<long long>(applicationId));
     if (!gClient) {
