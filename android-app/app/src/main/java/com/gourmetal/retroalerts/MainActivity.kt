@@ -595,6 +595,7 @@ private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): Strin
 
 class MainActivity : ComponentActivity() {
     private var discordContextReady = false
+    private var nativeBridgeLoaded = false
     private val discordCallbacks = Handler(Looper.getMainLooper())
     private val discordCallbackPump = object : Runnable {
         override fun run() {
@@ -610,7 +611,9 @@ class MainActivity : ComponentActivity() {
     private external fun nativeGetDiscordDiagnostic(): String
     private external fun nativeDisconnect()
 
-    fun readDiscordNativeDiagnostic(): String = nativeGetDiscordDiagnostic()
+    fun readDiscordNativeDiagnostic(): String =
+        if (nativeBridgeLoaded) nativeGetDiscordDiagnostic()
+        else "Native bridge not loaded; see LAST DISCORD CHECKPOINT"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -633,6 +636,18 @@ class MainActivity : ComponentActivity() {
             val failure = "KOTLIN SDK INIT ERROR: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
             recordDiscordCheckpoint(failure)
             android.util.Log.e("RetroAlertsDiscord", "Discord Android Activity registration failed", error)
+        }
+        if (discordContextReady) {
+            try {
+                android.util.Log.i("RetroAlertsDiscord", "Loading native bridge during Activity startup")
+                System.loadLibrary("retroalerts_discord")
+                nativeBridgeLoaded = true
+                recordDiscordCheckpoint("KOTLIN: native Discord bridge loaded during startup")
+            } catch (error: Throwable) {
+                val failure = "KOTLIN NATIVE LOAD ERROR: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
+                recordDiscordCheckpoint(failure)
+                android.util.Log.e("RetroAlertsDiscord", "Native Discord bridge failed to load", error)
+            }
         }
         createChannel(this)
         setContent {
@@ -661,7 +676,10 @@ class MainActivity : ComponentActivity() {
             throw IllegalStateException("Discord Android Activity initialization failed during app startup")
         }
         android.util.Log.i("RetroAlertsDiscord", "Loading native bridge library")
-        System.loadLibrary("retroalerts_discord")
+        if (!nativeBridgeLoaded) {
+            System.loadLibrary("retroalerts_discord")
+            nativeBridgeLoaded = true
+        }
         recordDiscordCheckpoint("KOTLIN: retroalerts_discord bridge loaded; Android context ready")
         android.util.Log.i("RetroAlertsDiscord", "Creating native Discord client")
         recordDiscordCheckpoint("KOTLIN: entering nativeInitialize")
