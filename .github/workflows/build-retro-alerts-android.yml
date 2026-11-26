@@ -35,43 +35,22 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           packages: "ndk;27.0.12077973 cmake;3.22.1"
-      - name: Extract Discord native libraries
+      - name: Download and validate official Discord Android SDK AAR
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          import zipfile
-          from pathlib import Path
-
-          root = Path("android-app/app")
-          mapping = {
-              "arm64": "arm64-v8a",
-              "armeabi": "armeabi-v7a",
-              "x86": "x86",
-              "x86_64": "x86_64",
-          }
-          for archive_arch, android_abi in mapping.items():
-              archive_path = root / f"discord-native-{archive_arch}.zip"
-              with zipfile.ZipFile(archive_path) as archive:
-                  entries = [name for name in archive.namelist()
-                             if name.endswith(".so") and not name.startswith("/")]
-                  if len(entries) != 1:
-                      raise SystemExit(f"Expected one .so in {archive_path}, found {entries}")
-                  destination = root / "src/main/jniLibs" / android_abi / "libdiscord_partner_sdk.so"
-                  destination.parent.mkdir(parents=True, exist_ok=True)
-                  destination.write_bytes(archive.read(entries[0]))
-                  print(f"Extracted {android_abi}: {destination.stat().st_size} bytes")
-
-          jar_archive = root / "discord_partner_sdk.zip"
-          with zipfile.ZipFile(jar_archive) as archive:
-              jars = [name for name in archive.namelist() if name.endswith(".jar")]
-              if len(jars) != 1:
-                  raise SystemExit(f"Expected one SDK JAR in {jar_archive}, found {jars}")
-              jar_destination = root / "libs" / "discord_partner_sdk.jar"
-              jar_destination.parent.mkdir(parents=True, exist_ok=True)
-              jar_destination.write_bytes(archive.read(jars[0]))
-              print(f"Extracted Discord Android Java bindings: {jar_destination.stat().st_size} bytes")
-          PY
+          mkdir -p android-app/app/libs
+          gh api \
+            -H "Accept: application/octet-stream" \
+            /repos/Gourmetal/Retroachievement-dashboard/releases/assets/788525034 \
+            > android-app/app/libs/discord_partner_sdk.aar
+          test -s android-app/app/libs/discord_partner_sdk.aar
+          echo "Official Discord Android SDK AAR:"
+          ls -lh android-app/app/libs/discord_partner_sdk.aar
+          unzip -t android-app/app/libs/discord_partner_sdk.aar
+          unzip -l android-app/app/libs/discord_partner_sdk.aar | grep -E '(^| )prefab/modules/discord_partner_sdk/|classes.jar'
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
       - name: Build debug APK
