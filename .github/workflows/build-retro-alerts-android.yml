@@ -77,6 +77,11 @@ jobs:
       - name: Build debug APK
         working-directory: android-app
         run: gradle assembleDebug
+      - name: Restore stable debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: retroalerts-debug-keystore-v1
       - name: Sign APK with Android APK Signature Schemes
         shell: bash
         run: |
