@@ -655,7 +655,13 @@ class MainActivity : ComponentActivity() {
         recordDiscordCheckpoint("KOTLIN: entering nativeInitialize")
         nativeInitialize(applicationId)
         recordDiscordCheckpoint("KOTLIN: nativeInitialize returned")
-        android.util.Log.i("RetroAlertsDiscord", "Native Discord client created successfully")
+        recordDiscordCheckpoint("KOTLIN: entering nativeUpdatePresence")
+        nativeUpdatePresence("Testing Gourmetal Retro Alerts", "Discord SDK presence test")
+        recordDiscordCheckpoint("KOTLIN: nativeUpdatePresence returned")
+        discordCallbacks.removeCallbacks(discordCallbackPump)
+        discordCallbacks.post(discordCallbackPump)
+        recordDiscordCheckpoint("KOTLIN: callback pump running; test presence queued")
+        android.util.Log.i("RetroAlertsDiscord", "Native Discord client created and test presence queued")
     }
 
     override fun onDestroy() {
@@ -2173,7 +2179,7 @@ fun RetroAlertsApp() {
                             discordTestStatus = "CREATING DISCORD SDK CLIENT..."
                             try {
                                 (context as? MainActivity)?.testDiscordSdkClientCreation(discordApplicationId.toLong())
-                                discordTestStatus = "SDK CLIENT CREATED • APP STAYED OPEN"
+                                discordTestStatus = "TEST PRESENCE QUEUED • APP STAYED OPEN"
                             } catch (error: Throwable) {
                                 android.util.Log.e("RetroAlertsDiscord", "SDK initialization test failed", error)
                                 val failure = "KOTLIN ERROR: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
@@ -2185,7 +2191,7 @@ fun RetroAlertsApp() {
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(if (discordTesting) "INITIALIZING..." else "TEST DISCORD SDK CLIENT CREATION", color = theme.text)
+                        Text(if (discordTesting) "INITIALIZING..." else "TEST DISCORD RICH PRESENCE", color = theme.text)
                     }
                     Text("LAST DISCORD CHECKPOINT • $discordTestStatus", color = if (discordTestStatus.contains("returned") || discordTestStatus.contains("CREATED")) theme.accent else theme.muted, fontSize = 10.sp)
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
