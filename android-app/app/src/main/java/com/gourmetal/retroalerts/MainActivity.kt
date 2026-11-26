@@ -604,7 +604,7 @@ class MainActivity : ComponentActivity() {
     }
 
     private external fun nativeInitialize(applicationId: Long)
-    private external fun nativeConnect()
+    private external fun nativeAuthorize(applicationId: Long)
     private external fun nativeUpdatePresence(details: String, state: String)
     private external fun nativeRunCallbacks()
     private external fun nativeDisconnect()
@@ -664,9 +664,9 @@ class MainActivity : ComponentActivity() {
         recordDiscordCheckpoint("KOTLIN: entering nativeInitialize")
         nativeInitialize(applicationId)
         recordDiscordCheckpoint("KOTLIN: nativeInitialize returned")
-        recordDiscordCheckpoint("KOTLIN: entering nativeConnect")
-        nativeConnect()
-        recordDiscordCheckpoint("KOTLIN: Discord RPC connection started; presence will publish at READY")
+        recordDiscordCheckpoint("KOTLIN: starting Discord authorization; approve the requested access")
+        nativeAuthorize(applicationId)
+        recordDiscordCheckpoint("KOTLIN: Discord authorization flow opened; waiting for approval")
         recordDiscordCheckpoint("KOTLIN: entering nativeUpdatePresence")
         nativeUpdatePresence("Testing Gourmetal Retro Alerts", "Discord SDK presence test")
         recordDiscordCheckpoint("KOTLIN: nativeUpdatePresence returned")
@@ -2200,7 +2200,7 @@ fun RetroAlertsApp() {
                                     throw IllegalStateException("MainActivity context unavailable")
                                 }
                                 activity.testDiscordSdkClientCreation(appId)
-                                discordTestStatus = "TEST PRESENCE QUEUED • APP STAYED OPEN"
+                                discordTestStatus = "DISCORD AUTHORIZATION STARTED • APPROVE ACCESS"
                             } catch (error: Throwable) {
                                 android.util.Log.e("RetroAlertsDiscord", "SDK initialization test failed", error)
                                 val failure = "KOTLIN ERROR: ${error.javaClass.simpleName}: ${error.message ?: "no message"}"
