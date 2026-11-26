@@ -17,7 +17,7 @@ on:
       - ".github/workflows/build-retro-alerts-android.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -36,13 +36,16 @@ jobs:
         with:
           packages: "ndk;27.0.12077973 cmake;3.22.1"
       - name: Download and validate official Discord Android SDK AAR
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p android-app/app/libs
-          curl --fail --location --retry 3 \
-            "https://github.com/Gourmetal/Retroachievement-dashboard/releases/download/untagged-080073640d593fcce8ba/discord_partner_sdk.aar" \
-            --output android-app/app/libs/discord_partner_sdk.aar
+          gh api \
+            -H "Accept: application/octet-stream" \
+            /repos/Gourmetal/Retroachievement-dashboard/releases/assets/788525034 \
+            > android-app/app/libs/discord_partner_sdk.aar
           test -s android-app/app/libs/discord_partner_sdk.aar
           echo "Official Discord Android SDK AAR:"
           ls -lh android-app/app/libs/discord_partner_sdk.aar
