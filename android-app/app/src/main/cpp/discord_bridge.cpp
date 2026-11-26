@@ -12,10 +12,21 @@
 #include <unistd.h>
 #include <utility>
 #include <optional>
+#include <mutex>
 
 namespace {
 constexpr const char* kTag = "RetroAlertsDiscord";
 std::unique_ptr<discordpp::Client> gClient;
+std::mutex gDiagnosticMutex;
+std::string gDiscordDiagnostic = "Discord diagnostic: waiting for test";
+
+void setDiscordDiagnostic(const std::string& message) {
+    {
+        std::lock_guard<std::mutex> lock(gDiagnosticMutex);
+        gDiscordDiagnostic = message;
+    }
+    __android_log_print(ANDROID_LOG_INFO, kTag, "%s", message.c_str());
+}
 
 void throwJavaException(JNIEnv* env, const std::string& message) {
     if (env == nullptr || env->ExceptionCheck()) return;
@@ -103,12 +114,10 @@ void publishPendingPresence() {
     if (!gPendingState.empty()) presence.SetState(gPendingState);
 
     gPresencePending = false;
-    __android_log_print(ANDROID_LOG_INFO, kTag,
-        "Discord SDK is READY; submitting queued Rich Presence");
+    setDiscordDiagnostic("Discord SDK READY; submitting Rich Presence");
     gClient->UpdateRichPresence(std::move(presence), [](discordpp::ClientResult result) {
-        __android_log_print(ANDROID_LOG_INFO, kTag,
-            "Rich Presence update completed: %s (%s)",
-            result.Successful() ? "success" : "failure", result.ToString().c_str());
+        setDiscordDiagnostic(std::string("Rich Presence update ") +
+            (result.Successful() ? "SUCCEEDED: " : "FAILED: ") + result.ToString());
     });
 }
 }
@@ -143,9 +152,9 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeInitialize(JNIEnv* env, jobjec
                 discordpp::Client::Status status,
                 discordpp::Client::Error error,
                 int32_t errorDetail) {
-                __android_log_print(ANDROID_LOG_INFO, kTag,
-                    "Discord SDK status changed: status=%d error=%d detail=%d",
-                    static_cast<int>(status), static_cast<int>(error), errorDetail);
+                setDiscordDiagnostic("Discord SDK status=" + std::to_string(static_cast<int>(status)) +
+                    " error=" + std::to_string(static_cast<int>(error)) +
+                    " detail=" + std::to_string(errorDetail));
                 if (status == discordpp::Client::Status::Ready) {
                     publishPendingPresence();
                 }
@@ -175,6 +184,7 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeAuthorize(JNIEnv* env, jobject
         if (!gClient) throw std::runtime_error("Discord SDK client has not been initialized");
         if (applicationId <= 0) throw std::invalid_argument("Discord Application ID must be positive");
 
+        setDiscordDiagnostic("OAuth: authorization request started");
         recordJavaCheckpoint(env, activity, "NATIVE: starting Discord OAuth authorization");
         __android_log_print(ANDROID_LOG_INFO, kTag,
             "Starting Discord OAuth authorization for application %lld",
@@ -190,22 +200,18 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeAuthorize(JNIEnv* env, jobject
             [applicationId, verifier = std::move(verifier)](
                 discordpp::ClientResult result, std::string code, std::string redirectUri) mutable {
                 if (!result.Successful()) {
-                    __android_log_print(ANDROID_LOG_ERROR, kTag,
-                        "Discord OAuth authorization failed: %s", result.ToString().c_str());
+                    setDiscordDiagnostic("OAuth FAILED: " + result.ToString());
                     return;
                 }
                 if (code.empty() || redirectUri.empty()) {
-                    __android_log_print(ANDROID_LOG_ERROR, kTag,
-                        "Discord OAuth returned an empty authorization code or redirect URI");
+                    setDiscordDiagnostic("OAuth FAILED: Discord returned an empty code or redirect URI");
                     return;
                 }
 
-                __android_log_print(ANDROID_LOG_INFO, kTag,
-                    "Discord OAuth authorization completed; exchanging code for access token");
+                setDiscordDiagnostic("OAuth approved; exchanging authorization code for token");
 
                 if (!gClient) {
-                    __android_log_print(ANDROID_LOG_ERROR, kTag,
-                        "Discord client disappeared before token exchange");
+                    setDiscordDiagnostic("OAuth FAILED: Discord client disappeared before token exchange");
                     return;
                 }
 
@@ -215,26 +221,21 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeAuthorize(JNIEnv* env, jobject
                        std::string refreshToken, discordpp::AuthorizationTokenType tokenType,
                        int32_t expiresIn, std::string scopes) {
                         if (!tokenResult.Successful() || accessToken.empty()) {
-                            __android_log_print(ANDROID_LOG_ERROR, kTag,
-                                "Discord token exchange failed: %s", tokenResult.ToString().c_str());
+                            setDiscordDiagnostic("Token exchange FAILED: " + tokenResult.ToString());
                             return;
                         }
 
-                        __android_log_print(ANDROID_LOG_INFO, kTag,
-                            "Discord OAuth token received; expiresIn=%d scopes=%s",
-                            expiresIn, scopes.c_str());
+                        setDiscordDiagnostic("OAuth token received; installing token (expires in " +
+                            std::to_string(expiresIn) + " seconds; scopes=" + scopes + ")");
 
                         if (!gClient) return;
                         gClient->UpdateToken(tokenType, accessToken,
                             [](discordpp::ClientResult updateResult) {
                                 if (!updateResult.Successful()) {
-                                    __android_log_print(ANDROID_LOG_ERROR, kTag,
-                                        "Discord SDK token update failed: %s",
-                                        updateResult.ToString().c_str());
+                                    setDiscordDiagnostic("SDK token installation FAILED: " + updateResult.ToString());
                                     return;
                                 }
-                                __android_log_print(ANDROID_LOG_INFO, kTag,
-                                    "Discord SDK token installed; now connecting");
+                                setDiscordDiagnostic("SDK token installed; connecting to Discord");
                                 if (gClient) gClient->Connect();
                             });
                     });
@@ -257,6 +258,7 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeUpdatePresence(
         gPendingDetails = fromJava(env, details);
         gPendingState = fromJava(env, state);
         gPresencePending = true;
+        setDiscordDiagnostic("Test presence queued; waiting for Discord SDK READY");
         recordJavaCheckpoint(env, activity, "NATIVE: presence queued; waiting for Discord READY");
         publishPendingPresence();
     } catch (const std::exception& error) {
@@ -282,6 +284,16 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeRunCallbacks(JNIEnv* env, jobj
     } catch (...) {
         throwJavaException(env, "Discord callback pump failed: unknown C++ exception");
     }
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_gourmetal_retroalerts_MainActivity_nativeGetDiscordDiagnostic(JNIEnv* env, jobject) {
+    std::string snapshot;
+    {
+        std::lock_guard<std::mutex> lock(gDiagnosticMutex);
+        snapshot = gDiscordDiagnostic;
+    }
+    return env->NewStringUTF(snapshot.c_str());
 }
 
 extern "C" JNIEXPORT void JNICALL
