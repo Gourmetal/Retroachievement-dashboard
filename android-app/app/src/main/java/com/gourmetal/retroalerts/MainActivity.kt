@@ -696,8 +696,7 @@ class MainActivity : ComponentActivity() {
         val state = parts.firstOrNull()?.takeIf { it == "PLAYING" || it == "PAUSED" }
             ?: return
         val title = parts.getOrNull(1)?.takeIf { it.isNotBlank() } ?: "Unknown game"
-        val system = parts.getOrNull(2)?.takeIf { it.isNotBlank() } ?: "RetroArch"
-        val activityState = if (state == "PAUSED") "Paused • MECOOL BB2 • $system" else "Playing on MECOOL BB2 • $system"
+        val activityState = if (state == "PAUSED") "Paused" else ""
         nativeUpdatePresence(title, activityState)
         recordDiscordCheckpoint("KOTLIN: Discord activity updated • $title")
     }
@@ -706,7 +705,7 @@ class MainActivity : ComponentActivity() {
         recordDiscordCheckpoint("KOTLIN: client test entered")
         ensureDiscordClient(applicationId)
         recordDiscordCheckpoint("KOTLIN: entering nativeUpdatePresence")
-        nativeUpdatePresence("RetroArch", "Connected • MECOOL BB2")
+        nativeUpdatePresence("RetroArch", "Connected")
         recordDiscordCheckpoint("KOTLIN: nativeUpdatePresence returned")
         recordDiscordCheckpoint("KOTLIN: callback pump running; test presence queued")
         android.util.Log.i("RetroAlertsDiscord", "Native Discord client created and test presence queued")
