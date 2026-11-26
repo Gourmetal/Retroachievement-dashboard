@@ -85,6 +85,31 @@ std::string fromJava(JNIEnv* env, jstring value) {
 std::string exceptionMessage(const char* stage, const char* what) {
     return std::string(stage) + ": " + (what != nullptr ? what : "unknown C++ exception");
 }
+
+std::string gPendingDetails;
+std::string gPendingState;
+bool gPresencePending = false;
+
+void publishPendingPresence() {
+    if (!gClient || !gPresencePending ||
+        gClient->GetStatus() != discordpp::Client::Status::Ready) {
+        return;
+    }
+
+    discordpp::Activity presence{};
+    presence.SetType(discordpp::ActivityTypes::Playing);
+    if (!gPendingDetails.empty()) presence.SetDetails(gPendingDetails);
+    if (!gPendingState.empty()) presence.SetState(gPendingState);
+
+    gPresencePending = false;
+    __android_log_print(ANDROID_LOG_INFO, kTag,
+        "Discord SDK is READY; submitting queued Rich Presence");
+    gClient->UpdateRichPresence(std::move(presence), [](discordpp::ClientResult result) {
+        __android_log_print(ANDROID_LOG_INFO, kTag,
+            "Rich Presence update completed: %s (%s)",
+            result.Successful() ? "success" : "failure", result.ToString().c_str());
+    });
+}
 }
 
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
@@ -113,6 +138,18 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeInitialize(JNIEnv* env, jobjec
             __android_log_print(ANDROID_LOG_INFO, kTag, "Stage 2: setting Discord application ID");
             client->SetApplicationId(static_cast<uint64_t>(applicationId));
             recordJavaCheckpoint(env, activity, "NATIVE: Client::SetApplicationId returned");
+            client->SetStatusChangedCallback([](
+                discordpp::Client::Status status,
+                discordpp::Client::Error error,
+                int32_t errorDetail) {
+                __android_log_print(ANDROID_LOG_INFO, kTag,
+                    "Discord SDK status changed: status=%d error=%d detail=%d",
+                    static_cast<int>(status), static_cast<int>(error), errorDetail);
+                if (status == discordpp::Client::Status::Ready) {
+                    publishPendingPresence();
+                }
+            });
+            recordJavaCheckpoint(env, activity, "NATIVE: Discord READY callback registered");
             gClient = std::move(client);
             recordJavaCheckpoint(env, activity, "NATIVE: Discord client created and configured");
         } else {
@@ -132,9 +169,21 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeInitialize(JNIEnv* env, jobjec
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_gourmetal_retroalerts_MainActivity_nativeConnect(JNIEnv*, jobject) {
-    // Android Rich Presence uses the SDK's unauthenticated RPC transport.
-    // Do not call Connect(): that starts the authenticated gateway flow.
+Java_com_gourmetal_retroalerts_MainActivity_nativeConnect(JNIEnv* env, jobject activity) {
+    try {
+        if (!gClient) throw std::runtime_error("Discord SDK client has not been initialized");
+        recordJavaCheckpoint(env, activity, "NATIVE: starting Discord RPC connection");
+        gClient->Connect();
+        __android_log_print(ANDROID_LOG_INFO, kTag,
+            "Discord SDK Connect() invoked; waiting for Status::Ready");
+    } catch (const std::exception& error) {
+        const auto message = exceptionMessage("nativeConnect failed", error.what());
+        recordJavaCheckpoint(env, activity, message.c_str());
+        __android_log_print(ANDROID_LOG_ERROR, kTag, "%s", message.c_str());
+        throwJavaException(env, message);
+    } catch (...) {
+        throwJavaException(env, "nativeConnect failed: unknown C++ exception");
+    }
 }
 
 extern "C" JNIEXPORT void JNICALL
@@ -142,18 +191,11 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeUpdatePresence(
     JNIEnv* env, jobject activity, jstring details, jstring state) {
     try {
         if (!gClient) throw std::runtime_error("Discord SDK client has not been initialized");
-        discordpp::Activity presence{};
-        presence.SetType(discordpp::ActivityTypes::Playing);
-        const std::string detailsText = fromJava(env, details);
-        const std::string stateText = fromJava(env, state);
-        if (!detailsText.empty()) presence.SetDetails(detailsText);
-        if (!stateText.empty()) presence.SetState(stateText);
-        gClient->UpdateRichPresence(std::move(presence), [](discordpp::ClientResult result) {
-            __android_log_print(ANDROID_LOG_INFO, kTag,
-                "Rich Presence update completed: %s (%s)",
-                result.Successful() ? "success" : "failure", result.ToString().c_str());
-        });
-        recordJavaCheckpoint(env, activity, "NATIVE: rich presence update submitted");
+        gPendingDetails = fromJava(env, details);
+        gPendingState = fromJava(env, state);
+        gPresencePending = true;
+        recordJavaCheckpoint(env, activity, "NATIVE: presence queued; waiting for Discord READY");
+        publishPendingPresence();
     } catch (const std::exception& error) {
         const auto message = exceptionMessage("nativeUpdatePresence failed", error.what());
         recordJavaCheckpoint(env, activity, message.c_str());
@@ -183,6 +225,9 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_gourmetal_retroalerts_MainActivity_nativeDisconnect(JNIEnv* env, jobject activity) {
     try {
         if (gClient) {
+            gPresencePending = false;
+            gPendingDetails.clear();
+            gPendingState.clear();
             gClient->Disconnect();
             gClient.reset();
         }
