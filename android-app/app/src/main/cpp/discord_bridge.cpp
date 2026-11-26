@@ -7,24 +7,26 @@
 #include <string>
 #include <csignal>
 #include <exception>
+#include <cstdlib>
 #include <unistd.h>
 
 namespace {
 constexpr const char* kTag = "RetroAlertsDiscord";
-constexpr uint64_t kApplicationId = 1574859797902266368ULL;
 std::unique_ptr<discordpp::Client> gClient;
 
 // Log a short marker, then let Android's debuggerd handle the fatal signal.
 // debuggerd writes the full native tombstone, including registers and backtrace.
 void nativeCrashSignalHandler(int signalNumber, siginfo_t*, void*) {
-    const char* message = "RetroAlertsDiscord: fatal native signal; Android tombstone contains registers and backtrace\\n";
-    (void)write(STDERR_FILENO, message, 98);
+    static constexpr char message[] =
+        "RetroAlertsDiscord: fatal native signal; Android tombstone contains registers and backtrace\n";
+    (void)write(STDERR_FILENO, message, sizeof(message) - 1);
     (void)kill(getpid(), signalNumber);
 }
 
 void nativeTerminateHandler() {
-    const char* message = "RetroAlertsDiscord: C++ std::terminate called; aborting for native tombstone\\n";
-    (void)write(STDERR_FILENO, message, 78);
+    static constexpr char message[] =
+        "RetroAlertsDiscord: C++ std::terminate called; aborting for native tombstone\n";
+    (void)write(STDERR_FILENO, message, sizeof(message) - 1);
     abort();
 }
 
