@@ -60,6 +60,14 @@ android {
         jvmTarget = "17"
     }
 
+    buildTypes {
+        getByName("debug") {
+            // Keep the diagnostic build alongside the user's existing app.
+            // This avoids uninstalling the installed app and losing its local data.
+            applicationIdSuffix = ".diagnostic"
+        }
+    }
+
     buildFeatures {
         compose = true
     }
