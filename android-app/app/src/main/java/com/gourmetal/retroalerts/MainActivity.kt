@@ -243,10 +243,68 @@ private object SteamGridKeyVault {
             .putString(PREF_KEY, Base64.encodeToString(encrypted, Base64.NO_WRAP)).apply()
     }
 
+    fun load(context: Context): String? = try {
+        val saved = context.getSharedPreferences(PREFS, 0).getString(PREF_KEY, null) ?: return null
+        val data = Base64.decode(saved, Base64.NO_WRAP)
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, data.copyOfRange(0, 12)))
+        String(cipher.doFinal(data.copyOfRange(12, data.size)))
+    } catch (_: Exception) { null }
+
     fun hasKey(context: Context): Boolean =
         !context.getSharedPreferences(PREFS, 0).getString(PREF_KEY, null).isNullOrBlank()
 }
 
+
+private suspend fun getSteamGridArtwork(context: Context, title: String): String? =
+    withContext(Dispatchers.IO) {
+        val cleanTitle = title.trim()
+        if (cleanTitle.isBlank()) return@withContext null
+        val prefs = context.getSharedPreferences(PREFS, 0)
+        val cache = org.json.JSONObject(prefs.getString("steamgriddb_art_cache", "{}") ?: "{}")
+        val cacheKey = cleanTitle.lowercase()
+        if (cache.has(cacheKey)) return@withContext cache.optString(cacheKey).takeIf { it.isNotBlank() }
+
+        val apiKey = SteamGridKeyVault.load(context) ?: return@withContext null
+        fun request(url: URL): org.json.JSONObject {
+            val connection = url.openConnection() as HttpURLConnection
+            try {
+                connection.connectTimeout = 10000
+                connection.readTimeout = 15000
+                connection.setRequestProperty("Authorization", "Bearer $apiKey")
+                connection.setRequestProperty("Accept", "application/json")
+                if (connection.responseCode !in 200..299) {
+                    throw java.io.IOException("SteamGridDB HTTP ${connection.responseCode}")
+                }
+                return org.json.JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+            } finally { connection.disconnect() }
+        }
+
+        try {
+            val query = URLEncoder.encode(cleanTitle, "UTF-8").replace("+", "%20")
+            val search = request(URL("https://www.steamgriddb.com/api/v2/search/autocomplete/$query"))
+            val games = search.optJSONArray("data") ?: JSONArray()
+            val normalized = cleanTitle.lowercase().replace(Regex("[^a-z0-9]"), "")
+            val game = (0 until games.length()).mapNotNull { games.optJSONObject(it) }
+                .firstOrNull { it.optString("name").lowercase().replace(Regex("[^a-z0-9]"), "") == normalized }
+                ?: games.optJSONObject(0)
+            val gameId = game?.optLong("id", 0L) ?: 0L
+            if (gameId <= 0L) {
+                cache.put(cacheKey, "")
+                prefs.edit().putString("steamgriddb_art_cache", cache.toString()).apply()
+                return@withContext null
+            }
+            val grids = request(URL("https://www.steamgriddb.com/api/v2/grids/game/$gameId?dimensions=600x900&types=static&limit=1"))
+            val data = grids.optJSONArray("data")
+            val imageUrl = data?.optJSONObject(0)?.optString("url")?.takeIf { it.startsWith("https://") }
+            cache.put(cacheKey, imageUrl ?: "")
+            prefs.edit().putString("steamgriddb_art_cache", cache.toString()).apply()
+            imageUrl
+        } catch (error: Exception) {
+            android.util.Log.w("SteamGridDB", "Artwork lookup failed for $cleanTitle: ${error.message}")
+            null
+        }
+    }
 
 private fun parseAchievementList(json: JSONArray): List<Achievement> {
     val byId = linkedMapOf<String, Achievement>()
@@ -635,7 +693,7 @@ class MainActivity : ComponentActivity() {
 
     private external fun nativeInitialize(applicationId: Long)
     private external fun nativeAuthorize(applicationId: Long)
-    private external fun nativeUpdatePresence(details: String, state: String)
+    private external fun nativeUpdatePresence(details: String, state: String, largeImage: String)
     private external fun nativeRunCallbacks()
     private external fun nativeGetDiscordDiagnostic(): String
     private external fun nativeDisconnect()
@@ -718,22 +776,23 @@ class MainActivity : ComponentActivity() {
         discordCallbacks.post(discordCallbackPump)
     }
 
-    fun updateDiscordGamePresence(applicationId: Long, gameStatus: String) {
+    suspend fun updateDiscordGamePresence(applicationId: Long, gameStatus: String) {
         ensureDiscordClient(applicationId)
         val parts = gameStatus.split(" • ")
         val state = parts.firstOrNull()?.takeIf { it == "PLAYING" || it == "PAUSED" }
             ?: return
         val title = parts.getOrNull(1)?.takeIf { it.isNotBlank() } ?: "Unknown game"
         val activityState = if (state == "PAUSED") "Paused" else ""
-        nativeUpdatePresence(title, activityState)
-        recordDiscordCheckpoint("KOTLIN: Discord activity updated • $title")
+        val artworkUrl = getSteamGridArtwork(this, title).orEmpty()
+        nativeUpdatePresence(title, activityState, artworkUrl)
+        recordDiscordCheckpoint("KOTLIN: Discord activity updated • $title • artwork=${if (artworkUrl.isBlank()) "none" else "found"}")
     }
 
     fun testDiscordSdkClientCreation(applicationId: Long) {
         recordDiscordCheckpoint("KOTLIN: client test entered")
         ensureDiscordClient(applicationId)
         recordDiscordCheckpoint("KOTLIN: entering nativeUpdatePresence")
-        nativeUpdatePresence("RetroArch", "Connected")
+        nativeUpdatePresence("RetroArch", "Connected", "")
         recordDiscordCheckpoint("KOTLIN: nativeUpdatePresence returned")
         recordDiscordCheckpoint("KOTLIN: callback pump running; test presence queued")
         android.util.Log.i("RetroAlertsDiscord", "Native Discord client created and test presence queued")
