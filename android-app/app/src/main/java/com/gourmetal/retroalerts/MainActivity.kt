@@ -907,7 +907,7 @@ class MainActivity : ComponentActivity() {
         recordDiscordCheckpoint("KOTLIN: client test entered")
         ensureDiscordClient(applicationId)
         recordDiscordCheckpoint("KOTLIN: entering nativeUpdatePresence")
-        nativeUpdatePresence("RetroArch", "Connected", "")
+        nativeUpdatePresence("Discord Connection Test", "Connected", "")
         recordDiscordCheckpoint("KOTLIN: nativeUpdatePresence returned")
         recordDiscordCheckpoint("KOTLIN: callback pump running; test presence queued")
         android.util.Log.i("RetroAlertsDiscord", "Native Discord client created and test presence queued")
