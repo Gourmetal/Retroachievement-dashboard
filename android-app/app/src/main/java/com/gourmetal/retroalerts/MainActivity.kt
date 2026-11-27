@@ -812,10 +812,11 @@ class MainActivity : ComponentActivity() {
         val state = parts.firstOrNull()?.takeIf { it == "PLAYING" || it == "PAUSED" }
             ?: return
         val title = parts.getOrNull(1)?.takeIf { it.isNotBlank() } ?: "Unknown game"
-        val activityState = if (state == "PAUSED") "Paused • $title" else "Playing • $title"
+        val system = parts.getOrNull(2)?.takeIf { it.isNotBlank() } ?: "RetroArch"
+        val activityState = system
         val artworkUrl = getSteamGridArtwork(this, title).orEmpty()
         nativeUpdatePresence(title, activityState, artworkUrl)
-        recordDiscordCheckpoint("KOTLIN: Discord activity updated • $title • artwork=${if (artworkUrl.isBlank()) "none" else "found"}")
+        recordDiscordCheckpoint("KOTLIN: Discord activity updated • name=$title • system=$system • artwork=${if (artworkUrl.isBlank()) "none" else "found"}")
     }
 
     fun testDiscordSdkClientCreation(applicationId: Long) {
