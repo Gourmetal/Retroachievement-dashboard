@@ -100,6 +100,7 @@ std::string exceptionMessage(const char* stage, const char* what) {
 
 std::string gPendingDetails;
 std::string gPendingState;
+std::string gPendingLargeImage;
 bool gPresencePending = false;
 
 void publishPendingPresence() {
@@ -114,6 +115,12 @@ void publishPendingPresence() {
     presence.SetType(discordpp::ActivityTypes::Playing);
     if (!gPendingDetails.empty()) presence.SetDetails(gPendingDetails);
     if (!gPendingState.empty()) presence.SetState(gPendingState);
+    if (!gPendingLargeImage.empty()) {
+        discordpp::ActivityAssets assets{};
+        assets.SetLargeImage(gPendingLargeImage);
+        assets.SetLargeText(gPendingDetails.empty() ? "Now playing" : gPendingDetails);
+        presence.SetAssets(assets);
+    }
 
     gPresencePending = false;
     setDiscordDiagnostic("Submitting Rich Presence through unauthenticated Android RPC");
@@ -254,11 +261,12 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeAuthorize(JNIEnv* env, jobject
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_gourmetal_retroalerts_MainActivity_nativeUpdatePresence(
-    JNIEnv* env, jobject activity, jstring details, jstring state) {
+    JNIEnv* env, jobject activity, jstring details, jstring state, jstring largeImage) {
     try {
         if (!gClient) throw std::runtime_error("Discord SDK client has not been initialized");
         gPendingDetails = fromJava(env, details);
         gPendingState = fromJava(env, state);
+        gPendingLargeImage = fromJava(env, largeImage);
         gPresencePending = true;
         setDiscordDiagnostic("Test presence queued; waiting for Discord SDK READY");
         recordJavaCheckpoint(env, activity, "NATIVE: presence queued; waiting for Discord READY");
@@ -305,6 +313,7 @@ Java_com_gourmetal_retroalerts_MainActivity_nativeDisconnect(JNIEnv* env, jobjec
             gPresencePending = false;
             gPendingDetails.clear();
             gPendingState.clear();
+            gPendingLargeImage.clear();
             gClient->Disconnect();
             gClient.reset();
         }
