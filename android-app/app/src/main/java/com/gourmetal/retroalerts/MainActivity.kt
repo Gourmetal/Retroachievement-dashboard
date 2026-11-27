@@ -220,6 +220,34 @@ private object KeyVault {
 }
 
 
+private object SteamGridKeyVault {
+    private const val ALIAS = "steamgriddb_key"
+    private const val PREF_KEY = "steamgriddb_api_key"
+
+    private fun key(): SecretKey {
+        val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+        (store.getKey(ALIAS, null) as? SecretKey)?.let { return it }
+        return KeyGenerator.getInstance("AES", "AndroidKeyStore").apply {
+            init(KeyGenParameterSpec.Builder(ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+                .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+                .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .build())
+        }.generateKey()
+    }
+
+    fun save(context: Context, value: String) {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, key())
+        val encrypted = cipher.iv + cipher.doFinal(value.toByteArray())
+        context.getSharedPreferences(PREFS, 0).edit()
+            .putString(PREF_KEY, Base64.encodeToString(encrypted, Base64.NO_WRAP)).apply()
+    }
+
+    fun hasKey(context: Context): Boolean =
+        !context.getSharedPreferences(PREFS, 0).getString(PREF_KEY, null).isNullOrBlank()
+}
+
+
 private fun parseAchievementList(json: JSONArray): List<Achievement> {
     val byId = linkedMapOf<String, Achievement>()
     for (i in 0 until json.length()) {
@@ -1023,6 +1051,8 @@ fun RetroAlertsApp() {
     var quietEnd by remember { mutableStateOf(prefs.getString("quiet_end", "08:00") ?: "08:00") }
     var apiKey by remember { mutableStateOf("") }
     var discordApplicationId by remember { mutableStateOf(prefs.getString("discord_application_id", "1574859797902266368") ?: "1574859797902266368") }
+    var steamGridKeyInput by remember { mutableStateOf("") }
+    var steamGridKeySaved by remember { mutableStateOf(SteamGridKeyVault.hasKey(context)) }
     var retroArchTarget by remember { mutableStateOf(prefs.getString("discord_retroarch_target", "PHONE") ?: "PHONE") }
     var retroArchHost by remember { mutableStateOf(prefs.getString("discord_retroarch_host", "") ?: "") }
     var retroArchTestStatus by remember { mutableStateOf("NOT TESTED") }
@@ -2237,6 +2267,47 @@ fun RetroAlertsApp() {
                         color = theme.muted,
                         fontSize = 11.sp
                     )
+                    Text("STEAMGRIDDB GAME ART", color = theme.accent, fontWeight = FontWeight.Black)
+                    Text(
+                        "Save your SteamGridDB API key here. It is encrypted on this phone and kept separate from your RetroAchievements key.",
+                        color = theme.muted,
+                        fontSize = 11.sp
+                    )
+                    OutlinedTextField(
+                        value = steamGridKeyInput,
+                        onValueChange = { steamGridKeyInput = it.trim() },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("SteamGridDB API key") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation()
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            enabled = steamGridKeyInput.isNotBlank(),
+                            onClick = {
+                                SteamGridKeyVault.save(context, steamGridKeyInput.trim())
+                                steamGridKeyInput = ""
+                                steamGridKeySaved = true
+                                status = "STEAMGRIDDB KEY SAVED SECURELY"
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) { Text("SAVE KEY") }
+                        OutlinedButton(
+                            enabled = steamGridKeySaved,
+                            onClick = {
+                                prefs.edit().remove("steamgriddb_api_key").apply()
+                                steamGridKeySaved = false
+                                status = "STEAMGRIDDB KEY CLEARED"
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) { Text("CLEAR KEY") }
+                    }
+                    Text(
+                        if (steamGridKeySaved) "STEAMGRIDDB KEY STORED ON THIS PHONE" else "STEAMGRIDDB KEY NOT SET",
+                        color = if (steamGridKeySaved) theme.accent else theme.muted,
+                        fontSize = 10.sp
+                    )
+                    HorizontalDivider(color = theme.muted.copy(alpha = 0.3f))
                     OutlinedTextField(
                         value = discordApplicationId,
                         onValueChange = {
