@@ -705,7 +705,7 @@ private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): Strin
                 val state = match.groupValues[1].uppercase()
                 val system = match.groupValues[2].trim()
                 val contentPath = match.groupValues[3].trim().trim('"')
-                val fileName = contentPath.substringAfterLast('/').substringAfterLast('\\\\')
+                val fileName = contentPath.substringAfterLast('/').substringAfterLast('\\')
                 val title = fileName.substringBeforeLast('.', fileName).trim()
                     .replace('_', ' ').replace(Regex("\\s+"), " ")
                 if (title.isNotBlank()) {
