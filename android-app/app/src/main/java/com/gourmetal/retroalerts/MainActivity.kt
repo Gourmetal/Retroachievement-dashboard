@@ -260,12 +260,23 @@ private suspend fun getSteamGridArtwork(context: Context, title: String): String
     withContext(Dispatchers.IO) {
         val cleanTitle = title.trim()
         if (cleanTitle.isBlank()) return@withContext null
+        val apiKey = SteamGridKeyVault.load(context) ?: return@withContext null
         val prefs = context.getSharedPreferences(PREFS, 0)
         val cache = org.json.JSONObject(prefs.getString("steamgriddb_art_cache", "{}") ?: "{}")
-        val cacheKey = cleanTitle.lowercase()
-        if (cache.has(cacheKey)) return@withContext cache.optString(cacheKey).takeIf { it.isNotBlank() }
+        // Include a non-reversible key fingerprint so saving/replacing an API key
+        // automatically bypasses old negative cache entries.
+        val cacheKey = cleanTitle.lowercase() + "|" + apiKey.hashCode()
+        val cached = cache.optJSONObject(cacheKey)
+        if (cached != null) {
+            val checkedAt = cached.optLong("checkedAt", 0L)
+            if (System.currentTimeMillis() - checkedAt < TimeUnit.HOURS.toMillis(12)) {
+                return@withContext cached.optString("url").takeIf { it.startsWith("https://") }
+            }
+        } else {
+            val legacy = cache.optString(cleanTitle.lowercase())
+            if (legacy.startsWith("https://")) return@withContext legacy
+        }
 
-        val apiKey = SteamGridKeyVault.load(context) ?: return@withContext null
         fun request(url: URL): org.json.JSONObject {
             val connection = url.openConnection() as HttpURLConnection
             try {
@@ -281,23 +292,42 @@ private suspend fun getSteamGridArtwork(context: Context, title: String): String
         }
 
         try {
+            fun normalize(value: String) = value.lowercase().replace(Regex("[^a-z0-9]"), "")
             val query = URLEncoder.encode(cleanTitle, "UTF-8").replace("+", "%20")
             val search = request(URL("https://www.steamgriddb.com/api/v2/search/autocomplete/$query"))
             val games = search.optJSONArray("data") ?: JSONArray()
-            val normalized = cleanTitle.lowercase().replace(Regex("[^a-z0-9]"), "")
-            val game = (0 until games.length()).mapNotNull { games.optJSONObject(it) }
-                .firstOrNull { it.optString("name").lowercase().replace(Regex("[^a-z0-9]"), "") == normalized }
-                ?: games.optJSONObject(0)
-            val gameId = game?.optLong("id", 0L) ?: 0L
-            if (gameId <= 0L) {
-                cache.put(cacheKey, "")
-                prefs.edit().putString("steamgriddb_art_cache", cache.toString()).apply()
-                return@withContext null
+            val normalized = normalize(cleanTitle)
+            val candidates = (0 until games.length()).mapNotNull { games.optJSONObject(it) }
+            val exact = candidates.firstOrNull { normalize(it.optString("name")) == normalized }
+            val queryTokens = cleanTitle.lowercase().split(Regex("[^a-z0-9]+")).filter { it.length > 1 }.toSet()
+            val best = exact ?: candidates.maxByOrNull { candidate ->
+                val candidateTokens = candidate.optString("name").lowercase()
+                    .split(Regex("[^a-z0-9]+")).filter { it.length > 1 }.toSet()
+                if (queryTokens.isEmpty()) 0.0
+                else queryTokens.intersect(candidateTokens).size.toDouble() / queryTokens.size
+            }?.takeIf { candidate ->
+                val candidateTokens = candidate.optString("name").lowercase()
+                    .split(Regex("[^a-z0-9]+")).filter { it.length > 1 }.toSet()
+                queryTokens.isNotEmpty() &&
+                    queryTokens.intersect(candidateTokens).size.toDouble() / queryTokens.size >= 0.6
             }
-            val grids = request(URL("https://www.steamgriddb.com/api/v2/grids/game/$gameId?dimensions=600x900&types=static&limit=1"))
-            val data = grids.optJSONArray("data")
-            val imageUrl = data?.optJSONObject(0)?.optString("url")?.takeIf { it.startsWith("https://") }
-            cache.put(cacheKey, imageUrl ?: "")
+            val gameId = best?.optLong("id", 0L) ?: 0L
+            var imageUrl: String? = null
+            if (gameId > 0L) {
+                // Prefer the portrait box grid; fall back to a square game icon
+                // when a title has no grid artwork.
+                val grids = request(URL("https://www.steamgriddb.com/api/v2/grids/game/$gameId?dimensions=600x900&types=static&limit=1"))
+                imageUrl = grids.optJSONArray("data")?.optJSONObject(0)?.optString("url")
+                    ?.takeIf { it.startsWith("https://") && it.length <= 300 }
+                if (imageUrl == null) {
+                    val icons = request(URL("https://www.steamgriddb.com/api/v2/icons/game/$gameId?types=static&limit=1"))
+                    imageUrl = icons.optJSONArray("data")?.optJSONObject(0)?.optString("url")
+                        ?.takeIf { it.startsWith("https://") && it.length <= 300 }
+                }
+            }
+            cache.put(cacheKey, org.json.JSONObject()
+                .put("url", imageUrl ?: "")
+                .put("checkedAt", System.currentTimeMillis()))
             prefs.edit().putString("steamgriddb_art_cache", cache.toString()).apply()
             imageUrl
         } catch (error: Exception) {
