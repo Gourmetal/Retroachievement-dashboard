@@ -113,7 +113,12 @@ void publishPendingPresence() {
 
     discordpp::Activity presence{};
     presence.SetType(discordpp::ActivityTypes::Playing);
-    if (!gPendingDetails.empty()) presence.SetDetails(gPendingDetails);
+    // Use the detected ROM title as the displayed application name in Discord.
+    // Details/state remain available for the expanded Rich Presence view.
+    if (!gPendingDetails.empty()) {
+        presence.SetName(gPendingDetails);
+        presence.SetDetails(gPendingDetails);
+    }
     if (!gPendingState.empty()) presence.SetState(gPendingState);
     if (!gPendingLargeImage.empty()) {
         discordpp::ActivityAssets assets{};
