@@ -906,11 +906,10 @@ class MainActivity : ComponentActivity() {
     fun testDiscordSdkClientCreation(applicationId: Long) {
         recordDiscordCheckpoint("KOTLIN: client test entered")
         ensureDiscordClient(applicationId)
-        recordDiscordCheckpoint("KOTLIN: entering nativeUpdatePresence")
-        nativeUpdatePresence("Discord Connection Test", "Connected", "")
-        recordDiscordCheckpoint("KOTLIN: nativeUpdatePresence returned")
-        recordDiscordCheckpoint("KOTLIN: callback pump running; test presence queued")
-        android.util.Log.i("RetroAlertsDiscord", "Native Discord client created and test presence queued")
+        // A connection test must never publish placeholder activity text.
+        // The RetroArch polling loop owns presence updates and will publish the detected game.
+        recordDiscordCheckpoint("KOTLIN: Discord client initialized; waiting for live game detection")
+        android.util.Log.i("RetroAlertsDiscord", "Discord client initialized; no placeholder presence submitted")
     }
 
     fun isDiscordClientInitialized(): Boolean = discordClientInitialized
