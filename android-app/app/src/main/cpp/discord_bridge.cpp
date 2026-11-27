@@ -113,11 +113,11 @@ void publishPendingPresence() {
 
     discordpp::Activity presence{};
     presence.SetType(discordpp::ActivityTypes::Playing);
-    // Use the detected ROM title as the displayed application name in Discord.
-    // Details/state remain available for the expanded Rich Presence view.
+    // Activity::Name is the game/application name Discord displays as the activity.
+    // The previous hard-coded "RetroArch" value caused every game to appear as RetroArch.
     if (!gPendingDetails.empty()) {
-        presence.SetName("RetroArch");
-        presence.SetDetails(gPendingDetails);
+        presence.SetName(gPendingDetails);
+        presence.SetDetails("Playing");
         presence.SetStatusDisplayType(discordpp::StatusDisplayTypes::Details);
     }
     if (!gPendingState.empty()) presence.SetState(gPendingState);
