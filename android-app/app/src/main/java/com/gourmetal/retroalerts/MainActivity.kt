@@ -682,6 +682,65 @@ class AchievementWorker(
         }
     }
 }
+private fun displayRetroArchSystem(rawSystem: String): String {
+    val key = rawSystem.trim().lowercase().replace(Regex("[^a-z0-9]"), "")
+    val known = mapOf(
+        "gameboyadvance" to "Game Boy Advance",
+        "gba" to "Game Boy Advance",
+        "gameboy" to "Game Boy",
+        "gb" to "Game Boy",
+        "gameboycolor" to "Game Boy Color",
+        "gbc" to "Game Boy Color",
+        "nes" to "Nintendo Entertainment System",
+        "famicom" to "Nintendo Entertainment System",
+        "snes" to "Super Nintendo",
+        "supernintendo" to "Super Nintendo",
+        "nintendo64" to "Nintendo 64",
+        "n64" to "Nintendo 64",
+        "nds" to "Nintendo DS",
+        "nintendods" to "Nintendo DS",
+        "3ds" to "Nintendo 3DS",
+        "nintendo3ds" to "Nintendo 3DS",
+        "playstation" to "PlayStation",
+        "psx" to "PlayStation",
+        "ps1" to "PlayStation",
+        "playstation2" to "PlayStation 2",
+        "ps2" to "PlayStation 2",
+        "playstationportable" to "PlayStation Portable",
+        "psp" to "PlayStation Portable",
+        "segagenesis" to "Sega Genesis",
+        "genesis" to "Sega Genesis",
+        "megadrive" to "Sega Mega Drive",
+        "segamastersystem" to "Sega Master System",
+        "mastersystem" to "Sega Master System",
+        "segacd" to "Sega CD",
+        "sega32x" to "Sega 32X",
+        "dreamcast" to "Sega Dreamcast",
+        "saturn" to "Sega Saturn",
+        "atarilynx" to "Atari Lynx",
+        "atarijaguar" to "Atari Jaguar",
+        "atari2600" to "Atari 2600",
+        "atari7800" to "Atari 7800",
+        "pcengine" to "PC Engine",
+        "turbografx16" to "TurboGrafx-16",
+        "neogeopocket" to "Neo Geo Pocket",
+        "neogeopocketcolor" to "Neo Geo Pocket Color",
+        "arcade" to "Arcade",
+        "mame" to "Arcade",
+        "fbneo" to "Arcade"
+    )
+    return known[key] ?: rawSystem.trim()
+        .replace('_', ' ').replace('-', ' ')
+        .replace(Regex("\\s+"), " ")
+        .split(' ').filter { it.isNotBlank() }
+        .joinToString(" ") { word ->
+            when (word.lowercase()) {
+                "gb", "gba", "gbc", "nes", "snes", "nds", "3ds", "psx", "psp", "mame" -> word.uppercase()
+                else -> word.lowercase().replaceFirstChar { it.uppercase() }
+            }
+        }
+}
+
 private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): String = withContext(Dispatchers.IO) {
     val address = InetAddress.getByName(host.trim())
     DatagramSocket().use { socket ->
@@ -703,7 +762,7 @@ private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): Strin
             ).find(raw)
             if (match != null) {
                 val state = match.groupValues[1].uppercase()
-                val system = match.groupValues[2].trim()
+                val system = displayRetroArchSystem(match.groupValues[2])
                 val contentPath = match.groupValues[3].trim().trim('"')
                 val fileName = contentPath.substringAfterLast('/').substringAfterLast('\\')
                 // Strip ROM-set numbering and trailing region/dump tags such as (U) and (DCS).
@@ -838,7 +897,7 @@ class MainActivity : ComponentActivity() {
             ?: return
         val title = parts.getOrNull(1)?.takeIf { it.isNotBlank() } ?: "Unknown game"
         val system = parts.getOrNull(2)?.takeIf { it.isNotBlank() } ?: "RetroArch"
-        val activityState = system
+        val activityState = displayRetroArchSystem(system)
         val artworkUrl = getSteamGridArtwork(this, title).orEmpty()
         nativeUpdatePresence(title, activityState, artworkUrl)
         recordDiscordCheckpoint("KOTLIN: Discord activity updated • name=$title • system=$system • artwork=${if (artworkUrl.isBlank()) "none" else "found"}")
