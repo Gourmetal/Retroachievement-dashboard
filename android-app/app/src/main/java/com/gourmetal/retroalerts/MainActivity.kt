@@ -710,7 +710,7 @@ private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): Strin
                 val titleWithoutExtension = fileName.substringBeforeLast('.', fileName).trim()
                 val withoutRomNumber = titleWithoutExtension.replace(Regex("^\\s*\\d+\\s*[-_]\\s*"), "")
                 val withoutDumpTags = withoutRomNumber
-                    .replace(Regex("""(?:\\s*[\\(\\[][^)\\]]*[\\)\\]])+\\s*$"""), "")
+                    .replace(Regex("""(?:\s*[\(\[][^)\]]*[\)\]])+\s*$"""), "")
                     .trim()
                 val smallWords = setOf("a", "an", "and", "as", "at", "but", "by", "for", "in", "of", "on", "or", "the", "to", "via")
                 val title = withoutDumpTags.replace('_', ' ').replace(Regex("\\s+"), " ")
