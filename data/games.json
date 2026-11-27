@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 174493,
+    "totalRanked": 174537,
     "hardcorePoints": 1,
-    "softcorePoints": 912,
+    "softcorePoints": 922,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-26T21:07:48.744452+00:00",
+  "lastUpdated": "2026-11-27T07:26:28.744297+00:00",
   "games": [
     {
       "gameId": 744,
@@ -17254,10 +17254,10 @@
       "gameId": 559,
       "title": "The Legend of Zelda: The Minish Cap",
       "console": "Game Boy Advance",
-      "earned": 52,
+      "earned": 53,
       "hardcoreEarned": 0,
       "total": 66,
-      "progress": 78.79,
+      "progress": 80.3,
       "mode": "Softcore",
       "lastPlayed": "",
       "boxArt": "https://retroachievements.org/Images/000156.png",
@@ -17457,6 +17457,17 @@
           "points": 5,
           "earned": true,
           "dateEarned": "2026-10-23 19:33:39",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
+          "id": 2078,
+          "badgeName": "155845",
+          "title": "Felled Jelly",
+          "description": "Defeat the Big Green Chuchu without taking damage",
+          "points": 10,
+          "earned": true,
+          "dateEarned": "2026-11-26 23:27:35",
           "hardcore": false,
           "dateEarnedHardcore": ""
         },
@@ -17873,17 +17884,6 @@
           "title": "Carlov Medal",
           "description": "Collect all 136 Figurines",
           "points": 25,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
-          "id": 2078,
-          "badgeName": "155845",
-          "title": "Felled Jelly",
-          "description": "Defeat the Big Green Chuchu without taking damage",
-          "points": 10,
           "earned": false,
           "dateEarned": "",
           "hardcore": false,
@@ -20917,7 +20917,7 @@
   "recentAchievements": [],
   "stats": {
     "gamesPlayed": 25,
-    "achievementsEarned": 181,
+    "achievementsEarned": 182,
     "achievementsTotal": 1850
   }
 }
