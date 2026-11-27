@@ -117,7 +117,7 @@ void publishPendingPresence() {
     // Details/state remain available for the expanded Rich Presence view.
     if (!gPendingDetails.empty()) {
         presence.SetName(gPendingDetails);
-        presence.SetDetails(gPendingDetails);
+        presence.SetDetails("RetroArch");
     }
     if (!gPendingState.empty()) presence.SetState(gPendingState);
     if (!gPendingLargeImage.empty()) {
