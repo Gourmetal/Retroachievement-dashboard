@@ -118,6 +118,7 @@ void publishPendingPresence() {
     if (!gPendingDetails.empty()) {
         presence.SetName("RetroArch");
         presence.SetDetails(gPendingDetails);
+        presence.SetStatusDisplayType(discordpp::StatusDisplayTypes::Details);
     }
     if (!gPendingState.empty()) presence.SetState(gPendingState);
     if (!gPendingLargeImage.empty()) {
