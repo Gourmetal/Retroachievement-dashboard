@@ -6,12 +6,12 @@
     "memberSince": "2021-11-25 20:36:47",
     "motto": "",
     "rank": null,
-    "totalRanked": 174537,
+    "totalRanked": 174594,
     "hardcorePoints": 1,
-    "softcorePoints": 922,
+    "softcorePoints": 947,
     "truePoints": 1
   },
-  "lastUpdated": "2026-11-27T07:26:28.744297+00:00",
+  "lastUpdated": "2026-11-27T20:51:47.284104+00:00",
   "games": [
     {
       "gameId": 744,
@@ -17254,10 +17254,10 @@
       "gameId": 559,
       "title": "The Legend of Zelda: The Minish Cap",
       "console": "Game Boy Advance",
-      "earned": 53,
+      "earned": 54,
       "hardcoreEarned": 0,
       "total": 66,
-      "progress": 80.3,
+      "progress": 81.82,
       "mode": "Softcore",
       "lastPlayed": "",
       "boxArt": "https://retroachievements.org/Images/000156.png",
@@ -17736,6 +17736,17 @@
           "dateEarnedHardcore": ""
         },
         {
+          "id": 2086,
+          "badgeName": "155847",
+          "title": "Scales & Stones",
+          "description": "Defeat Gleerok without taking damage",
+          "points": 25,
+          "earned": true,
+          "dateEarned": "2026-11-27 07:37:26",
+          "hardcore": false,
+          "dateEarnedHardcore": ""
+        },
+        {
           "id": 2055,
           "badgeName": "155813",
           "title": "Set up Us the Bomb",
@@ -17917,17 +17928,6 @@
           "title": "Minish Turned Mastermind",
           "description": "Defeat Vaati without taking damage",
           "points": 100,
-          "earned": false,
-          "dateEarned": "",
-          "hardcore": false,
-          "dateEarnedHardcore": ""
-        },
-        {
-          "id": 2086,
-          "badgeName": "155847",
-          "title": "Scales & Stones",
-          "description": "Defeat Gleerok without taking damage",
-          "points": 25,
           "earned": false,
           "dateEarned": "",
           "hardcore": false,
@@ -20917,7 +20917,7 @@
   "recentAchievements": [],
   "stats": {
     "gamesPlayed": 25,
-    "achievementsEarned": 182,
+    "achievementsEarned": 183,
     "achievementsTotal": 1850
   }
 }
