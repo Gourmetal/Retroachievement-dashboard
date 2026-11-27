@@ -116,8 +116,8 @@ void publishPendingPresence() {
     // Use the detected ROM title as the displayed application name in Discord.
     // Details/state remain available for the expanded Rich Presence view.
     if (!gPendingDetails.empty()) {
-        presence.SetName(gPendingDetails);
-        presence.SetDetails("RetroArch");
+        presence.SetName("RetroArch");
+        presence.SetDetails(gPendingDetails);
     }
     if (!gPendingState.empty()) presence.SetState(gPendingState);
     if (!gPendingLargeImage.empty()) {
