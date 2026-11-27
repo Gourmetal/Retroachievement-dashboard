@@ -706,8 +706,20 @@ private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): Strin
                 val system = match.groupValues[2].trim()
                 val contentPath = match.groupValues[3].trim().trim('"')
                 val fileName = contentPath.substringAfterLast('/').substringAfterLast('\\')
-                val title = fileName.substringBeforeLast('.', fileName).trim()
-                    .replace('_', ' ').replace(Regex("\\s+"), " ")
+                // Strip ROM-set numbering and trailing region/dump tags such as (U) and (DCS).
+                val titleWithoutExtension = fileName.substringBeforeLast('.', fileName).trim()
+                val withoutRomNumber = titleWithoutExtension.replace(Regex("^\\s*\\d+\\s*[-_]\\s*"), "")
+                val withoutDumpTags = withoutRomNumber
+                    .replace(Regex("""(?:\\s*[\\(\\[][^)\\]]*[\\)\\]])+\\s*$"""), "")
+                    .trim()
+                val smallWords = setOf("a", "an", "and", "as", "at", "but", "by", "for", "in", "of", "on", "or", "the", "to", "via")
+                val title = withoutDumpTags.replace('_', ' ').replace(Regex("\\s+"), " ")
+                    .trim().split(' ').filter { it.isNotBlank() }
+                    .mapIndexed { index, word ->
+                        val lower = word.lowercase()
+                        if (index > 0 && lower in smallWords) lower
+                        else lower.replaceFirstChar { it.uppercase() }
+                    }.joinToString(" ")
                 if (title.isNotBlank()) {
                     val crc = match.groupValues[4].takeIf { it.isNotBlank() }
                     if (crc != null) "$state • $title • $system • CRC ${crc.uppercase()}"
