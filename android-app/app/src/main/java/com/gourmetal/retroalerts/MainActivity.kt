@@ -695,15 +695,28 @@ private suspend fun queryRetroArchStatus(host: String, port: Int = 55355): Strin
         if (raw.contains("CONTENTLESS", ignoreCase = true)) {
             "CONNECTED • NO GAME LOADED"
         } else {
-            val match = Regex("GET_STATUS\\s+(PLAYING|PAUSED)\\s+([^,]+),([^,]+),crc32=([0-9A-Fa-f]+)", RegexOption.IGNORE_CASE).find(raw)
+            // RetroArch versions differ: some include ",crc32=..." while others
+            // return only "GET_STATUS PLAYING CORE, CONTENT_PATH".
+            val match = Regex(
+                "GET_STATUS\\s+(PLAYING|PAUSED)\\s+([^,]+),\\s*(.*?)(?:,\\s*crc32=([0-9A-Fa-f]+))?\\s*$",
+                RegexOption.IGNORE_CASE
+            ).find(raw)
             if (match != null) {
                 val state = match.groupValues[1].uppercase()
                 val system = match.groupValues[2].trim()
-                val fileName = match.groupValues[3].substringAfterLast('/').substringAfterLast('\\')
-                val title = fileName.substringBeforeLast('.', fileName).replace('_', ' ').replace('-', ' ').trim()
-                "$state • $title • $system • CRC ${match.groupValues[4].uppercase()}"
+                val contentPath = match.groupValues[3].trim().trim('"')
+                val fileName = contentPath.substringAfterLast('/').substringAfterLast('\\\\')
+                val title = fileName.substringBeforeLast('.', fileName).trim()
+                    .replace('_', ' ').replace(Regex("\\s+"), " ")
+                if (title.isNotBlank()) {
+                    val crc = match.groupValues[4].takeIf { it.isNotBlank() }
+                    if (crc != null) "$state • $title • $system • CRC ${crc.uppercase()}"
+                    else "$state • $title • $system"
+                } else {
+                    "CONNECTED • $raw"
+                }
             } else {
-                "CONNECTED • ${raw.take(180)}"
+                "CONNECTED • $raw"
             }
         }
     }
